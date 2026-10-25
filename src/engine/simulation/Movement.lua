@@ -13,7 +13,12 @@ local function extend(cell, move, own)
     for _, point in ipairs(move.via) do
         path[#path + 1] = point
     end
-    path[#path + 1] = { move.x, move.y }
+
+    if not own and #path > 1 and (cell.own or 0) < 2 then
+        path[#path][1], path[#path][2] = move.x, move.y
+    else
+        path[#path + 1] = { move.x, move.y }
+    end
 
     if own then cell.own = (cell.own or 0) + #move.via + 1 end
 end
@@ -28,6 +33,7 @@ function Movement.new(data)
     self.walk = {}
     self.stamp = 0
     self.dead = {}
+    self.moves = 0
     return self
 end
 
@@ -145,6 +151,7 @@ end
 
 function Movement:_shift(chain, silent)
     local grid = self.grid
+    self.moves = self.moves + #chain
 
     for _, move in ipairs(chain) do
         grid:set(move.cell.x, move.cell.y)

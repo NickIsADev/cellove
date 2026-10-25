@@ -19,6 +19,7 @@ function Simulator.new(data)
     self.grid = Grid.new(data)
     self.movement = Movement.new({ simulator = self })
     self.interval = data.interval or constants.simulator.interval
+    self.profile = { sim = 0, post = 0, memory = 0, moves = 0 }
     self:_rewind()
     return self
 end
@@ -93,7 +94,7 @@ function Simulator:_scan(subtick, direction)
     end
 
     for outer = outerFrom, outerTo, outerStep do
-        if lines[outer] then
+        if (lines[outer] or 0) > 0 then
             local base = outer * outerStride - width
             for inner = innerFrom, innerTo, innerStep do
                 local cell = cells[base + inner * innerStride]
@@ -112,12 +113,19 @@ function Simulator:_changed()
 end
 
 function Simulator:_tick()
+    local profile, start, memory = self.profile, love.timer.getTime(), collectgarbage("count")
+    self.movement.moves = 0
+
     repeat
         self:_pass()
     until self.time.subtick % self.maxSubticks == 0 and self.time.pass == 0
 
+    local middle = love.timer.getTime()
     if self:_changed() then Audio.play("tick") end
     Events.emit("simulator:tick", self)
+
+    profile.sim, profile.post = (middle - start) * 1000, (love.timer.getTime() - middle) * 1000
+    profile.memory, profile.moves = (collectgarbage("count") - memory) / 1024, self.movement.moves
 end
 
 function Simulator:_pass()

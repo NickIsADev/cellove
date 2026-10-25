@@ -4,6 +4,7 @@ return {
     },
 
     renderer = {
+        far = 0.3,
         box = {
             fill = 0.15,
             line = 0.9,
@@ -31,7 +32,6 @@ return {
         shadow = {
             offset = 6,
             alpha = 0.5,
-            minZoom = 0.3,
             shader = [[
 vec4 effect(vec4 color, Image tex, vec2 uv, vec2 screen)
 {

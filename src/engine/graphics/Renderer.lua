@@ -9,6 +9,7 @@ local shadow = constants.renderer.shadow
 local box = constants.renderer.box
 local mark = constants.renderer.marker
 local blast = constants.renderer.explosion
+local far = constants.renderer.far
 local tag = constants.renderer.tag
 local tile = constants.grid.tile
 local colors = constants.ui.colors
@@ -51,6 +52,8 @@ function Renderer.new(data)
     self.queue = { n = 0 }
     self.rest = { n = 0 }
     self.tail = { n = 0 }
+    self.cache = {}
+    self.profile = { collect = 0, layer = 0 }
     self.labels = setmetatable({}, weak)
     self.shadowShader = love.graphics.newShader(shadow.shader)
     self.backgroundQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
@@ -241,6 +244,53 @@ function Renderer:_label(item, color, alpha)
     return label
 end
 
+function Renderer:_drawLayer(simulator, progress)
+    local profile, start = self.profile, love.timer.getTime()
+
+    self:_collect(simulator, progress)
+    profile.collect = (love.timer.getTime() - start) * 1000
+
+    if self.shadows and self.camera.zoom >= far then
+        love.graphics.setShader(self.shadowShader)
+        love.graphics.setColor(utils.fromHex(0x000000, shadow.alpha))
+        self:_drawCells(shadow.offset)
+        love.graphics.setShader()
+        love.graphics.setColor(utils.fromHex(colors.white))
+    end
+    self:_drawBorder(simulator.grid)
+    self:_drawCells(0)
+    profile.layer = (love.timer.getTime() - start) * 1000
+end
+
+function Renderer:_drawFar(simulator, progress)
+    local cache, grid, camera = self.cache, simulator.grid, self.camera
+    local width, height = Display.size()
+    local key = table.concat({ tostring(grid), grid.version, camera.x, camera.y, camera.zoom, Display.scale, width, height }, ",")
+
+    if cache.width ~= width or cache.height ~= height then
+        cache.canvas = love.graphics.newCanvas(width, height)
+        cache.width, cache.height, cache.key = width, height, nil
+    end
+
+    if cache.key ~= key or #self.particles.blasts > 0 then
+        local previous = love.graphics.getCanvas()
+
+        love.graphics.setCanvas(cache.canvas)
+        love.graphics.clear(0, 0, 0, 0)
+        self:_drawLayer(simulator, progress)
+        love.graphics.setCanvas(previous)
+        cache.key = key
+    end
+
+    love.graphics.push()
+    love.graphics.origin()
+    love.graphics.setBlendMode("alpha", "premultiplied")
+    love.graphics.setColor(utils.fromHex(colors.white))
+    love.graphics.draw(cache.canvas)
+    love.graphics.setBlendMode("alpha")
+    love.graphics.pop()
+end
+
 function Renderer:font(size)
     local font = self.fonts[size]
     if not font then
@@ -390,6 +440,7 @@ function Renderer:loadTextures()
         rows = 0
     }
 
+    self.cache.key = nil
     if self.classes then self:preload(self.classes) end
 end
 
@@ -401,9 +452,10 @@ function Renderer:preload(classes, first, last)
 end
 
 function Renderer:draw(simulator, progress, markers)
-    if not self.animated then progress = 1 end
-
     local grid, back = simulator.grid, self.back
+    local distant = self.camera.zoom < far
+
+    if distant or not self.animated then progress = 1 end
 
     love.graphics.clear(utils.fromHex(colors.dark))
     love.graphics.push()
@@ -419,17 +471,7 @@ function Renderer:draw(simulator, progress, markers)
     love.graphics.draw(back.texture, self.backgroundQuad, 0, 0, 0, tile / back.width, tile / back.height)
 
     self:_drawPlaceables(markers)
-    self:_collect(simulator, progress)
-
-    if self.shadows and self.camera.zoom >= shadow.minZoom then
-        love.graphics.setShader(self.shadowShader)
-        love.graphics.setColor(utils.fromHex(0x000000, shadow.alpha))
-        self:_drawCells(shadow.offset)
-        love.graphics.setShader()
-        love.graphics.setColor(utils.fromHex(colors.white))
-    end
-    self:_drawBorder(grid)
-    self:_drawCells(0)
+    if distant then self:_drawFar(simulator, progress) else self:_drawLayer(simulator, progress) end
     if not simulator:started() then self:_drawOverlays(markers, grid) end
     self.particles:draw()
 

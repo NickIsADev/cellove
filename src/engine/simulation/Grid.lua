@@ -1,8 +1,7 @@
 local constants = require("src/constants")
 
 local function tally(lines, index, amount)
-    local total = (lines[index] or 0) + amount
-    lines[index] = total > 0 and total or nil
+    lines[index] = (lines[index] or 0) + amount
 end
 
 local Grid = {}
@@ -86,6 +85,7 @@ function Grid:set(x, y, cell)
     if old then self:_count(old, x, y, -1) end
 
     self.cells[index] = cell
+    self.total = self.total - (old and 1 or 0) + (cell and 1 or 0)
 
     if cell then
         self:_count(cell, x, y, 1)
@@ -120,6 +120,7 @@ function Grid:clear()
     self.cells = {}
     self.counts = {}
     self.touched = {}
+    self.total = 0
 end
 
 function Grid:snapshot()
