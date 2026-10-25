@@ -12,6 +12,32 @@ local blast = constants.renderer.explosion
 local tag = constants.renderer.tag
 local tile = constants.grid.tile
 local colors = constants.ui.colors
+local stride = 6
+local weak = { __mode = "k" }
+
+local names = setmetatable({}, {
+    __index = function(cache, kind)
+        cache[kind] = utils.texture(kind)
+        return cache[kind]
+    end
+})
+
+local function push(list, cell, x, y, angle, size, fade)
+    local n = list.n
+    list[n + 1], list[n + 2], list[n + 3], list[n + 4], list[n + 5], list[n + 6] = cell, x, y, angle, size, fade
+    list.n = n + stride
+end
+
+local function append(list, other)
+    for i = 1, other.n do
+        list[list.n + i] = other[i]
+    end
+    list.n = list.n + other.n
+end
+
+local function place(batch, size, x, y)
+    batch:add((x - 0.5) * tile, (y - 0.5) * tile, 0, size.scale, size.scale, size.x, size.y)
+end
 
 local Renderer = {}
 Renderer.__index = Renderer
@@ -22,7 +48,10 @@ function Renderer.new(data)
     self.particles = Particles.new()
     self.shadows = true
     self.animated = true
-    self.canvas = love.graphics.newCanvas(Display.size())
+    self.queue = { n = 0 }
+    self.rest = { n = 0 }
+    self.tail = { n = 0 }
+    self.labels = setmetatable({}, weak)
     self.shadowShader = love.graphics.newShader(shadow.shader)
     self.backgroundQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
     self.camera = Camera.new()
@@ -42,70 +71,134 @@ function Renderer:_textures(folder)
     return setmetatable({}, {
         __index = function(cache, name)
             local path = self:_path(folder, name .. ".png") or self:_path(config.missing.folder, config.missing.name .. ".png")
-            cache[name] = love.graphics.newImage(path)
-            return cache[name]
+            local image = love.graphics.newImage(path)
+            local width, height = image:getDimensions()
+
+            self.sizes[image] = {
+                scale = tile / width,
+                x = width / 2,
+                y = height / 2
+            }
+            cache[name] = image
+            return image
         end
     })
 end
 
-function Renderer:_drawCell(cell, x, y, progress, dying, offset)
-    local rx, ry, size = x, y, 1
+function Renderer:_sprite(name)
+    local texture = self.textures.cells[name]
+    return texture, self.sizes[texture]
+end
+
+function Renderer:_queue(list, cell, x, y, progress, dying)
+    local size, fade = 1, 0
 
     local path = cell.path
     if path and #path > 1 then
-        local own = 0
-        for i = 2, #path do
-            if path[i][3] then own = own + 1 end
-        end
-
-        if own > 1 then
+        if (cell.own or 0) > 1 then
             local t = progress * (#path - 1)
             local i = math.min(math.floor(t), #path - 2)
             local a, b = path[i + 1], path[i + 2]
-            rx = utils.lerp(a[1], b[1], t - i)
-            ry = utils.lerp(a[2], b[2], t - i)
+            x = utils.lerp(a[1], b[1], t - i)
+            y = utils.lerp(a[2], b[2], t - i)
             if dying then size = 1 - math.max(0, t - (#path - 2)) end
         else
             local a, b = path[1], path[#path]
-            rx = utils.lerp(a[1], b[1], progress)
-            ry = utils.lerp(a[2], b[2], progress)
+            x = utils.lerp(a[1], b[1], progress)
+            y = utils.lerp(a[2], b[2], progress)
             if dying then size = 1 - progress end
         end
     end
 
-    local angle = cell.rotation - (cell.turn or 0) * (1 - progress)
-
     if cell.exploded then
-        local t = self.particles:blast(cell, progress)
-        if t >= 1 then return end
-
-        local r, g, b, a = love.graphics.getColor()
-
-        love.graphics.setColor(r, g, b, a * (1 - t))
-        cell:draw(self, rx, ry, angle, 1 + t * blast.grow, offset)
-        love.graphics.setColor(r, g, b, a)
-        return
+        fade = self.particles:blast(cell, progress)
+        if fade >= 1 then return end
+        size = 1 + fade * blast.grow
     end
 
-    cell:draw(self, rx, ry, angle, size, offset)
+    push(list, cell, x, y, cell.rotation - (cell.turn or 0) * (1 - progress), size, fade)
+end
+
+function Renderer:_collect(simulator, progress)
+    local queue, rest, tail = self.queue, self.rest, self.tail
+    local grid, camera = simulator.grid, self.camera
+    queue.n, rest.n, tail.n = 0, 0, 0
+
+    local margin = simulator.maxSubticks
+    local halfWidth = love.graphics.getWidth() / 2 / camera.zoom
+    local halfHeight = love.graphics.getHeight() / 2 / camera.zoom
+    local minX = math.max(1, math.floor((camera.x - halfWidth) / tile) + 1 - margin)
+    local maxX = math.min(grid.width, math.floor((camera.x + halfWidth) / tile) + 1 + margin)
+    local minY = math.max(1, math.floor((camera.y - halfHeight) / tile) + 1 - margin)
+    local maxY = math.min(grid.height, math.floor((camera.y + halfHeight) / tile) + 1 + margin)
+
+    for _, cell in ipairs(simulator.dying) do
+        local visible = cell.x >= minX and cell.x <= maxX and cell.y >= minY and cell.y <= maxY
+        if visible then self:_queue(cell.born and tail or queue, cell, cell.x, cell.y, progress, true) end
+    end
+
+    for y = minY, maxY do
+        for x = minX, maxX do
+            local cell = grid:get(x, y)
+            if cell then self:_queue(cell.born and queue or rest, cell, x, y, progress, false) end
+        end
+    end
+
+    append(queue, rest)
+    append(queue, tail)
+end
+
+function Renderer:_drawCells(offset)
+    local queue = self.queue
+
+    for i = 1, queue.n, stride do
+        local cell, x, y, angle, size, fade = queue[i], queue[i + 1], queue[i + 2], queue[i + 3], queue[i + 4], queue[i + 5]
+
+        if fade == 0 then
+            cell:draw(self, x, y, angle, size, offset)
+        else
+            local r, g, b, a = love.graphics.getColor()
+
+            love.graphics.setColor(r, g, b, a * (1 - fade))
+            cell:draw(self, x, y, angle, size, offset)
+            love.graphics.setColor(r, g, b, a)
+        end
+    end
+end
+
+function Renderer:_fitBackground(grid)
+    local back = self.back
+    if back.cols == grid.width and back.rows == grid.height then return end
+
+    back.cols, back.rows = grid.width, grid.height
+    self.backgroundQuad:setViewport(0, 0, grid.width * back.width, grid.height * back.height, back.width, back.height)
 end
 
 function Renderer:_drawBorder(grid)
-    local right, bottom = grid.width + 1, grid.height + 1
+    local border = self.border
 
-    for x = 0, right do
-        self:drawSprite("ghost", x, 0, 0, 1, 0)
-        self:drawSprite("ghost", x, bottom, 0, 1, 0)
+    if border.cols ~= grid.width or border.rows ~= grid.height then
+        local size = self.sizes[self.textures.cells.ghost]
+        local right, bottom = grid.width + 1, grid.height + 1
+
+        border.cols, border.rows = grid.width, grid.height
+        border.batch:clear()
+        for x = 0, right do
+            place(border.batch, size, x, 0)
+            place(border.batch, size, x, bottom)
+        end
+        for y = 1, grid.height do
+            place(border.batch, size, 0, y)
+            place(border.batch, size, right, y)
+        end
     end
-    for y = 1, grid.height do
-        self:drawSprite("ghost", 0, y, 0, 1, 0)
-        self:drawSprite("ghost", right, y, 0, 1, 0)
-    end
+
+    love.graphics.draw(border.batch)
 end
 
 function Renderer:_drawTile(name, x, y)
     local texture = self.textures.ui[name]
-    local scale = tile / texture:getWidth()
+    local scale = self.sizes[texture].scale
 
     love.graphics.draw(texture, (x - 1) * tile, (y - 1) * tile, 0, scale, scale)
 end
@@ -131,40 +224,19 @@ function Renderer:_drawOverlays(markers, grid)
     end)
 end
 
-function Renderer:_eachCell(simulator, visit)
-    for _, cell in ipairs(simulator.dying) do
-        if not cell.born then visit(cell, cell.x, cell.y, true) end
-    end
+function Renderer:_label(item, color, alpha)
+    local label = self.labels[item]
+    if label and label.text == item.text and label.color == color and label.alpha == alpha then return label end
 
-    local camera = self.camera
-    local margin = simulator.maxSubticks
-    local halfWidth = love.graphics.getWidth() / 2 / camera.zoom
-    local halfHeight = love.graphics.getHeight() / 2 / camera.zoom
-    local minX = math.max(1, math.floor((camera.x - halfWidth) / tile) + 1 - margin)
-    local maxX = math.min(simulator.grid.width, math.floor((camera.x + halfWidth) / tile) + 1 + margin)
-    local minY = math.max(1, math.floor((camera.y - halfHeight) / tile) + 1 - margin)
-    local maxY = math.min(simulator.grid.height, math.floor((camera.y + halfHeight) / tile) + 1 + margin)
-
-    for pass = 1, 2 do
-        for y = minY, maxY do
-            for x = minX, maxX do
-                local cell = simulator.grid:get(x, y)
-                if cell and (cell.born ~= nil) == (pass == 1) then
-                    visit(cell, x, y, false)
-                end
-            end
-        end
-    end
-
-    for _, cell in ipairs(simulator.dying) do
-        if cell.born then visit(cell, cell.x, cell.y, true) end
-    end
-end
-
-function Renderer:_drawCells(simulator, progress, offset)
-    self:_eachCell(simulator, function(cell, x, y, dying)
-        self:_drawCell(cell, x, y, progress, dying, offset)
-    end)
+    label = {
+        text = item.text,
+        color = color,
+        alpha = alpha,
+        plain = utils.plain(item.text),
+        colored = utils.colored(item.text, { utils.fromHex(color, alpha) }, alpha)
+    }
+    self.labels[item] = label
+    return label
 end
 
 function Renderer:font(size)
@@ -178,12 +250,11 @@ function Renderer:font(size)
 end
 
 function Renderer:drawSprite(name, x, y, angle, scale, offset)
-    local texture = self.textures.cells[name]
-    local width, height = texture:getDimensions()
-    local factor = tile / width * scale
+    local texture, size = self:_sprite(name)
+    local factor = size.scale * scale
 
     love.graphics.draw(texture, (x - 0.5) * tile + offset, (y - 0.5) * tile + offset,
-        angle * math.pi / 2, factor, factor, width / 2, height / 2)
+        angle * math.pi / 2, factor, factor, size.x, size.y)
 end
 
 function Renderer:drawTag(text, x, y, _, scale, offset)
@@ -270,20 +341,19 @@ function Renderer:drawMarkers(markers, alpha, ox, oy)
                 item.width * tile, item.height * tile)
             love.graphics.setLineWidth(1)
         elseif item.kind == "label" then
-            local plain = utils.plain(item.text)
-            local left, top = x - font:getWidth(plain) / 2, y - font:getHeight() / 2
+            local label = self:_label(item, color, alpha)
+            local left, top = x - font:getWidth(label.plain) / 2, y - font:getHeight() / 2
 
             love.graphics.setColor(utils.fromHex(0x000000, mark.shadow.alpha * alpha))
-            love.graphics.print(plain, left + mark.shadow.offset, top + mark.shadow.offset)
+            love.graphics.print(label.plain, left + mark.shadow.offset, top + mark.shadow.offset)
             love.graphics.setColor(utils.fromHex(colors.white))
-            love.graphics.print(utils.colored(item.text, { utils.fromHex(color, alpha) }, alpha), left, top)
+            love.graphics.print(label.colored, left, top)
         elseif item.kind ~= "placeable" then
-            local texture = self.textures.markers[utils.texture(item.kind)]
-            local width, height = texture:getDimensions()
-            local scale = tile / width
+            local texture = self.textures.markers[names[item.kind]]
+            local size = self.sizes[texture]
 
             love.graphics.setColor(utils.fromHex(colors.white, alpha))
-            love.graphics.draw(texture, x, y, (item.rotation or 0) * math.pi / 2, scale, scale, width / 2, height / 2)
+            love.graphics.draw(texture, x, y, (item.rotation or 0) * math.pi / 2, size.scale, size.scale, size.x, size.y)
         end
     end
 
@@ -293,28 +363,46 @@ function Renderer:drawMarkers(markers, alpha, ox, oy)
 end
 
 function Renderer:loadTextures()
+    self.sizes = setmetatable({}, weak)
+    self.fonts = {}
     self.textures = {
         cells = self:_textures("cells"),
         ui = self:_textures("ui"),
         markers = self:_textures("markers")
     }
-    self.fonts = {}
+
+    local background = self.textures.ui.background
+    local width, height = background:getDimensions()
+    background:setWrap("repeat", "repeat")
+
+    self.back = {
+        texture = background,
+        width = width,
+        height = height,
+        cols = 0,
+        rows = 0
+    }
+    self.border = {
+        batch = love.graphics.newSpriteBatch(self.textures.cells.ghost),
+        cols = 0,
+        rows = 0
+    }
+
+    if self.classes then self:preload(self.classes) end
+end
+
+function Renderer:preload(classes)
+    self.classes = classes
+    for _, class in ipairs(classes) do
+        self:_sprite(class.texture)
+    end
 end
 
 function Renderer:draw(simulator, progress, markers)
     if not self.animated then progress = 1 end
 
-    local w, h = Display.size()
-    if w ~= self.canvas:getWidth() or h ~= self.canvas:getHeight() then
-        self.canvas:release()
-        self.canvas = love.graphics.newCanvas(w, h)
-    end
+    local grid, back = simulator.grid, self.back
 
-    local grid = simulator.grid
-    local background = self.textures.ui.background
-    local tileWidth, tileHeight = background:getDimensions()
-
-    love.graphics.setCanvas(self.canvas)
     love.graphics.clear(utils.fromHex(colors.dark))
     love.graphics.push()
     love.graphics.origin()
@@ -324,32 +412,25 @@ function Renderer:draw(simulator, progress, markers)
     love.graphics.setColor(utils.fromHex(colors.dark))
     love.graphics.rectangle("fill", 0, 0, grid.width * tile, grid.height * tile)
 
-    background:setWrap("repeat", "repeat")
-    self.backgroundQuad:setViewport(0, 0, grid.width * tileWidth, grid.height * tileHeight, tileWidth, tileHeight)
-
+    self:_fitBackground(grid)
     love.graphics.setColor(utils.fromHex(colors.white))
-    love.graphics.draw(background, self.backgroundQuad, 0, 0, 0, tile / tileWidth, tile / tileHeight)
+    love.graphics.draw(back.texture, self.backgroundQuad, 0, 0, 0, tile / back.width, tile / back.height)
 
     self:_drawPlaceables(markers)
-    
+    self:_collect(simulator, progress)
+
     if self.shadows then
         love.graphics.setShader(self.shadowShader)
         love.graphics.setColor(utils.fromHex(0x000000, shadow.alpha))
-        self:_drawCells(simulator, progress, shadow.offset)
+        self:_drawCells(shadow.offset)
         love.graphics.setShader()
         love.graphics.setColor(utils.fromHex(colors.white))
     end
     self:_drawBorder(grid)
-    self:_drawCells(simulator, progress, 0)
+    self:_drawCells(0)
     if not simulator:started() then self:_drawOverlays(markers, grid) end
     self.particles:draw()
 
-    love.graphics.pop()
-    love.graphics.setCanvas()
-    love.graphics.clear(utils.fromHex(colors.dark))
-    love.graphics.push()
-    love.graphics.origin()
-    love.graphics.draw(self.canvas)
     love.graphics.pop()
 end
 
