@@ -11,7 +11,7 @@ local AntiWeight = setmetatable({
 AntiWeight.__index = AntiWeight
 
 function AntiWeight:force()
-    return 1
+    return -constants.force.weight
 end
 
 return AntiWeight
