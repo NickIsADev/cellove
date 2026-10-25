@@ -8,6 +8,7 @@ local utils = require("src/utils")
 
 local config = constants.menu
 local credits = config.credits
+local discord = config.discord
 local separator = constants.ui.separator
 local version = config.version
 local alert = constants.mods.alert
@@ -71,6 +72,17 @@ function MenuScene.new(data)
         title = credits.button.title,
         description = credits.button.description
     })
+    self.discordButton = IconButton.new({
+        renderer = data.renderer,
+        id = "discord",
+        folder = "ui",
+        texture = "discord",
+        size = discord.size,
+        alpha = discord.alpha,
+        growth = 0,
+        title = discord.title,
+        description = discord.description
+    })
     self.credits = false
     return self
 end
@@ -85,6 +97,7 @@ function MenuScene:_layout()
     end
     self.quitButton:place(w - config.quit.margin - config.quit.size, config.quit.margin)
     self.creditsButton:place(credits.button.margin, h - credits.button.margin - credits.button.size)
+    self.discordButton:place(credits.button.margin + credits.button.size + discord.gap, h - credits.button.margin - discord.size)
 end
 
 function MenuScene:_drawTitle()
@@ -148,10 +161,14 @@ end
 function MenuScene:_drawVersion()
     local font = self.renderer:font(version.font)
     local w, h = love.graphics.getDimensions()
+    local lineHeight = font:getHeight()
+    local top = h - credits.button.margin - (credits.button.size + #version.lines * lineHeight) / 2
 
     love.graphics.setFont(font)
-    love.graphics.setColor(utils.fromHex(colors.white, version.alpha))
-    love.graphics.print(version.text, w - version.margin - font:getWidth(version.text), h - version.margin - font:getHeight())
+    for index, line in ipairs(version.lines) do
+        love.graphics.setColor(utils.fromHex(colors.white, index == 1 and version.alpha.number or version.alpha.build))
+        love.graphics.print(line, w - version.margin - font:getWidth(line), top + (index - 1) * lineHeight)
+    end
 end
 
 function MenuScene:_drawCredits()
@@ -244,6 +261,7 @@ function MenuScene:update(dt)
     for _, button in ipairs(self.buttons) do button:update(dt) end
     self.quitButton:update(dt)
     self.creditsButton:update(dt)
+    self.discordButton:update(dt)
 end
 
 function MenuScene:mousepressed(x, y, button)
@@ -258,6 +276,7 @@ function MenuScene:mousepressed(x, y, button)
         self.credits = true
         return
     end
+    if self.discordButton:hit(x, y) then return love.system.openURL(discord.url) end
     if self.quitButton:hit(x, y) then return love.event.quit() end
 
     for _, icon in ipairs(self.buttons) do
@@ -282,6 +301,7 @@ function MenuScene:draw()
     for _, button in ipairs(self.buttons) do button:draw() end
     self.quitButton:draw()
     self.creditsButton:draw()
+    self.discordButton:draw()
     self:_drawVersion()
     self.toast:draw(constants.toast.top)
     if self.credits then
@@ -289,6 +309,7 @@ function MenuScene:draw()
     else
         self.quitButton:drawTooltip(self.tooltip)
         self.creditsButton:drawTooltip(self.tooltip)
+        self.discordButton:drawTooltip(self.tooltip)
     end
 
     love.graphics.setFont(previousFont)

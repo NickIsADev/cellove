@@ -263,10 +263,18 @@ return {
             }
         },
         version = {
-            text = "v" .. info.number .. " build " .. info.build,
+            lines = { "v" .. info.number, "build " .. info.build },
             font = 12,
             margin = 12,
-            alpha = 0.5
+            alpha = { number = 0.7, build = 0.4 }
+        },
+        discord = {
+            size = 40,
+            gap = 8,
+            alpha = { idle = 0.5, hover = 0.75 },
+            title = "Discord",
+            description = "Join our Discord server!",
+            url = "https://discord.gg/sgyE9DmZXP"
         },
         quit = {
             size = 40,
