@@ -72,14 +72,17 @@ end
 
 function Simulator:_scan(subtick, direction)
     local grid = self.grid
-    if not grid:has(subtick) then return end
+    local facing = constants.directions[direction]
+    local horizontal = facing[1] ~= 0
+
+    local lines = grid:lines(subtick, horizontal and "rows" or "cols")
+    if not lines then return end
 
     local cells, width, height = grid.cells, grid.width, grid.height
-    local facing = constants.directions[direction]
 
     local outerFrom, outerTo, outerStep, outerStride
     local innerFrom, innerTo, innerStep, innerStride
-    if facing[1] ~= 0 then
+    if horizontal then
         outerFrom, outerTo, outerStep, outerStride = 1, height, 1, width
         innerFrom, innerTo, innerStep = range(width, facing[1], self.rear[subtick])
         innerStride = 1
@@ -90,10 +93,12 @@ function Simulator:_scan(subtick, direction)
     end
 
     for outer = outerFrom, outerTo, outerStep do
-        local base = outer * outerStride - width
-        for inner = innerFrom, innerTo, innerStep do
-            local cell = cells[base + inner * innerStride]
-            if cell then self:_run(cell, subtick, direction) end
+        if lines[outer] then
+            local base = outer * outerStride - width
+            for inner = innerFrom, innerTo, innerStep do
+                local cell = cells[base + inner * innerStride]
+                if cell then self:_run(cell, subtick, direction) end
+            end
         end
     end
 end

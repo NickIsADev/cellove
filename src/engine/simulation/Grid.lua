@@ -1,5 +1,10 @@
 local constants = require("src/constants")
 
+local function tally(lines, index, amount)
+    local total = (lines[index] or 0) + amount
+    lines[index] = total > 0 and total or nil
+end
+
 local Grid = {}
 Grid.__index = Grid
 
@@ -22,9 +27,13 @@ function Grid:_coordinates(index)
     return (index - 1) % self.width + 1, math.floor((index - 1) / self.width) + 1
 end
 
-function Grid:_count(cell, amount)
+function Grid:_count(cell, x, y, amount)
     for subtick in pairs(getmetatable(cell).lookup.subtick) do
-        self.counts[subtick] = (self.counts[subtick] or 0) + amount
+        local count = self.counts[subtick] or { rows = {}, cols = {} }
+
+        tally(count.rows, y, amount)
+        tally(count.cols, x, amount)
+        self.counts[subtick] = count
     end
 end
 
@@ -58,8 +67,9 @@ function Grid:surrounding(x, y, distance, callback)
     self:_around(x, y, distance, false, callback)
 end
 
-function Grid:has(subtick)
-    return (self.counts[subtick] or 0) > 0
+function Grid:lines(subtick, axis)
+    local count = self.counts[subtick]
+    return count and count[axis]
 end
 
 function Grid:touch(cell)
@@ -73,12 +83,12 @@ function Grid:set(x, y, cell)
     self.version = self.version + 1
     local index = self:_index(x, y)
     local old = self.cells[index]
-    if old then self:_count(old, -1) end
+    if old then self:_count(old, x, y, -1) end
 
     self.cells[index] = cell
 
     if cell then
-        self:_count(cell, 1)
+        self:_count(cell, x, y, 1)
         cell.x, cell.y, cell.grid = x, y, self
     end
 
