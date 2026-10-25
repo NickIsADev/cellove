@@ -277,8 +277,10 @@ function Debug:update(dt)
 end
 
 function Debug:record(event, ...)
+    if not (self.enabled or event == "keypressed") then return end
+
     local handler = self["_" .. event]
-    if handler and (self.enabled or event == "keypressed") then handler(self, ...) end
+    if handler then handler(self, ...) end
 end
 
 function Debug:draw(manager)
