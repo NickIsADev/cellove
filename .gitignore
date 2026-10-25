@@ -1,0 +1,8 @@
+# build output
+*.love
+build/
+dist/
+
+# original cellua assets, i put them here to save time
+temp/
+stock/

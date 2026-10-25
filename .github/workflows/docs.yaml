@@ -1,0 +1,33 @@
+name: Docs
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - docs/**
+      - src/engine/modding/API.lua
+      - tools/docgen.lua
+
+permissions:
+  contents: write
+
+jobs:
+  wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate API reference
+        run: |
+          sudo apt-get install -y lua5.4
+          lua5.4 tools/docgen.lua
+
+      - name: Publish to wiki
+        run: |
+          git clone "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.wiki.git" wiki
+          rsync -a --delete --exclude .git docs/ wiki/
+          cd wiki
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || (git commit -m "Update docs from ${GITHUB_SHA::7}" && git push)

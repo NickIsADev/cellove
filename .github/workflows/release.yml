@@ -1,0 +1,226 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  LOVE_VERSION: "11.5"
+
+jobs:
+  info:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.info.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: info
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Notes
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          prev=$(git describe --tags --abbrev=0 "$GITHUB_REF_NAME^" 2>/dev/null || true)
+          install_icon="<img src=\"https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$GITHUB_REF_NAME/texturepacks/default/cells/generator.png\" width=\"20\" align=\"absmiddle\">"
+          changelog_icon="<img src=\"https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$GITHUB_REF_NAME/texturepacks/default/cells/mover.png\" width=\"20\" align=\"absmiddle\">"
+
+          cat > notes.md <<EOF
+          ## $install_icon Installation
+
+          $install_icon **Windows:** Download the Windows zip, extract it and run the \`.exe\`
+
+          $install_icon **Linux:** Download \`CelLove-$version-Linux.AppImage\`, run \`chmod +x\` on it, then launch it
+
+          $install_icon **macOS:** Download \`CelLove-$version-macOS.zip\`, extract it and right-click \`CelLove.app\` -> Open (it's unsigned)
+
+          $install_icon **Android:** Download \`CelLove-$version-Android.apk\` and open it (it can appear a few minutes after the release)
+
+          $install_icon **Other/Any:** Install [LÖVE 11.5](https://love2d.org) and open \`CelLove-$version.love\` with it
+
+          ## $changelog_icon Release Notes
+
+          EOF
+          
+          git log ${prev:+$prev..}"$GITHUB_REF_NAME" --pretty="tformat:$changelog_icon %s (%h)%n" >> notes.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: notes
+          path: notes.md
+
+  love:
+    needs: info
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write version
+        run: |
+          printf 'return {\n    version = {\n        number = "%s",\n        build = "%s"\n    }\n}\n' \
+            "${{ needs.info.outputs.version }}" "${{ github.run_number }}" > src/constants/version.lua
+
+      - uses: love-actions/love-actions-core@v1
+        with:
+          build-list: ./main.lua ./conf.lua ./src/ ./content/ ./texturepacks/
+          package-path: ./CelLove-${{ needs.info.outputs.version }}.love
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-love
+          path: ./*.love
+
+  windows:
+    needs: [info, love]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-love
+
+      - id: build
+        uses: love-actions/love-actions-windows@v2
+        with:
+          love-ref: ${{ env.LOVE_VERSION }}
+          love-package: ./CelLove-${{ needs.info.outputs.version }}.love
+          product-name: CelLove-${{ needs.info.outputs.version }}-Windows
+          output-folder: ./build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-windows
+          path: ./build/*
+
+  linux:
+    needs: [info, love]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-love
+
+      - id: build
+        uses: love-actions/love-actions-linux@v2
+        with:
+          app-name: CelLove
+          bundle-id: io.github.nickisadev.cellove
+          description: A sandbox game based on Cell Machine by Sam Hogan.
+          icon-path: ./texturepacks/default/ui/icon.png
+          version-string: ${{ needs.info.outputs.version }}
+          love-ref: ${{ env.LOVE_VERSION }}
+          love-package: ./CelLove-${{ needs.info.outputs.version }}.love
+          product-name: CelLove-${{ needs.info.outputs.version }}-Linux
+          output-folder: ./build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-linux
+          path: ./build/*
+
+  macos:
+    needs: [info, love]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-love
+
+      - name: Build app
+        run: |
+          curl -fsSL -o love.zip "https://github.com/love2d/love/releases/download/${LOVE_VERSION}/love-${LOVE_VERSION}-macos.zip"
+          unzip -q love.zip
+          cp ./CelLove-${{ needs.info.outputs.version }}.love love.app/Contents/Resources/
+          mv love.app CelLove.app
+          mkdir build
+          zip -qry "build/CelLove-${{ needs.info.outputs.version }}-macOS.zip" CelLove.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-macos
+          path: ./build/*
+
+  android:
+    needs: [info, love]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-love
+
+      - name: Generate icons
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends imagemagick
+          for density in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
+            size=${density#*:}
+            mkdir -p ".github/android/res/drawable-${density%:*}"
+            convert texturepacks/default/ui/icon.png -filter point -resize ${size}x${size} \
+              ".github/android/res/drawable-${density%:*}/icon.png"
+          done
+
+      - id: build
+        uses: love-actions/love-actions-android@v2
+        with:
+          app-name: CelLove
+          bundle-id: io.github.nickisadev.cellove
+          resource-path: ./.github/android/res
+          icon-specifier: "@drawable/icon"
+          love-package: ./CelLove-${{ needs.info.outputs.version }}.love
+          product-name: CelLove-${{ needs.info.outputs.version }}-Android
+          version-string: ${{ needs.info.outputs.version }}
+          version-code: ${{ github.run_number }}
+          output-folder: ./build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-android
+          path: ./build/*
+
+  release:
+    needs: [info, windows, linux, macos]
+    if: ${{ !failure() && !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: notes
+          path: notes
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: build-*
+          merge-multiple: true
+          path: dist
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "CelLove $GITHUB_REF_NAME" \
+            --notes-file notes/notes.md
+
+  attach:
+    needs: [release, android]
+    if: ${{ needs.release.result == 'success' && needs.android.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-android
+          path: dist
+
+      - name: Upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/* --clobber --repo "$GITHUB_REPOSITORY"
