@@ -2,6 +2,10 @@ local constants = require("src/constants")
 
 local none = {}
 
+local function key(width, x, y, dx, dy)
+    return ((y - 1) * width + x) * 5 + dx + 2 * dy
+end
+
 local function extend(cell, move, own)
     local path = cell.path
     own = own or #move.via > 0
@@ -23,7 +27,18 @@ function Movement.new(data)
     self.grid = data.simulator.grid
     self.walk = {}
     self.stamp = 0
+    self.dead = {}
     return self
+end
+
+function Movement:_seal(size)
+    local walk, dead, grid = self.walk, self.dead, self.grid
+
+    for i = size - 8, 1, -9 do
+        if walk[i + 8] ~= none then return end
+        local cell = walk[i]
+        dead[key(grid.width, cell.x, cell.y, walk[i + 5], walk[i + 6])] = grid.version
+    end
 end
 
 function Movement:_open(x, y, dx, dy)
@@ -74,8 +89,8 @@ function Movement:_route(x, y, dx, dy, reverse)
 end
 
 function Movement:_line(x, y, dx, dy, force, chain)
-    local grid, walk = self.grid, self.walk
-    local width, height = grid.width, grid.height
+    local grid, walk, dead = self.grid, self.walk, self.dead
+    local width, height, version = grid.width, grid.height, grid.version
     chain = chain or {}
 
     self.stamp = self.stamp + 1
@@ -86,9 +101,10 @@ function Movement:_line(x, y, dx, dy, force, chain)
 
     local cell = grid:get(x, y)
     while true do
-        if x < 1 or x > width or y < 1 or y > height then return end
+        if x < 1 or x > width or y < 1 or y > height then return self:_seal(size) end
         if not cell or cell:eats(dx, dy) then break end
-        if cell.walked == stamp or not cell:pushable(dx, dy) then return end
+        if cell.walked == stamp then return end
+        if dead[key(width, x, y, dx, dy)] == version or not cell:pushable(dx, dy) then return self:_seal(size) end
 
         force = force + cell:force(dx, dy, "push")
         if force <= 0 then return end

@@ -9,6 +9,7 @@ function Grid.new(data)
     local self = setmetatable({}, Grid)
     self.width = data.width or constants.grid.default.width
     self.height = data.height or constants.grid.default.height
+    self.version = 0
     self:clear()
     return self
 end
@@ -62,12 +63,14 @@ function Grid:has(subtick)
 end
 
 function Grid:touch(cell)
+    self.version = self.version + 1
     self.touched[#self.touched + 1] = cell
 end
 
 function Grid:set(x, y, cell)
     if not self:bounds(x, y) then return false end
 
+    self.version = self.version + 1
     local index = self:_index(x, y)
     local old = self.cells[index]
     if old then self:_count(old, -1) end
@@ -103,6 +106,7 @@ function Grid:reshape(width, height)
 end
 
 function Grid:clear()
+    self.version = self.version + 1
     self.cells = {}
     self.counts = {}
     self.touched = {}
