@@ -41,7 +41,8 @@ function IconButton:_drawLabel(fade)
     if self.labelSide == "right" then
         love.graphics.print(self.label, self.x + self.width + self.labelGap, self.y + (self.height - font:getHeight()) / 2)
     else
-        love.graphics.printf(self.label, self.x - self.width / 2, self.y + self.height + self.labelGap, self.width * 2, "center")
+        local limit = math.max(self.width * 2, font:getWidth(self.label))
+        love.graphics.printf(self.label, self.x + (self.width - limit) / 2, self.y + self.height + self.labelGap, limit, "center")
     end
 end
 
