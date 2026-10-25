@@ -38,10 +38,12 @@ jobs:
           icon() { echo "<img src=\"https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$GITHUB_REF_NAME/texturepacks/default/$1.png\" width=\"20\" align=\"absmiddle\">"; }
           install=$(icon cells/generator)
           changelog=$(icon cells/mover)
+          nudger=$(icon cells/nudger)
           arrow=$(icon ui/arrow)
           full="https://github.com/$GITHUB_REPOSITORY/commits/$GITHUB_REF_NAME"
           [[ -z "$prev" ]] || full="https://github.com/$GITHUB_REPOSITORY/compare/$prev...$GITHUB_REF_NAME"
           discord="https://img.shields.io/badge/Discord-Join%20the%20server-5865F2?style=for-the-badge&logo=discord&logoColor=white"
+          downloads="https://img.shields.io/github/downloads/$GITHUB_REPOSITORY/total?style=for-the-badge&label=Downloads&logo=github&logoColor=white&color=2EA043"
 
           cat > notes.md <<EOF
           ## $install Installation
@@ -60,12 +62,19 @@ jobs:
 
           EOF
 
-          git log ${prev:+$prev..}"$GITHUB_REF_NAME" --pretty="tformat:$arrow %s (%h)%n" >> notes.md
+          order="feat fix perf refactor revert docs style test build ci chore"
+
+          git log ${prev:+$prev..}"$GITHUB_REF_NAME" --no-merges --pretty="tformat:%s (%h)" |
+            awk -v order="$order" '
+              BEGIN { n = split(order, types, " "); for (i = 1; i <= n; i++) rank[types[i]] = i }
+              { type = $0; sub(/[(!:].*/, "", type); print (type in rank ? rank[type] : n + 1) "\t" $0 }
+            ' | sort -s -n -k1,1 | cut -f2- |
+            while IFS= read -r line; do printf '%s %s\n\n' "$arrow" "$line"; done >> notes.md
 
           cat >> notes.md <<EOF
-          $changelog **[Full changelog]($full)**
+          $nudger **[Full changelog]($full)**
 
-          [![Discord]($discord)](https://discord.gg/sgyE9DmZXP)
+          [![Discord]($discord)](https://discord.gg/sgyE9DmZXP) [![Downloads]($downloads)](https://github.com/$GITHUB_REPOSITORY/releases)
           EOF
 
       - uses: actions/upload-artifact@v4
