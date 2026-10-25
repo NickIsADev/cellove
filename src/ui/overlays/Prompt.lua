@@ -1,3 +1,4 @@
+local Widget = require("src/ui/abstract/Widget")
 local IconButton = require("src/ui/widgets/IconButton")
 local Stepper = require("src/ui/widgets/Stepper")
 local TextField = require("src/ui/widgets/TextField")
@@ -121,11 +122,12 @@ function Prompt:_confirm()
     end
 
     self:close()
-    self.onConfirm(text, values)
+    if self.onConfirm then self.onConfirm(text, values) end
 end
 
 function Prompt:open(options)
     self.active = true
+    Widget.blocked = true
     self.title = options.title
     self.icon = options.icon
     self.message = options.message or ""
@@ -138,6 +140,7 @@ function Prompt:open(options)
     self.onConfirm = options.onConfirm
     self.onCancel = options.onCancel
     self.confirmButton.label = options.confirm or config.text.confirm
+    self.cancelButton.label = options.cancel or config.text.cancel
 
     self.inputs = {}
     for _, field in ipairs(options.fields or {}) do
@@ -159,18 +162,21 @@ end
 
 function Prompt:close()
     self.active = false
+    Widget.blocked = false
     love.keyboard.setKeyRepeat(self.keyRepeat)
 end
 
 function Prompt:update(dt)
     if not self.active then return end
 
+    Widget.blocked = false
     self:_layout()
     if self.field then self.field:update(dt) end
     self.confirmButton.enabled = self:_valid()
     self.confirmButton:update(dt)
     self.cancelButton:update(dt)
     for _, input in ipairs(self.inputs) do input:update(dt) end
+    Widget.blocked = true
 end
 
 function Prompt:mousepressed(x, y, button)

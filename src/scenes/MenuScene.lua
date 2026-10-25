@@ -3,6 +3,7 @@ local IconButton = require("src/ui/widgets/IconButton")
 local Panel = require("src/ui/Panel")
 local Tooltip = require("src/ui/overlays/Tooltip")
 local Toast = require("src/ui/overlays/Toast")
+local Prompt = require("src/ui/overlays/Prompt")
 local constants = require("src/constants")
 local utils = require("src/utils")
 
@@ -11,6 +12,8 @@ local credits = config.credits
 local discord = config.discord
 local separator = constants.ui.separator
 local version = config.version
+local info = constants.version
+local notice = constants.updates.notice
 local alert = constants.mods.alert
 local colors = constants.ui.colors
 local shadow = constants.ui.shadow
@@ -22,8 +25,11 @@ function MenuScene.new(data)
     local self = setmetatable({}, MenuScene)
     self.manager = data.manager
     self.mods = data.mods
+    self.updates = data.updates
     self.toast = Toast.new(data.renderer)
+    self.prompt = Prompt.new(data.renderer)
     self.alerted = false
+    self.noticed = {}
     self.renderer = data.renderer
     self.background = ScrollingBackground.new(data.renderer)
     self.tooltip = Tooltip.new(data.renderer)
@@ -158,16 +164,32 @@ function MenuScene:_drawSplash(x, y)
     end, config.splash.shadow, shadow.alpha, config.splash.color)
 end
 
+function MenuScene:_versionLines()
+    local text, alpha = version.text, version.alpha
+    local latest = self.updates:available()
+    local color = utils.prerelease(info.number) and colors.warning or colors.white
+    local lines = {
+        { text = text.number, color = color, alpha = alpha.number },
+        { text = text.build, color = color, alpha = alpha.build }
+    }
+
+    if latest then
+        lines[#lines + 1] = { text = string.format(text.outdated, latest), color = colors.warning, alpha = alpha.warning }
+    end
+    return lines
+end
+
 function MenuScene:_drawVersion()
     local font = self.renderer:font(version.font)
     local w, h = love.graphics.getDimensions()
+    local lines = self:_versionLines()
     local lineHeight = font:getHeight()
-    local top = h - credits.button.margin - (credits.button.size + #version.lines * lineHeight) / 2
+    local top = h - credits.button.margin - (credits.button.size + #lines * lineHeight) / 2
 
     love.graphics.setFont(font)
-    for index, line in ipairs(version.lines) do
-        love.graphics.setColor(utils.fromHex(colors.white, index == 1 and version.alpha.number or version.alpha.build))
-        love.graphics.print(line, w - version.margin - font:getWidth(line), top + (index - 1) * lineHeight)
+    for index, line in ipairs(lines) do
+        love.graphics.setColor(utils.fromHex(line.color, line.alpha))
+        love.graphics.print(line.text, w - version.margin - font:getWidth(line.text), top + (index - 1) * lineHeight)
     end
 end
 
@@ -237,6 +259,30 @@ function MenuScene:_alert()
     self.toast:show(message, true, alert.time)
 end
 
+function MenuScene:_notify()
+    if self.prompt.active then return end
+
+    local latest = self.updates:available()
+    if not self.noticed.prerelease and utils.prerelease(info.number) then
+        self.noticed.prerelease = true
+        self.prompt:open({
+            title = notice.prerelease.title,
+            message = notice.prerelease.message,
+            confirm = notice.prerelease.confirm,
+            cancel = notice.prerelease.cancel,
+            onCancel = love.event.quit
+        })
+    elseif not self.noticed.outdated and latest then
+        self.noticed.outdated = true
+        self.prompt:open({
+            title = notice.outdated.title,
+            message = string.format(notice.outdated.message, latest),
+            confirm = notice.outdated.confirm,
+            onConfirm = function() love.system.openURL(constants.updates.releases) end
+        })
+    end
+end
+
 function MenuScene:_activate(button)
     if button.scene then
         self.manager:switch(button.scene)
@@ -256,6 +302,8 @@ function MenuScene:update(dt)
     self.time = self.time + dt
     self.background:update(dt)
     self.toast:update(dt)
+    self.prompt:update(dt)
+    self:_notify()
     self:_layout()
 
     for _, button in ipairs(self.buttons) do button:update(dt) end
@@ -265,7 +313,7 @@ function MenuScene:update(dt)
 end
 
 function MenuScene:mousepressed(x, y, button)
-    if button ~= 1 then return end
+    if self.prompt:mousepressed(x, y, button) or button ~= 1 then return end
 
     self:_layout()
     if self.credits then
@@ -285,6 +333,8 @@ function MenuScene:mousepressed(x, y, button)
 end
 
 function MenuScene:keypressed(key)
+    if self.prompt:keypressed(key) then return end
+
     if self.credits then
         self.credits = false
     elseif key == "return" or key == "space" then
@@ -304,9 +354,9 @@ function MenuScene:draw()
     self.discordButton:draw()
     self:_drawVersion()
     self.toast:draw(constants.toast.top)
-    if self.credits then
-        self:_drawCredits()
-    else
+    if self.credits then self:_drawCredits() end
+    self.prompt:draw()
+    if not self.credits and not self.prompt.active then
         self.quitButton:drawTooltip(self.tooltip)
         self.creditsButton:drawTooltip(self.tooltip)
         self.discordButton:drawTooltip(self.tooltip)

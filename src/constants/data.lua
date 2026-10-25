@@ -17,6 +17,7 @@ return {
             sfxVolume = 70,
             musicSpeed = 100,
             debug = false,
+            checkUpdates = true,
             mods = "",
             toolbar = table.concat(toolbar.layout, ",")
         }

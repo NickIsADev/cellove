@@ -61,6 +61,7 @@ local function boot()
     local Puzzles = require("src/engine/data/Puzzles")
     local Registry = require("src/engine/registry/Registry")
     local Progress = require("src/engine/data/Progress")
+    local Updates = require("src/engine/data/Updates")
     local Audio = require("src/engine/audio/Audio")
     local Window = require("src/engine/graphics/Window")
     local Display = require("src/engine/graphics/Display")
@@ -118,6 +119,7 @@ local function boot()
         stamps = stamps,
         puzzles = puzzles,
         progress = Progress.new(),
+        updates = Updates.new({ settings = settings }),
         registry = registry,
         mods = mods
     }

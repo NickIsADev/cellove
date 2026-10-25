@@ -148,6 +148,13 @@ options.rows = {
         height = options.row.height
     },
     {
+        key = "checkUpdates",
+        title = "Check for Updates",
+        description = "Checks GitHub for a newer release when the game starts.",
+        kind = "toggle",
+        height = options.row.height
+    },
+    {
         key = "debug",
         title = "Debug Mode",
         description = "Shows developer tools and overlays.",
@@ -263,10 +270,14 @@ return {
             }
         },
         version = {
-            lines = { "v" .. info.number, "build " .. info.build },
+            text = {
+                number = "v" .. info.number,
+                build = "build " .. info.build,
+                outdated = "Update available: v%s"
+            },
             font = 12,
             margin = 12,
-            alpha = { number = 0.7, build = 0.4 }
+            alpha = { number = 0.7, build = 0.4, warning = 0.9 }
         },
         discord = {
             size = 40,
