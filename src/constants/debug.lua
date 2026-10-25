@@ -116,6 +116,14 @@ return {
             music = "music: %s (%d/%d)  %.0fs / %.0fs",
             sound = "sources: %d  music: %d%%  sfx: %d%%  speed: %d%%",
             none = "none",
+            system = {
+                game = "game: v%s (build %s)",
+                love = "love: %d.%d.%d (%s)",
+                lua = "lua: %s  arch: %s",
+                os = "os: %s  cores: %d",
+                gpu = "gpu: %s (%s)",
+                api = "renderer: %s %s"
+            },
             key = "key: %s",
             click = "mouse %d: %d, %d",
             wheel = "wheel: %+d",

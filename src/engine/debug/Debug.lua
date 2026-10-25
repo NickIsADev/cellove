@@ -8,6 +8,22 @@ local utils = require("src/utils")
 local config = constants.debug
 local text = config.text
 local colors = constants.ui.colors
+local version = constants.version
+
+local function systemInfo()
+    local system = text.system
+    local major, minor, revision, codename = love.getVersion()
+    local api, apiVersion, vendor, device = love.graphics.getRendererInfo()
+
+    return {
+        string.format(system.game, version.number, version.build),
+        string.format(system.love, major, minor, revision, codename),
+        string.format(system.lua, jit.version, jit.arch),
+        string.format(system.os, love.system.getOS(), love.system.getProcessorCount()),
+        string.format(system.gpu, device, vendor),
+        string.format(system.api, api, apiVersion)
+    }
+end
 
 local function tint(button)
     return config.colors.buttons[button] or colors.white
@@ -43,6 +59,7 @@ function Debug.new(data)
     self.renderer = data.renderer
     self.settings = data.settings
     self.world = World.new({ renderer = data.renderer })
+    self.system = systemInfo()
     self.enabled = false
     self.timer = config.interval
     self.frames = {}
@@ -115,6 +132,8 @@ function Debug:_collect(manager)
         string.format(text.music, audio.track and audio.track:match("[^/]+$") or text.none, audio.index, audio.count, audio.time, audio.duration),
         string.format(text.sound, audio.sources, settings:get("musicVolume"), settings:get("sfxVolume"), settings:get("musicSpeed"))
     }
+
+    table.move(self.system, 1, #self.system, #self.lines + 1, self.lines)
 
     local current = manager.current
     if not (current and current.debugInfo) then return end
