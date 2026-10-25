@@ -1,4 +1,4 @@
-local BaseSource = require("src/engine/sources/BaseSource")
+local BaseSource = require("src/engine/sources/abstract/BaseSource")
 local constants = require("src/constants")
 local utils = require("src/utils")
 

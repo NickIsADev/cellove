@@ -1,4 +1,4 @@
-local BaseSource = require("src/engine/sources/BaseSource")
+local BaseSource = require("src/engine/sources/abstract/BaseSource")
 local Patcher = require("src/engine/modding/Patcher")
 local API = require("src/engine/modding/API")
 local constants = require("src/constants")
