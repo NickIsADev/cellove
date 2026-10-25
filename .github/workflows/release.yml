@@ -35,28 +35,38 @@ jobs:
           NAME: ${{ steps.info.outputs.name }}
         run: |
           prev=$(git describe --tags --abbrev=0 "$GITHUB_REF_NAME^" 2>/dev/null || true)
-          icon() { echo "<img src=\"https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$GITHUB_REF_NAME/texturepacks/default/cells/$1.png\" width=\"20\" align=\"absmiddle\">"; }
-          install=$(icon generator)
-          changelog=$(icon mover)
+          icon() { echo "<img src=\"https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$GITHUB_REF_NAME/texturepacks/default/$1.png\" width=\"20\" align=\"absmiddle\">"; }
+          install=$(icon cells/generator)
+          changelog=$(icon cells/mover)
+          arrow=$(icon ui/arrow)
+          full="https://github.com/$GITHUB_REPOSITORY/commits/$GITHUB_REF_NAME"
+          [[ -z "$prev" ]] || full="https://github.com/$GITHUB_REPOSITORY/compare/$prev...$GITHUB_REF_NAME"
+          discord="https://img.shields.io/badge/Discord-Join%20the%20server-5865F2?style=for-the-badge&logo=discord&logoColor=white"
 
           cat > notes.md <<EOF
           ## $install Installation
 
-          $install **Windows:** Download \`$NAME-Windows.zip\`, extract it and run the \`.exe\`
+          $arrow **Windows:** Download \`$NAME-Windows.zip\`, extract it and run the \`.exe\`
 
-          $install **Linux:** Download \`$NAME-Linux.AppImage\`, run \`chmod +x\` on it, then launch it
+          $arrow **Linux:** Download \`$NAME-Linux.AppImage\`, run \`chmod +x\` on it, then launch it
 
-          $install **macOS:** Download \`$NAME-macOS.zip\`, extract it and right-click \`CelLove.app\` -> Open (it's unsigned)
+          $arrow **macOS:** Download \`$NAME-macOS.zip\`, extract it and right-click \`CelLove.app\` -> Open (it's unsigned)
 
-          $install **Android:** Download \`$NAME-Android.apk\` and open it (it can appear a few minutes after the release)
+          $arrow **Android:** Download \`$NAME-Android.apk\` and open it (it can appear a few minutes after the release)
 
-          $install **Other/Any:** Install [LÖVE 11.5](https://love2d.org) and open \`$NAME.love\` with it
+          $arrow **Other/Any:** Install [LÖVE 11.5](https://love2d.org) and open \`$NAME.love\` with it
 
           ## $changelog Release Notes
 
           EOF
 
-          git log ${prev:+$prev..}"$GITHUB_REF_NAME" --pretty="tformat:$changelog %s (%h)%n" >> notes.md
+          git log ${prev:+$prev..}"$GITHUB_REF_NAME" --pretty="tformat:$arrow %s (%h)%n" >> notes.md
+
+          cat >> notes.md <<EOF
+          $changelog **[Full changelog]($full)**
+
+          [![Discord]($discord)](https://discord.gg/sgyE9DmZXP)
+          EOF
 
       - uses: actions/upload-artifact@v4
         if: github.ref_type == 'tag'
