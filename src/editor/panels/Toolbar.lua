@@ -1,3 +1,4 @@
+local Widget = require("src/ui/abstract/Widget")
 local IconButton = require("src/ui/widgets/IconButton")
 local Panel = require("src/ui/Panel")
 local Lift = require("src/ui/decor/Lift")
@@ -123,6 +124,10 @@ function Toolbar:_place()
     self.next:place(w - step, y)
 end
 
+function Toolbar:_hovered()
+    return not (self.drag or Widget.blocked) and self:slotAt(love.mouse.getPosition())
+end
+
 function Toolbar:_flip(dt)
     local drag = self.drag
     local over = (self.prev:contains(love.mouse.getPosition()) and -1) or (self.next:contains(love.mouse.getPosition()) and 1)
@@ -224,7 +229,7 @@ end
 
 function Toolbar:update(dt)
     local view = self:_view()
-    local hovered = not self.drag and self:slotAt(love.mouse.getPosition())
+    local hovered = self:_hovered()
     local ease = math.min(1, constants.ui.hover.speed * dt)
     local slide = math.min(1, config.slide * dt)
 
@@ -354,7 +359,7 @@ function Toolbar:draw(selected, rotation)
 end
 
 function Toolbar:drawTooltip()
-    local hovered = not self.drag and self:slotAt(love.mouse.getPosition())
+    local hovered = self:_hovered()
 
     self.picker:drawTooltip(self.tooltip)
     self.library:drawTooltip(self.tooltip)

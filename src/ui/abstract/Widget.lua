@@ -31,7 +31,7 @@ function Widget:hit(x, y)
 end
 
 function Widget:update(dt)
-    local target = self.enabled and self:contains(love.mouse.getPosition()) and 1 or 0
+    local target = not Widget.blocked and self.enabled and self:contains(love.mouse.getPosition()) and 1 or 0
     self.hover = utils.lerp(self.hover, target, math.min(1, constants.ui.hover.speed * dt))
 end
 

@@ -205,7 +205,7 @@ function OptionsScene:update(dt)
     self.background:update(dt)
 
     local mx, my = love.mouse.getPosition()
-    local hoveredRow = self.drag or self.list:rowAt(mx, my)
+    local hoveredRow = self.drag or not self.prompt.active and self.list:rowAt(mx, my)
     local ease = math.min(1, constants.ui.hover.speed * dt)
 
     for index = 1, #config.rows do

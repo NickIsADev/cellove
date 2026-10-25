@@ -1,3 +1,4 @@
+local Widget = require("src/ui/abstract/Widget")
 local Tooltip = require("src/ui/overlays/Tooltip")
 local constants = require("src/constants")
 local utils = require("src/utils")
@@ -44,7 +45,7 @@ end
 
 function Controls:draw()
     local renderer = self.renderer
-    local hovered = self:buttonAt(love.mouse.getPosition())
+    local hovered = not Widget.blocked and self:buttonAt(love.mouse.getPosition())
     local hoveredLook
 
     for _, button in ipairs(config.buttons) do
