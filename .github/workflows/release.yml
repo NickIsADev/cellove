@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -23,10 +24,13 @@ jobs:
 
       - id: info
         run: |
-          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-          echo "name=CelLove-$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          tag=$GITHUB_REF_NAME
+          [[ "$GITHUB_REF_TYPE" == tag ]] || tag=v0.0.0-dev
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          echo "name=CelLove-$tag" >> "$GITHUB_OUTPUT"
 
       - name: Notes
+        if: github.ref_type == 'tag'
         env:
           NAME: ${{ steps.info.outputs.name }}
         run: |
@@ -55,13 +59,25 @@ jobs:
           git log ${prev:+$prev..}"$GITHUB_REF_NAME" --pretty="tformat:$changelog %s (%h)%n" >> notes.md
 
       - uses: actions/upload-artifact@v4
+        if: github.ref_type == 'tag'
         with:
           name: notes
           path: notes.md
           retention-days: 1
 
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Syntax
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends luajit
+          find . -name '*.lua' -print0 | xargs -0 -n1 luajit -bl > /dev/null
+
   love:
-    needs: info
+    needs: [info, check]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -140,13 +156,34 @@ jobs:
           name: build-love
 
       - name: Build app
+        env:
+          NAME: ${{ needs.info.outputs.name }}
+          VERSION: ${{ needs.info.outputs.version }}
         run: |
           curl -fsSL -o love.zip "https://github.com/love2d/love/releases/download/${LOVE_VERSION}/love-${LOVE_VERSION}-macos.zip"
           unzip -q love.zip
-          cp ./${{ needs.info.outputs.name }}.love love.app/Contents/Resources/
+          cp "./$NAME.love" love.app/Contents/Resources/
           mv love.app CelLove.app
+
+          python3 - <<'PY'
+          import os, plistlib
+
+          path = "CelLove.app/Contents/Info.plist"
+          with open(path, "rb") as file:
+              info = plistlib.load(file)
+
+          info.update(
+              CFBundleName="CelLove",
+              CFBundleDisplayName="CelLove",
+              CFBundleIdentifier="io.github.nickisadev.cellove",
+              CFBundleShortVersionString=os.environ["VERSION"]
+          )
+          with open(path, "wb") as file:
+              plistlib.dump(info, file)
+          PY
+
           mkdir build
-          zip -qry "build/${{ needs.info.outputs.name }}-macOS.zip" CelLove.app
+          zip -qry "build/$NAME-macOS.zip" CelLove.app
 
       - uses: actions/upload-artifact@v4
         with:
@@ -195,7 +232,7 @@ jobs:
 
   release:
     needs: [info, windows, linux, macos]
-    if: ${{ !failure() && !cancelled() }}
+    if: ${{ github.ref_type == 'tag' && !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
