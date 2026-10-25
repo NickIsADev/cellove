@@ -99,9 +99,12 @@ function BaseCell:surrounding(distance, callback)
 end
 
 function BaseCell:rotateNeighbors(amount, predicate)
-    self:neighbors(1, function(cell)
+    local grid = self.simulator.grid
+
+    for _, facing in pairs(constants.directions) do
+        local cell = grid:get(self.x + facing[1], self.y + facing[2])
         if cell and (not predicate or predicate(cell)) then cell:rotate(amount) end
-    end)
+    end
 end
 
 function BaseCell:kill(exploded)

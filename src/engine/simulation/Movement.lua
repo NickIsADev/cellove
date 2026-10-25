@@ -1,12 +1,17 @@
 local constants = require("src/constants")
 
-local function extend(path, move, own)
+local none = {}
+
+local function extend(cell, move, own)
+    local path = cell.path
     own = own or #move.via > 0
 
     for _, point in ipairs(move.via) do
-        path[#path + 1] = { point[1], point[2], own }
+        path[#path + 1] = point
     end
-    path[#path + 1] = { move.x, move.y, own }
+    path[#path + 1] = { move.x, move.y }
+
+    if own then cell.own = (cell.own or 0) + #move.via + 1 end
 end
 
 local Movement = {}
@@ -31,8 +36,8 @@ function Movement:_absorb(eater, cell, dx, dy)
 end
 
 function Movement:_route(x, y, dx, dy, reverse)
-    local out = { dx, dy }
-    local via, turn = {}, 0
+    local ox, oy = dx, dy
+    local via, turn = none, 0
 
     for _ = 1, constants.simulator.hops do
         x, y = x + dx, y + dy
@@ -47,12 +52,14 @@ function Movement:_route(x, y, dx, dy, reverse)
                 y = y,
                 dx = dx,
                 dy = dy,
-                out = out,
+                ox = ox,
+                oy = oy,
                 turn = reverse and -turn or turn,
                 via = via
             }
         end
 
+        if via == none then via = {} end
         table.insert(via, reverse and 1 or #via + 1, { x, y })
         dx, dy, turn = nx, ny, turn + spin
     end
@@ -62,14 +69,17 @@ function Movement:_line(x, y, dx, dy, force, chain)
     local grid = self.grid
     chain = chain or {}
 
-    local seen = {}
-    for _, move in ipairs(chain) do seen[move.cell] = true end
-
+    local seen
     while true do
         if not grid:bounds(x, y) then return end
 
         local cell = grid:get(x, y)
         if not cell or cell:eats(dx, dy) then break end
+
+        if not seen then
+            seen = {}
+            for _, move in ipairs(chain) do seen[move.cell] = true end
+        end
         if seen[cell] or not cell:pushable(dx, dy) then return end
 
         force = force + cell:force(dx, dy, "push")
@@ -88,7 +98,7 @@ end
 
 function Movement:_drive(chain, action)
     for _, move in ipairs(chain) do
-        if move.cell:driven(move.out[1], move.out[2], action) then
+        if move.cell:driven(move.ox, move.oy, action) then
             move.cell.updated = self.simulator.time.tick
         end
     end
@@ -97,29 +107,28 @@ end
 function Movement:_shift(chain, silent)
     local grid = self.grid
 
-    local moving, eaten = {}, {}
-    for _, move in ipairs(chain) do moving[move.cell] = true end
-    for _, move in ipairs(chain) do
-        local occupant = grid:get(move.x, move.y)
-        if occupant and not moving[occupant] and occupant:eats(move.dx, move.dy) then
-            eaten[move] = occupant
-        end
-    end
-
     for _, move in ipairs(chain) do
         grid:set(move.cell.x, move.cell.y)
     end
 
+    for _, move in ipairs(chain) do
+        local occupant = grid:get(move.x, move.y)
+        if occupant and occupant:eats(move.dx, move.dy) then move.eater = occupant end
+    end
+
     for i, move in ipairs(chain) do
         local cell = move.cell
-        cell.path = cell.path or { { cell.x, cell.y } }
-        extend(cell.path, move, not silent and i == 1)
+        if not cell.path then
+            cell.path = { { cell.x, cell.y } }
+            grid:touch(cell)
+        end
+        extend(cell, move, not silent and i == 1)
 
         if move.turn ~= 0 then cell:rotate(move.turn) end
 
-        if eaten[move] then
+        if move.eater then
             table.insert(self.simulator.dying, cell)
-            self:_absorb(eaten[move], cell, move.dx, move.dy)
+            self:_absorb(move.eater, cell, move.dx, move.dy)
         else
             grid:set(move.x, move.y, cell)
         end
@@ -177,10 +186,10 @@ function Movement:pull(x, y, dx, dy, force)
         local cell = walk and grid:get(walk.x, walk.y)
         if not cell or seen[cell] then break end
 
-        local out = { -walk.dx, -walk.dy }
-        if not cell:pushable(out[1], out[2]) then break end
+        local ox, oy = -walk.dx, -walk.dy
+        if not cell:pushable(ox, oy) then break end
 
-        force = force + cell:force(out[1], out[2], "pull")
+        force = force + cell:force(ox, oy, "pull")
         if force <= 0 then return false end
 
         seen[cell] = true
@@ -190,7 +199,8 @@ function Movement:pull(x, y, dx, dy, force)
             y = py,
             dx = -wx,
             dy = -wy,
-            out = out,
+            ox = ox,
+            oy = oy,
             turn = walk.turn,
             via = walk.via
         }
@@ -230,10 +240,11 @@ function Movement:generate(x, y, dx, dy, options)
 
     local clone = getmetatable(source):new({ rotation = source.rotation + turn, props = source.props })
     clone.updated = source.updated
-    clone.ran.any = source.ran.any
+    clone.ran = source.ran
     clone.born = true
     clone.path = { { origin[1], origin[2] } }
-    extend(clone.path, front)
+    extend(clone, front)
+    grid:touch(clone)
 
     local occupant = grid:get(front.x, front.y)
     if occupant then
