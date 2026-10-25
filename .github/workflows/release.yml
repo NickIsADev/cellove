@@ -95,7 +95,7 @@ jobs:
       - name: Write version
         run: |
           printf 'return {\n    version = {\n        number = "%s",\n        build = "%s"\n    }\n}\n' \
-            "${{ needs.info.outputs.version }}" "${{ github.run_number }}" > src/constants/version.lua
+            "${{ needs.info.outputs.version }}" "${GITHUB_SHA::7}" > src/constants/version.lua
 
       - uses: love-actions/love-actions-core@v1
         with:
