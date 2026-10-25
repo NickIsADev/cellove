@@ -122,6 +122,7 @@ end
 function Renderer:_collect(simulator, progress)
     local queue, rest, tail = self.queue, self.rest, self.tail
     local grid, camera = simulator.grid, self.camera
+    local cells, width = grid.cells, grid.width
     queue.n, rest.n, tail.n = 0, 0, 0
 
     local margin = simulator.maxSubticks
@@ -138,8 +139,9 @@ function Renderer:_collect(simulator, progress)
     end
 
     for y = minY, maxY do
+        local row = (y - 1) * width
         for x = minX, maxX do
-            local cell = grid:get(x, y)
+            local cell = cells[row + x]
             if cell then self:_queue(cell.born and queue or rest, cell, x, y, progress, false) end
         end
     end
@@ -419,7 +421,7 @@ function Renderer:draw(simulator, progress, markers)
     self:_drawPlaceables(markers)
     self:_collect(simulator, progress)
 
-    if self.shadows then
+    if self.shadows and self.camera.zoom >= shadow.minZoom then
         love.graphics.setShader(self.shadowShader)
         love.graphics.setColor(utils.fromHex(0x000000, shadow.alpha))
         self:_drawCells(shadow.offset)
