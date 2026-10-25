@@ -391,10 +391,10 @@ function Renderer:loadTextures()
     if self.classes then self:preload(self.classes) end
 end
 
-function Renderer:preload(classes)
+function Renderer:preload(classes, first, last)
     self.classes = classes
-    for _, class in ipairs(classes) do
-        self:_sprite(class.texture)
+    for i = first or 1, last or #classes do
+        self:_sprite(classes[i].texture)
     end
 end
 

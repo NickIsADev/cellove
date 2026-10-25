@@ -21,6 +21,8 @@ function Movement.new(data)
     local self = setmetatable({}, Movement)
     self.simulator = data.simulator
     self.grid = data.simulator.grid
+    self.walk = {}
+    self.stamp = 0
     return self
 end
 
@@ -35,29 +37,18 @@ function Movement:_absorb(eater, cell, dx, dy)
     eater:absorb(cell, dx, dy)
 end
 
-function Movement:_route(x, y, dx, dy, reverse)
-    local ox, oy = dx, dy
+function Movement:_step(x, y, dx, dy, reverse)
+    local grid = self.grid
     local via, turn = none, 0
 
     for _ = 1, constants.simulator.hops do
         x, y = x + dx, y + dy
 
-        local cell = self.grid:get(x, y)
+        local cell = grid:get(x, y)
         local nx, ny, spin
         if cell then nx, ny, spin = cell:divert(dx, dy, reverse) end
 
-        if not nx then
-            return {
-                x = x,
-                y = y,
-                dx = dx,
-                dy = dy,
-                ox = ox,
-                oy = oy,
-                turn = reverse and -turn or turn,
-                via = via
-            }
-        end
+        if not nx then return x, y, dx, dy, reverse and -turn or turn, via, cell end
 
         if via == none then via = {} end
         table.insert(via, reverse and 1 or #via + 1, { x, y })
@@ -65,34 +56,66 @@ function Movement:_route(x, y, dx, dy, reverse)
     end
 end
 
+function Movement:_route(x, y, dx, dy, reverse)
+    local nx, ny, ndx, ndy, turn, via, target = self:_step(x, y, dx, dy, reverse)
+    if not nx then return end
+
+    return {
+        x = nx,
+        y = ny,
+        dx = ndx,
+        dy = ndy,
+        ox = dx,
+        oy = dy,
+        turn = turn,
+        via = via,
+        target = target
+    }
+end
+
 function Movement:_line(x, y, dx, dy, force, chain)
-    local grid = self.grid
+    local grid, walk = self.grid, self.walk
+    local width, height = grid.width, grid.height
     chain = chain or {}
 
-    local seen
+    self.stamp = self.stamp + 1
+    local stamp, size = self.stamp, 0
+    for _, move in ipairs(chain) do
+        move.cell.walked = stamp
+    end
+
+    local cell = grid:get(x, y)
     while true do
-        if not grid:bounds(x, y) then return end
-
-        local cell = grid:get(x, y)
+        if x < 1 or x > width or y < 1 or y > height then return end
         if not cell or cell:eats(dx, dy) then break end
-
-        if not seen then
-            seen = {}
-            for _, move in ipairs(chain) do seen[move.cell] = true end
-        end
-        if seen[cell] or not cell:pushable(dx, dy) then return end
+        if cell.walked == stamp or not cell:pushable(dx, dy) then return end
 
         force = force + cell:force(dx, dy, "push")
         if force <= 0 then return end
 
-        local move = self:_route(x, y, dx, dy)
-        if not move then return end
+        local nx, ny, ndx, ndy, turn, via, target = self:_step(x, y, dx, dy)
+        if not nx then return end
 
-        move.cell, seen[cell] = cell, true
-        chain[#chain + 1] = move
-        x, y, dx, dy = move.x, move.y, move.dx, move.dy
+        cell.walked = stamp
+        walk[size + 1], walk[size + 2], walk[size + 3], walk[size + 4], walk[size + 5] = cell, nx, ny, ndx, ndy
+        walk[size + 6], walk[size + 7], walk[size + 8], walk[size + 9] = dx, dy, turn, via
+        size = size + 9
+        x, y, dx, dy, cell = nx, ny, ndx, ndy, target
     end
 
+    for i = 1, size, 9 do
+        chain[#chain + 1] = {
+            cell = walk[i],
+            x = walk[i + 1],
+            y = walk[i + 2],
+            dx = walk[i + 3],
+            dy = walk[i + 4],
+            ox = walk[i + 5],
+            oy = walk[i + 6],
+            turn = walk[i + 7],
+            via = walk[i + 8]
+        }
+    end
     return chain
 end
 
@@ -183,7 +206,7 @@ function Movement:pull(x, y, dx, dy, force)
 
     while true do
         local walk = self:_route(px, py, wx, wy, true)
-        local cell = walk and grid:get(walk.x, walk.y)
+        local cell = walk and walk.target
         if not cell or seen[cell] then break end
 
         local ox, oy = -walk.dx, -walk.dy
