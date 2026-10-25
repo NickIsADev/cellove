@@ -44,6 +44,11 @@ function Registry:_register(class, namespace, source)
     class.categories = resolved
     rawset(class, "category", resolved[1])
 
+    class.lookup = {
+        subtick = utils.set(class.subtick),
+        outputs = utils.set(class.outputs)
+    }
+
     class.id = namespace .. ":" .. class.name
     class.texture = namespace == config.base.namespace and class.name or utils.texture(class.id)
     assert(not self.cells[class.id], "duplicate cell id " .. class.id)

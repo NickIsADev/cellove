@@ -3,7 +3,6 @@ local Movement = require("src/engine/simulation/Movement")
 local Events = require("src/engine/modding/Events")
 local Audio = require("src/engine/audio/Audio")
 local constants = require("src/constants")
-local utils = require("src/utils")
 
 local function range(size, direction, rear)
     if (rear and direction or -direction) > 0 then return 1, size, 1 end
@@ -37,18 +36,27 @@ end
 
 function Simulator:_run(cell, subtick, direction)
     local class = getmetatable(cell)
-    if not utils.has(class.subtick, subtick) then return end
+    local lookup = class.lookup
+    if not lookup.subtick[subtick] then return end
 
-    local key = "any"
+    local multi = false
     if class.directional then
-        if not utils.has(class.outputs, (direction - cell.rotation) % 4) then return end
-        if #class.outputs > 1 then key = direction end
+        if not lookup.outputs[(direction - cell.rotation) % 4] then return end
+        multi = #class.outputs > 1
     elseif direction ~= constants.simulator.scan then return end
 
     local stamp = self.time.subtick
-    if cell.ran[key] == stamp or (class.drive and cell.updated == self.time.tick) then return end
+    if class.drive and cell.updated == self.time.tick then return end
 
-    cell.ran[key] = stamp
+    if multi then
+        cell.dirs = cell.dirs or {}
+        if cell.dirs[direction] == stamp then return end
+        cell.dirs[direction] = stamp
+    else
+        if cell.ran == stamp then return end
+        cell.ran = stamp
+    end
+
     cell.simulator = self
     cell:update(subtick, direction)
 end
@@ -56,18 +64,16 @@ end
 function Simulator:_sync()
     self.dying = {}
 
-    for i = 1, self.grid.width * self.grid.height do
-        local cell = self.grid.cells[i]
-        if cell then
-            cell.path = nil
-            cell.turn = 0
-            cell.born = nil
-        end
+    for _, cell in ipairs(self.grid.touched) do
+        cell.path, cell.own, cell.turn, cell.born = nil, nil, 0, nil
     end
+    self.grid.touched = {}
 end
 
 function Simulator:_scan(subtick, direction)
     local grid = self.grid
+    if not grid:has(subtick) then return end
+
     local cells, width, height = grid.cells, grid.width, grid.height
     local facing = constants.directions[direction]
 
@@ -95,9 +101,8 @@ end
 function Simulator:_changed()
     if #self.dying > 0 then return true end
 
-    for i = 1, self.grid.width * self.grid.height do
-        local cell = self.grid.cells[i]
-        if cell and (cell.path or cell.turn ~= 0) then return true end
+    for _, cell in ipairs(self.grid.touched) do
+        if cell.path or cell.turn ~= 0 then return true end
     end
 end
 

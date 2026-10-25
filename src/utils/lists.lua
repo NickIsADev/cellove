@@ -7,6 +7,14 @@ function lists.has(list, value)
     return false
 end
 
+function lists.set(list)
+    local set = {}
+    for _, item in ipairs(list) do
+        set[item] = true
+    end
+    return set
+end
+
 function lists.indexOf(list, value)
     for index, item in ipairs(list) do
         if item == value then return index end

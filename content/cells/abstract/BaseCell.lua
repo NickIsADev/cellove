@@ -20,7 +20,6 @@ function BaseCell:new(data)
     cell.rotation = 0
     cell:rotate(data.rotation or 0)
     cell.turn = 0
-    cell.ran = {}
     cell.props = {}
 
     for _, property in ipairs(self.properties) do
@@ -88,6 +87,7 @@ end
 function BaseCell:rotate(amount)
     self.turn = (self.turn or 0) + (amount + 2) % 4 - 2
     self.rotation = (self.rotation + amount) % 4
+    if self.grid then self.grid:touch(self) end
 end
 
 function BaseCell:neighbors(distance, callback)
