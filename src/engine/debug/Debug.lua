@@ -1,6 +1,7 @@
 local Panel = require("src/ui/Panel")
 local Audio = require("src/engine/audio/Audio")
 local Display = require("src/engine/graphics/Display")
+local World = require("src/engine/debug/World")
 local constants = require("src/constants")
 local utils = require("src/utils")
 
@@ -41,6 +42,7 @@ function Debug.new(data)
     local self = setmetatable({}, Debug)
     self.renderer = data.renderer
     self.settings = data.settings
+    self.world = World.new({ renderer = data.renderer })
     self.enabled = false
     self.timer = config.interval
     self.frames = {}
@@ -297,6 +299,10 @@ function Debug:draw(manager)
 
     love.graphics.setFont(previousFont)
     love.graphics.setColor(utils.fromHex(colors.white))
+end
+
+function Debug:drawWorld(simulator)
+    if self.enabled then self.world:draw(simulator) end
 end
 
 return Debug

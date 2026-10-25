@@ -1,4 +1,4 @@
-local Properties = require("src/engine/data/Properties")
+local Properties = require("src/engine/registry/Properties")
 local constants = require("src/constants")
 
 local BaseCell = {
@@ -72,17 +72,17 @@ function BaseCell:divert(dx, dy, reverse)
 end
 
 function BaseCell:nudge(dx, dy)
-    return self.simulator:nudge(self.x, self.y, self:_aim(dx, dy))
+    return self.simulator.movement:nudge(self.x, self.y, self:_aim(dx, dy))
 end
 
 function BaseCell:push(dx, dy, force)
     dx, dy = self:_aim(dx, dy)
-    return self.simulator:push(self.x, self.y, dx, dy, force)
+    return self.simulator.movement:push(self.x, self.y, dx, dy, force)
 end
 
 function BaseCell:pull(dx, dy, force)
     dx, dy = self:_aim(dx, dy)
-    return self.simulator:pull(self.x, self.y, dx, dy, force)
+    return self.simulator.movement:pull(self.x, self.y, dx, dy, force)
 end
 
 function BaseCell:rotate(amount)
@@ -115,7 +115,7 @@ end
 
 function BaseCell:generate(direction, options)
     local facing = constants.directions[direction or self.rotation]
-    return self.simulator:generate(self.x, self.y, facing[1], facing[2], options)
+    return self.simulator.movement:generate(self.x, self.y, facing[1], facing[2], options)
 end
 
 function BaseCell:update(subtick, direction)

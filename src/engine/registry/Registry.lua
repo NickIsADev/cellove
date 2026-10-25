@@ -1,4 +1,4 @@
-local Properties = require("src/engine/data/Properties")
+local Properties = require("src/engine/registry/Properties")
 local constants = require("src/constants")
 local utils = require("src/utils")
 
