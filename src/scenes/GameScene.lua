@@ -109,20 +109,18 @@ end
 
 function GameScene:debugInfo()
     local sim, editor, camera = self.simulator, self.editor, self.renderer.camera
+    local cost, paint = sim.profile, self.renderer.profile
     local grid = sim.grid
     local tick, subtick = sim:position()
     local gx, gy = self.renderer.camera:screenToGrid(love.mouse.getPosition())
     local cell = grid:get(gx, gy)
 
-    local count = 0
-    for i = 1, grid.width * grid.height do
-        if grid.cells[i] then count = count + 1 end
-    end
-
     local lines = {
         string.format(labels.sim, sim.paused and labels.paused or labels.running, tick, subtick, sim.time.pass),
         string.format(labels.speed, sim.interval * 1000, sim:progress() * 100),
-        string.format(labels.grid, grid.width, grid.height, count, #sim.dying, #self.renderer.particles.blasts),
+        string.format(labels.grid, grid.width, grid.height, grid.total, #sim.dying, #self.renderer.particles.blasts),
+        string.format(labels.tick, cost.sim, cost.post, cost.memory, cost.moves),
+        string.format(labels.render, paint.collect, paint.layer),
         string.format(labels.camera, camera.x, camera.y, camera.zoom, camera.targetZoom),
         string.format(labels.tool, editor.toolId, editor.selected and editor.selected.name or constants.debug.text.none, editor.targetRotation % 4, #editor.history),
         string.format(labels.markers, #self.markers.items, self.name or constants.contraptions.defaultName),

@@ -135,6 +135,8 @@ return {
                 sim = "sim: %s  tick: %d  subtick: %d  pass: %d",
                 speed = "interval: %.0f ms  progress: %d%%",
                 grid = "grid: %dx%d  cells: %d  dying: %d  blasts: %d",
+                tick = "last tick: sim %.1f ms  post %.1f ms  alloc %.2f MB  moved %d",
+                render = "last redraw: collect %.1f ms  layer %.1f ms",
                 camera = "camera: %.1f, %.1f  zoom: %.2f (%.2f)",
                 tool = "tool: %s  cell: %s  rotation: %d  history: %d",
                 markers = "markers: %d  contraption: %s",
