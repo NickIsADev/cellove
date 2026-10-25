@@ -87,7 +87,7 @@ function PuzzleScene:_drawHeld()
     local held, renderer = self.puzzle.held, self.renderer
     if not held then return end
 
-    local x, y = renderer:screenToTile(love.mouse.getPosition())
+    local x, y = renderer.camera:screenToTile(love.mouse.getPosition())
 
     renderer:drawGhost(held.cell.texture, x, y, held.cell.rotation, config.held.alpha)
 end
@@ -134,7 +134,7 @@ function PuzzleScene:enter(_, data)
 
     self.pauseMenu:setLayout(data.back and "custom" or "puzzle")
     self:_reset()
-    self.renderer:focus(self.info.data.width, self.info.data.height)
+    self.renderer.camera:focus(self.info.data.width, self.info.data.height)
 end
 
 function PuzzleScene:leave()
@@ -145,7 +145,7 @@ function PuzzleScene:leave()
 end
 
 function PuzzleScene:update(dt)
-    self.renderer:update(dt, self:_locked())
+    self.renderer.camera:update(dt, self:_locked())
     self.simulator:update(dt)
     self:_watch(dt)
     self.pauseMenu:update(dt)
@@ -161,7 +161,7 @@ function PuzzleScene:mousepressed(x, y, button)
         return self.simulator[control](self.simulator)
     end
 
-    self.puzzle:lift(self.renderer:screenToGrid(x, y))
+    self.puzzle:lift(self.renderer.camera:screenToGrid(x, y))
 end
 
 function PuzzleScene:mousemoved(x, y)
@@ -172,11 +172,11 @@ function PuzzleScene:mousereleased(x, y, button)
     if button ~= 1 or not self.puzzle.held then return end
 
     Audio.play("click")
-    self.puzzle:drop(self.renderer:screenToGrid(x, y))
+    self.puzzle:drop(self.renderer.camera:screenToGrid(x, y))
 end
 
 function PuzzleScene:wheelmoved(x, y)
-    if not self:_locked() then self.renderer:wheelmoved(x, y) end
+    if not self:_locked() then self.renderer.camera:wheelmoved(x, y) end
 end
 
 function PuzzleScene:keypressed(key)

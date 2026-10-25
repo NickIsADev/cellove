@@ -1,6 +1,6 @@
 local IconButton = require("src/ui/widgets/IconButton")
 local Panel = require("src/ui/Panel")
-local Lift = require("src/ui/Lift")
+local Lift = require("src/ui/decor/Lift")
 local Tooltip = require("src/ui/overlays/Tooltip")
 local Audio = require("src/engine/audio/Audio")
 local constants = require("src/constants")

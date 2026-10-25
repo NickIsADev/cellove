@@ -12,7 +12,7 @@ local Marker = require("src/editor/tools/Marker")
 local Prompt = require("src/ui/overlays/Prompt")
 local ColorPicker = require("src/ui/overlays/ColorPicker")
 local Markers = require("src/engine/simulation/Markers")
-local Properties = require("src/engine/data/Properties")
+local Properties = require("src/engine/registry/Properties")
 local Events = require("src/engine/modding/Events")
 local Audio = require("src/engine/audio/Audio")
 local constants = require("src/constants")
@@ -231,11 +231,11 @@ function Editor:_resizeGrid(width, height)
         sim.grid:reshape(old.width, old.height)
         sim.grid:populate(cells)
         for _, marker in ipairs(items) do markers.items[#markers.items + 1] = marker end
-        self.renderer:focus(old.width, old.height)
+        self.renderer.camera:focus(old.width, old.height)
     end)
     self:commit()
 
-    self.renderer:focus(width, height)
+    self.renderer.camera:focus(width, height)
     self.toast:show(string.format(text.done, width, height))
 end
 
@@ -435,7 +435,7 @@ function Editor:mousepressed(x, y, button)
 
     if self.properties:mousepressed(x, y, button) or self.toolbar:mousepressed(x, y, button) or self.panel:mousepressed(x, y, button) then return true end
 
-    local gx, gy = self.renderer:screenToGrid(x, y)
+    local gx, gy = self.renderer.camera:screenToGrid(x, y)
     if button == 3 then
         self:_pick(gx, gy)
         return true
@@ -459,7 +459,7 @@ function Editor:mousemoved(x, y)
     self.panel:mousemoved(x, y)
     self.properties:mousemoved(x, y)
 
-    if self.drag then self.tool:move(self.renderer:screenToGrid(x, y)) end
+    if self.drag then self.tool:move(self.renderer.camera:screenToGrid(x, y)) end
 end
 
 function Editor:mousereleased(x, y, button)
@@ -473,7 +473,7 @@ function Editor:mousereleased(x, y, button)
 
     if button ~= self.drag then return end
 
-    self.tool:release(self.renderer:screenToGrid(x, y))
+    self.tool:release(self.renderer.camera:screenToGrid(x, y))
     self.drag = nil
     self:commit()
 end
@@ -482,7 +482,7 @@ function Editor:draw()
     local mx, my = love.mouse.getPosition()
     local gx, gy
     if not (self:typing() or self:_overUi(mx, my)) then
-        gx, gy = self.renderer:screenToGrid(mx, my)
+        gx, gy = self.renderer.camera:screenToGrid(mx, my)
     end
 
     self.tool:draw(gx, gy)

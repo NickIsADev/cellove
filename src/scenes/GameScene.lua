@@ -93,7 +93,7 @@ function GameScene:enter(_, data)
     self.simulator:load(contraption)
     self.markers:load(contraption.markers)
     self.editor:reset()
-    self.renderer:focus(contraption.width, contraption.height)
+    self.renderer.camera:focus(contraption.width, contraption.height)
     self.checkpoint = self.contraptions:export(self:_snapshot())
 end
 
@@ -111,7 +111,7 @@ function GameScene:debugInfo()
     local sim, editor, camera = self.simulator, self.editor, self.renderer.camera
     local grid = sim.grid
     local tick, subtick = sim:position()
-    local gx, gy = self.renderer:screenToGrid(love.mouse.getPosition())
+    local gx, gy = self.renderer.camera:screenToGrid(love.mouse.getPosition())
     local cell = grid:get(gx, gy)
 
     local count = 0
@@ -122,7 +122,7 @@ function GameScene:debugInfo()
     local lines = {
         string.format(labels.sim, sim.paused and labels.paused or labels.running, tick, subtick, sim.time.pass),
         string.format(labels.speed, sim.interval * 1000, sim:progress() * 100),
-        string.format(labels.grid, grid.width, grid.height, count, #sim.dying, #self.renderer.blasts),
+        string.format(labels.grid, grid.width, grid.height, count, #sim.dying, #self.renderer.particles.blasts),
         string.format(labels.camera, camera.x, camera.y, camera.zoom, camera.targetZoom),
         string.format(labels.tool, editor.toolId, editor.selected and editor.selected.name or constants.debug.text.none, editor.targetRotation % 4, #editor.history),
         string.format(labels.markers, #self.markers.items, self.name or constants.contraptions.defaultName),
@@ -137,7 +137,7 @@ function GameScene:debugInfo()
 end
 
 function GameScene:update(dt)
-    self.renderer:update(dt, self.editor:typing())
+    self.renderer.camera:update(dt, self.editor:typing())
     self.editor:update(dt)
     self.simulator:update(dt)
     self.toast:update(dt)
@@ -147,14 +147,14 @@ function GameScene:draw()
     self.renderer:draw(self.simulator, self.simulator:progress(), self.markers.items)
     self.renderer:drawMarkers(self.markers.items)
 
-    if self.settings:get("debug") then self.renderer:drawDebug(self.simulator) end
-    
+    self.manager.debug:drawWorld(self.simulator)
+
     self.editor:draw()
     self.toast:draw(config.top)
 end
 
 function GameScene:wheelmoved(x, y)
-    if not self.editor:wheelmoved(x, y) then self.renderer:wheelmoved(x, y) end
+    if not self.editor:wheelmoved(x, y) then self.renderer.camera:wheelmoved(x, y) end
 end
 
 function GameScene:mousepressed(x, y, button)

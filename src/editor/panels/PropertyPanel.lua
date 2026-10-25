@@ -1,5 +1,5 @@
 local ToolPanel = require("src/editor/panels/ToolPanel")
-local Properties = require("src/engine/data/Properties")
+local Properties = require("src/engine/registry/Properties")
 local Panel = require("src/ui/Panel")
 local constants = require("src/constants")
 local utils = require("src/utils")

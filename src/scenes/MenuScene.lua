@@ -1,4 +1,4 @@
-local ScrollingBackground = require("src/ui/ScrollingBackground")
+local ScrollingBackground = require("src/ui/decor/ScrollingBackground")
 local IconButton = require("src/ui/widgets/IconButton")
 local Panel = require("src/ui/Panel")
 local Tooltip = require("src/ui/overlays/Tooltip")
