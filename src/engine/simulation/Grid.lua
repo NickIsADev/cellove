@@ -27,7 +27,7 @@ function Grid:_coordinates(index)
 end
 
 function Grid:_count(cell, x, y, amount)
-    for subtick in pairs(getmetatable(cell).lookup.subtick) do
+    for _, subtick in ipairs(getmetatable(cell).subtick) do
         local count = self.counts[subtick] or { rows = {}, cols = {} }
 
         tally(count.rows, y, amount)
