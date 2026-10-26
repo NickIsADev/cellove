@@ -137,6 +137,40 @@ function Movement:_line(x, y, dx, dy, force, chain)
     end
 end
 
+function Movement:_trail(chain, x, y, dx, dy, force)
+    local size, seen = #chain, {}
+    for _, move in ipairs(chain) do
+        seen[move.cell] = true
+    end
+
+    local wx, wy = -dx, -dy
+    while true do
+        local walk = self:_route(x, y, wx, wy, true)
+        local cell = walk and walk.target
+        if not cell or seen[cell] then return true end
+
+        local ox, oy = -walk.dx, -walk.dy
+        if not cell:pushable(ox, oy) then return true end
+
+        force = force + cell:force(ox, oy, "pull")
+        if force <= 0 then
+            for i = #chain, size + 1, -1 do
+                chain[i] = nil
+            end
+            return false
+        end
+
+        seen[cell] = true
+
+        local entry = self:_take()
+        entry.cell, entry.x, entry.y, entry.dx, entry.dy = cell, x, y, -wx, -wy
+        entry.ox, entry.oy, entry.turn, entry.via = ox, oy, walk.turn, walk.via
+        chain[#chain + 1] = entry
+
+        x, y, wx, wy = walk.x, walk.y, walk.dx, walk.dy
+    end
+end
+
 function Movement:_drive(chain, action)
     for _, move in ipairs(chain) do
         if move.cell:driven(move.ox, move.oy, action) then
@@ -211,8 +245,7 @@ function Movement:push(x, y, dx, dy, force)
 end
 
 function Movement:pull(x, y, dx, dy, force)
-    local grid = self.grid
-    local puller = grid:get(x, y)
+    local puller = self.grid:get(x, y)
     if not puller then return false end
 
     self.top = 0
@@ -223,31 +256,32 @@ function Movement:pull(x, y, dx, dy, force)
     if force <= 0 then return false end
 
     move.cell = puller
-    local chain, seen = { move }, { [puller] = true }
-    local px, py, wx, wy = x, y, -dx, -dy
-
-    while true do
-        local walk = self:_route(px, py, wx, wy, true)
-        local cell = walk and walk.target
-        if not cell or seen[cell] then break end
-
-        local ox, oy = -walk.dx, -walk.dy
-        if not cell:pushable(ox, oy) then break end
-
-        force = force + cell:force(ox, oy, "pull")
-        if force <= 0 then return false end
-
-        seen[cell] = true
-
-        local entry = self:_take()
-        entry.cell, entry.x, entry.y, entry.dx, entry.dy = cell, px, py, -wx, -wy
-        entry.ox, entry.oy, entry.turn, entry.via = ox, oy, walk.turn, walk.via
-        chain[#chain + 1] = entry
-
-        px, py, wx, wy = walk.x, walk.y, walk.dx, walk.dy
-    end
+    local chain = { move }
+    if not self:_trail(chain, x, y, dx, dy, force) then return false end
 
     self:_drive(chain, "pull")
+    self:_shift(chain)
+    return true
+end
+
+function Movement:advance(x, y, dx, dy)
+    local advancer = self.grid:get(x, y)
+    if not advancer then return false end
+
+    local push = constants.force.push + advancer:force(dx, dy, "push")
+    local pull = constants.force.pull + advancer:force(dx, dy, "pull")
+    if push <= 0 then return false end
+
+    self.top = 0
+    local move = self:_route(x, y, dx, dy)
+    if not move then return false end
+
+    move.cell = advancer
+    local chain = self:_line(move.x, move.y, move.dx, move.dy, push, { move })
+    if not chain then return false end
+
+    self:_trail(chain, x, y, dx, dy, pull)
+    self:_drive(chain, "push")
     self:_shift(chain)
     return true
 end

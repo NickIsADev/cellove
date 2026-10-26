@@ -264,6 +264,23 @@ function Puller:update()
 end
 ```
 
+### `BaseCell:advance(dx, dy)`
+
+Moves the cell one tile, pushing the cells in front of it and dragging the cells behind it.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `dx` | `number?` | horizontal direction |
+| `dy` | `number?` | vertical direction |
+
+**Returns** `boolean`, true if it moved.
+
+```lua
+function Advancer:update()
+    self:advance()
+end
+```
+
 ### `BaseCell:nudge(dx, dy)`
 
 Moves the cell one tile without pushing. Fails if the tile is occupied.

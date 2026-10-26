@@ -84,6 +84,11 @@ function BaseCell:pull(dx, dy, force)
     return self.simulator.movement:pull(self.x, self.y, dx, dy, force)
 end
 
+function BaseCell:advance(dx, dy)
+    dx, dy = self:_aim(dx, dy)
+    return self.simulator.movement:advance(self.x, self.y, dx, dy)
+end
+
 function BaseCell:rotate(amount)
     self.turn = (self.turn or 0) + (amount + 2) % 4 - 2
     self.rotation = (self.rotation + amount) % 4
