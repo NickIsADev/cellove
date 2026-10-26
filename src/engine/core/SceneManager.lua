@@ -89,8 +89,9 @@ function SceneManager:run(action, text)
 end
 
 function SceneManager:update(dt)
-    self.clock = self.clock + dt
     self.debug:update(dt)
+    dt = math.min(dt, config.maxDelta)
+    self.clock = self.clock + dt
     Audio.update()
 
     if self.pending then

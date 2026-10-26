@@ -15,6 +15,7 @@ return {
     scene = {
         callbacks = callbacks,
         fade = { time = 0.2, hold = 0.25 },
+        maxDelta = 0.1,
         loading = {
             text = "Loading...",
             size = 24,

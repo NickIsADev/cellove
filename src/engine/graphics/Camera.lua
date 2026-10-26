@@ -58,7 +58,7 @@ function Camera:update(dt, locked)
     self.x = self.x + self.vx * dt
     self.y = self.y + self.vy * dt
 
-    self.zoom = utils.lerp(self.zoom, self.targetZoom, view.zoom.ease * dt)
+    self.zoom = utils.lerp(self.zoom, self.targetZoom, math.min(1, view.zoom.ease * dt))
 end
 
 function Camera:wheelmoved(_, y)
