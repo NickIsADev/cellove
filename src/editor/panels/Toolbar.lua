@@ -345,7 +345,7 @@ function Toolbar:draw(selected, rotation)
         self.next:draw()
     end
 
-    love.graphics.setScissor(config.start - config.pad / 2, h - config.height, view.width, config.height)
+    love.graphics.setScissor(config.start - config.pad / 2, 0, view.width, h)
     local drag = self.drag and self.drag.active and self.drag
     local held = drag or self.settle
     for _, slot in ipairs(view.slots) do
