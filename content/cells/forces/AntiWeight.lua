@@ -2,9 +2,9 @@ local BaseCell = require("content/cells/abstract/BaseCell")
 local constants = require("src/constants")
 
 local AntiWeight = setmetatable({
-    name = "anti weight",
+    name = "antiweight",
     k3 = 104,
-    title = "Anti Weight",
+    title = "Anti-Weight",
     description = "Adds 1 unit of force to applied forces.",
     categories = { "forces" }
 }, { __index = BaseCell })
