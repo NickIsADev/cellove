@@ -42,6 +42,25 @@ return {
         label = { font = 16, shadow = { offset = 2, alpha = 0.6 } },
         separator = { width = 2, alpha = 0.3 },
         swatch = { size = 28 },
+        shine = {
+            speed = 0.6,
+            width = 0.3,
+            gap = 1,
+            strength = 0.6,
+            shader = [[
+uniform float time;
+uniform float width;
+uniform float span;
+uniform float strength;
+
+vec4 effect(vec4 color, Image tex, vec2 uv, vec2 screen)
+{
+    vec4 base = Texel(tex, uv) * color;
+    float band = max(0.0, 1.0 - abs((uv.x + uv.y) / 2.0 - (fract(time) * span - width)) / width);
+    return vec4(base.rgb + band * strength * base.a, base.a);
+}
+]]
+        },
         avatar = { font = 32, alpha = 0.4, cap = 0.75 },
         field = {
             height = 40,

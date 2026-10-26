@@ -11,6 +11,7 @@ local Selector = require("src/editor/tools/Selector")
 local Marker = require("src/editor/tools/Marker")
 local Prompt = require("src/ui/overlays/Prompt")
 local ColorPicker = require("src/ui/overlays/ColorPicker")
+local Fresh = require("src/engine/data/Fresh")
 local Markers = require("src/engine/simulation/Markers")
 local Properties = require("src/engine/registry/Properties")
 local Events = require("src/engine/modding/Events")
@@ -65,10 +66,12 @@ function Editor.new(data)
         }
     })
     self.toolMenu = ToolMenu.new({ renderer = data.renderer, onPick = function(id) self:setTool(id) end })
+    self.fresh = Fresh.new({ registry = data.registry, settings = data.settings })
     self.toolbar = Toolbar.new({
         renderer = data.renderer,
         registry = data.registry,
         settings = data.settings,
+        fresh = self.fresh,
         on = {
             cell = function(class) self:select(self.selected ~= class and class or nil) end,
             menu = function() self.toolMenu:open(self.toolId) end,
@@ -79,6 +82,7 @@ function Editor.new(data)
         renderer = data.renderer,
         registry = data.registry,
         toolbar = self.toolbar,
+        fresh = self.fresh,
         onPick = function(class) self:select(class) end
     })
     self.stampList = StampList.new({

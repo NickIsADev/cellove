@@ -2,6 +2,7 @@ local IconButton = require("src/ui/widgets/IconButton")
 local ScrollList = require("src/ui/widgets/ScrollList")
 local TextField = require("src/ui/widgets/TextField")
 local Panel = require("src/ui/Panel")
+local Shine = require("src/ui/decor/Shine")
 local Tooltip = require("src/ui/overlays/Tooltip")
 local Audio = require("src/engine/audio/Audio")
 local constants = require("src/constants")
@@ -57,6 +58,7 @@ function Library.new(data)
     self.renderer = data.renderer
     self.registry = data.registry
     self.toolbar = data.toolbar
+    self.fresh = data.fresh
     self.onPick = data.onPick
     self.tooltip = Tooltip.new(data.renderer)
     self.active = false
@@ -231,7 +233,9 @@ function Library:_drawCell(class, x, y, width, height)
     local textX = x + row.pad * 2 + row.icon
 
     love.graphics.setColor(utils.fromHex(colors.white))
+    Shine.set(self.fresh:has(class))
     love.graphics.draw(texture, x + row.pad, y + (height - row.icon) / 2, 0, scale, scale)
+    Shine.set(false)
 
     love.graphics.setFont(titleFont)
     love.graphics.print(class.title, textX, textY)
@@ -279,6 +283,7 @@ function Library:_click(x, y)
 
     Audio.play("click")
     local class = self.cells.items[index]
+    self.fresh:clear(class)
     local bx, by, size = addBox(self.cells:bounds(index))
     if utils.inside(x, y, bx, by, size, size) or love.keyboard.isDown("lshift", "rshift") then
         self.toolbar:toggle(class)
