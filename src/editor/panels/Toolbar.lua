@@ -218,6 +218,10 @@ function Toolbar:toggle(class)
     if self:has(class) then self:remove(class) else self:add(class) end
 end
 
+function Toolbar:restore()
+    self.settings:set("toolbar", self.settings.defaults.toolbar)
+end
+
 function Toolbar:setTool(id)
     for _, tool in ipairs(tools.list) do
         if tool.id == id then self.picker.texture = tool.texture end

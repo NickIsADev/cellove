@@ -82,6 +82,7 @@ function Editor.new(data)
         renderer = data.renderer,
         registry = data.registry,
         toolbar = self.toolbar,
+        prompt = self.prompt,
         fresh = self.fresh,
         onPick = function(class) self:select(class) end
     })

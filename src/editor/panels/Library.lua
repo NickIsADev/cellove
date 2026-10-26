@@ -65,6 +65,7 @@ function Library.new(data)
     self.renderer = data.renderer
     self.registry = data.registry
     self.toolbar = data.toolbar
+    self.prompt = data.prompt
     self.fresh = data.fresh
     self.onPick = data.onPick
     self.tooltip = Tooltip.new(data.renderer)
@@ -83,6 +84,14 @@ function Library.new(data)
         size = config.filter.size,
         title = config.filter.title,
         description = config.filter.description
+    })
+    self.reset = IconButton.new({
+        renderer = data.renderer,
+        folder = "cells",
+        texture = config.reset.texture,
+        size = config.reset.size,
+        title = config.reset.title,
+        description = config.reset.description
     })
     self.categories = ScrollList.new({
         renderer = data.renderer,
@@ -107,14 +116,15 @@ end
 function Library:_layout()
     local w, h = love.graphics.getDimensions()
     local box, pad, gap = self.box, config.pad, config.gap
-    local filter = config.filter.size
+    local filter, reset = config.filter.size, config.reset.size
 
     box.width, box.height = math.min(config.width, w - config.margin * 2), math.min(config.height, h - config.margin * 2)
     box.x, box.y = (w - box.width) / 2, (h - box.height) / 2
 
     local top = box.y + pad
-    self.search:place(box.x + pad, top, box.width - pad * 2 - gap - filter)
+    self.search:place(box.x + pad, top, box.width - pad * 2 - gap * 2 - filter - reset)
     self.filter:place(box.x + box.width - pad - filter, top)
+    self.reset:place(self.filter.x - gap - reset, top)
 
     local bodyY = top + filter + gap
     local bodyHeight = box.y + box.height - pad - bodyY
@@ -206,6 +216,17 @@ function Library:_pick(class)
     self.onPick(class)
 end
 
+function Library:_askReset()
+    local text = config.reset.prompt
+
+    self.prompt:open({
+        title = text.title,
+        message = text.message,
+        confirm = text.confirm,
+        onConfirm = function() self.toolbar:restore() end
+    })
+end
+
 function Library:_drawCategory(category, x, y, width, height, hover, selected)
     local style = config.category
     local font = self.renderer:font(style.font)
@@ -282,6 +303,7 @@ function Library:_drawTooltip()
         end
     end
     self.filter:drawTooltip(self.tooltip)
+    self.reset:drawTooltip(self.tooltip)
 end
 
 function Library:_click(x, y)
@@ -337,6 +359,7 @@ function Library:update(dt)
     self:_layout()
     self.search:update(dt)
     self.filter:update(dt)
+    self.reset:update(dt)
     self.categories:update(dt, not self.menu)
     self.cells:update(dt, not self.menu)
     self.sorts:update(dt, self.menu)
@@ -361,6 +384,8 @@ function Library:mousepressed(x, y, button)
         self:close()
     elseif self.filter:hit(x, y) then
         self.menu = true
+    elseif self.reset:hit(x, y) then
+        self:_askReset()
     elseif not (self.cells:mousepressed(x, y, button) or self.categories:mousepressed(x, y, button)) then
         self:_click(x, y)
     end
@@ -428,6 +453,7 @@ function Library:draw()
 
     self.search:draw()
     self.filter:draw()
+    self.reset:draw()
     self.categories:draw()
     self.cells:draw()
     if self.menuT > 0 then self.sorts:draw() end

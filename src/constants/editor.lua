@@ -436,6 +436,17 @@ return {
             title = "Sort",
             description = "Changes how cells are ordered."
         },
+        reset = {
+            texture = "rotator_180",
+            size = 40,
+            title = "Reset Toolbar",
+            description = "Restores the default toolbar layout.",
+            prompt = {
+                title = "Reset Toolbar",
+                message = "Restore the toolbar's orignal cell layout?",
+                confirm = "Reset"
+            }
+        },
         add = { title = "Add to Toolbar", description = "Adds the cell to the toolbar." },
         remove = { title = "Remove from Toolbar", description = "Removes the cell from the toolbar." },
         sorts = {
