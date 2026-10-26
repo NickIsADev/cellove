@@ -71,6 +71,12 @@ return {
                 id = "destroyers",
                 title = "Destroyers",
                 icon = "trash"
+            },
+            {
+                id = "misc",
+                title = "Miscellaneous",
+                icon = "base",
+                folder = "ui"
             }
         }
     }

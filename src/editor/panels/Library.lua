@@ -143,6 +143,7 @@ function Library:_load()
                 id = category.id,
                 title = category.title,
                 icon = category.icon,
+                folder = category.folder,
                 count = counts[category.id]
             }
         end
@@ -195,7 +196,7 @@ function Library:_drawCategory(category, x, y, width, height, hover, selected)
     local style = config.category
     local font = self.renderer:font(style.font)
     local countFont = self.renderer:font(style.count.font)
-    local icon = self.renderer.textures.cells[category.icon]
+    local icon = self.renderer.textures[category.folder or "cells"][category.icon]
     local scale = style.icon / icon:getWidth()
     local alpha = selected and 1 or 0.7 + 0.3 * hover
     local count = tostring(category.count)
