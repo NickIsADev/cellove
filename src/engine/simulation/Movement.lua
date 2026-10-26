@@ -14,10 +14,12 @@ local function extend(cell, move, own)
         path[#path + 1] = point
     end
 
-    if not own and #path > 1 and (cell.own or 0) < 2 then
-        path[#path][1], path[#path][2] = move.x, move.y
+    local size = #path
+    if not own and size > 1 and (cell.own or 0) < 2 then
+        local last = path[size]
+        last[1], last[2] = move.x, move.y
     else
-        path[#path + 1] = { move.x, move.y }
+        path[size + 1] = { move.x, move.y }
     end
 
     if own then cell.own = (cell.own or 0) + #move.via + 1 end
@@ -80,7 +82,7 @@ function Movement:_step(x, y, dx, dy, reverse)
 
         local cell = grid:get(x, y)
         local nx, ny, spin
-        if cell then nx, ny, spin = cell:divert(dx, dy, reverse) end
+        if cell and getmetatable(cell).lookup.divert then nx, ny, spin = cell:divert(dx, dy, reverse) end
 
         if not nx then return x, y, dx, dy, reverse and -turn or turn, via, cell end
 

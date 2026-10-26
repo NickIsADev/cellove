@@ -1,4 +1,5 @@
 local Properties = require("src/engine/registry/Properties")
+local BaseCell = require("content/cells/abstract/BaseCell")
 local constants = require("src/constants")
 local utils = require("src/utils")
 
@@ -46,7 +47,8 @@ function Registry:_register(class, namespace, source)
 
     class.lookup = {
         subtick = utils.set(class.subtick),
-        outputs = utils.set(class.outputs)
+        outputs = utils.set(class.outputs),
+        divert = class.divert ~= BaseCell.divert
     }
 
     class.id = namespace .. ":" .. class.name
