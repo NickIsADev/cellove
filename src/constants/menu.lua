@@ -266,6 +266,7 @@ return {
                 { role = "Programming", name = "troptopreal" },
                 { role = "UI Design", name = "troptopreal" },
                 { role = "Textures", name = "KyYay" },
+                { role = "Music/SFX", name = "KyYay" },
                 { role = "Cell Machine", name = "Sam Hogan" }
             }
         },
