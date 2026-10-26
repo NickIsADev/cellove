@@ -284,8 +284,11 @@ function Selector:keypressed(key)
         return false
     end
 
-    if self.pasting and (key == "e" or key == "q") then
-        self:_turn(key == "e" and 1 or -1)
+    local hotkeys = self.editor.hotkeys
+    local turn = hotkeys:turn(key)
+
+    if self.pasting and turn ~= 0 then
+        self:_turn(turn)
         return true
     end
 
@@ -294,23 +297,21 @@ function Selector:keypressed(key)
         return true
     end
 
-    if not love.keyboard.isDown("lctrl", "rctrl") then return false end
-
-    local shift = love.keyboard.isDown("lshift", "rshift")
-    if key == "a" and not shift then
+    if hotkeys:pressed("selectAll", key) then
         self:_all()
         return true
     end
 
-    local action = (shift and shortcuts.shifted or shortcuts.plain)[key]
-    if not action then return false end
-
-    if self.byId[action].enabled then
-        self.actions[action](self)
-    elseif action == "paste" then
-        self.editor.toast:show(config.text.empty, true)
+    for _, action in ipairs(shortcuts) do
+        if hotkeys:pressed(action, key) then
+            if self.byId[action].enabled then
+                self.actions[action](self)
+            elseif action == "paste" then
+                self.editor.toast:show(config.text.empty, true)
+            end
+            return true
+        end
     end
-    return true
 end
 
 function Selector:draw(gx, gy)

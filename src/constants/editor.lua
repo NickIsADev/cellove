@@ -26,7 +26,6 @@ return {
             }
         },
         rotationEase = 20,
-        turns = { e = 1, q = -1 },
         ghost = 0.5,
         label = {
             font = 12,
@@ -126,14 +125,7 @@ return {
             }
         },
         selection = {
-            shortcuts = {
-                plain = {
-                    c = "copy",
-                    x = "cut",
-                    v = "paste"
-                },
-                shifted = { c = "export", v = "import" }
-            },
+            shortcuts = { "copy", "cut", "paste", "export", "import" },
             buttons = {
                 {
                     kind = "icon",

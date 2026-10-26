@@ -16,6 +16,7 @@ function GameScene.new(data)
     self.manager = data.manager
     self.renderer = data.renderer
     self.settings = data.settings
+    self.hotkeys = data.hotkeys
     self.contraptions = data.contraptions
     self.toast = Toast.new(data.renderer)
     self.markers = Markers.new()
@@ -27,6 +28,7 @@ function GameScene.new(data)
         renderer = self.renderer,
         registry = data.registry,
         settings = self.settings,
+        hotkeys = self.hotkeys,
         markers = self.markers,
         contraptions = self.contraptions,
         stamps = data.stamps,
@@ -174,16 +176,17 @@ end
 function GameScene:keypressed(key)
     if self.editor:keypressed(key) then return end
 
-    local shift = love.keyboard.isDown("lshift", "rshift")
-    local ctrl = love.keyboard.isDown("lctrl", "rctrl")
+    local hotkeys = self.hotkeys
 
-    if key == "space" then
+    if hotkeys:pressed("toggle", key) then
         self.simulator:toggle()
-    elseif key == "f" then
-        if shift then self.simulator:substep() else self.simulator:step() end
-    elseif key == "r" and ctrl then
+    elseif hotkeys:pressed("step", key) then
+        self.simulator:step()
+    elseif hotkeys:pressed("substep", key) then
+        self.simulator:substep()
+    elseif hotkeys:pressed("reset", key) then
         self.simulator:reset()
-    elseif key == "s" and ctrl then
+    elseif hotkeys:pressed("save", key) then
         self:_save()
     end
 end

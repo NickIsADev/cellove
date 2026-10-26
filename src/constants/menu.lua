@@ -4,12 +4,36 @@ local function percent(value)
     return value .. "%"
 end
 
-local options = {
-    title = { text = "Options", size = 40 },
+local rows = {
+    font = { text = 24 },
+    top = { ratio = 0.16 },
     reset = {
         texture = "rotator_180",
         size = 40,
-        margin = 24,
+        margin = 24
+    },
+    row = {
+        width = 640,
+        height = 48,
+        gap = 12,
+        bottom = 8,
+        pad = 16,
+        margin = 16
+    }
+}
+
+local function page(title, list)
+    for _, row in ipairs(list) do
+        row.height = rows.row.height
+    end
+    return { title = title, rows = list }
+end
+
+local options = {
+    title = { text = "Options", size = 40 },
+    main = "main",
+    steps = { left = -1, right = 1 },
+    reset = {
         title = "Reset",
         description = "Restores every option to its default.",
         prompt = {
@@ -17,16 +41,6 @@ local options = {
             message = "Restore all options to their defaults?",
             confirm = "Reset"
         }
-    },
-    font = { text = 24, small = 16 },
-    top = { ratio = 0.16 },
-    row = {
-        width = 580,
-        height = 48,
-        gap = 12,
-        bottom = 8,
-        pad = 16,
-        margin = 16
     },
     link = {
         arrow = 32,
@@ -37,130 +51,162 @@ local options = {
         conflicts = "%d conflicting"
     },
     slider = {
-        width = 180,
+        min = 60,
         gap = 16,
-        value = 130,
         track = 4,
         handle = { width = 8, height = 22 }
     }
 }
-options.rows = {
-    {
-        title = "Texture Packs",
-        description = "Choose which texture packs are active.",
-        kind = "link",
-        scene = "packs",
-        source = "texturePacks",
-        height = options.row.height
-    },
-    {
-        title = "Mods",
-        description = "Enable, disable and order mods.",
-        kind = "link",
-        scene = "mods",
-        source = "mods",
-        height = options.row.height
-    },
-    {
-        key = "tickSpeed",
-        title = "Tick Speed",
-        description = "How fast the simulation steps.",
-        kind = "slider",
-        min = 1,
-        max = 128,
-        format = function(value) return value == 1 and "1 tick/s" or value .. " ticks/s" end,
-        height = options.row.height
-    },
-    {
-        key = "musicVolume",
-        title = "Music Volume",
-        description = "Volume of the music.",
-        kind = "slider",
-        min = 0,
-        max = 100,
-        format = percent,
-        height = options.row.height
-    },
-    {
-        key = "sfxVolume",
-        title = "SFX Volume",
-        description = "Volume of sound effects.",
-        kind = "slider",
-        min = 0,
-        max = 100,
-        format = percent,
-        height = options.row.height
-    },
-    {
-        key = "musicSpeed",
-        title = "Music Speed",
-        description = "Playback speed of the music.",
-        kind = "slider",
-        min = 50,
-        max = 200,
-        format = percent,
-        height = options.row.height
-    },
-    {
-        key = "uiScale",
-        title = "UI Scale",
-        description = "Size of the interface.",
-        kind = "slider",
-        min = 50,
-        max = 200,
-        deferred = true,
-        format = function(value) return value .. "%" end,
-        height = options.row.height
-    },
-    {
-        key = "showFps",
-        title = "Show FPS",
-        description = "Shows the frame rate on screen.",
-        kind = "toggle",
-        height = options.row.height
-    },
-    {
-        key = "fullscreen",
-        title = "Fullscreen",
-        description = "Toggles fullscreen.",
-        kind = "toggle",
-        height = options.row.height
-    },
-    {
-        key = "vsync",
-        title = "VSync",
-        description = "Syncs frames to your display to prevent tearing.",
-        kind = "toggle",
-        height = options.row.height
-    },
-    {
-        key = "cellShadows",
-        title = "Cell Shadows",
-        description = "Draws shadows under cells.",
-        kind = "toggle",
-        height = options.row.height
-    },
-    {
-        key = "cellAnimation",
-        title = "Cell Animation",
-        description = "Animates cell movement.",
-        kind = "toggle",
-        height = options.row.height
-    },
-    {
-        key = "checkUpdates",
-        title = "Check for Updates",
-        description = "Checks GitHub for a newer release when the game starts.",
-        kind = "toggle",
-        height = options.row.height
-    },
-    {
-        key = "debug",
-        title = "Debug Mode",
-        description = "Shows developer tools and overlays.",
-        kind = "toggle",
-        height = options.row.height
-    }
+options.pages = {
+    main = page("Options", {
+        {
+            title = "Graphics",
+            description = "Manage display, interface and render quality settings.",
+            kind = "link",
+            scene = "options",
+            page = "graphics"
+        },
+        {
+            title = "Audio",
+            description = "Manage audio playback speed and volume.",
+            kind = "link",
+            scene = "options",
+            page = "audio"
+        },
+        {
+            title = "Hotkeys",
+            description = "Manage the keyboard shortcuts.",
+            kind = "link",
+            scene = "hotkeys"
+        },
+        {
+            title = "Texture Packs",
+            description = "Enable, disable, and reorder your texture packs.",
+            kind = "link",
+            scene = "packs",
+            source = "texturePacks"
+        },
+        {
+            title = "Mods",
+            description = "Enable, disable, and reorder your mods.",
+            kind = "link",
+            scene = "mods",
+            source = "mods"
+        },
+        {
+            key = "tickSpeed",
+            title = "Tick Speed",
+            description = "The rate at which the simulator steps.",
+            kind = "slider",
+            min = 1,
+            max = 128,
+            format = function(value) return value == 1 and "1 tick/s" or value .. " ticks/s" end
+        },
+        {
+            key = "checkUpdates",
+            title = "Check for Updates",
+            description = "Checks GitHub for a newer release upon launch.",
+            kind = "toggle"
+        },
+        {
+            key = "debug",
+            title = "Debug Mode",
+            description = "Shows developer tools, overlays, and useful debugging statistics.",
+            kind = "toggle"
+        }
+    }),
+    graphics = page("Graphics", {
+        {
+            key = "fullscreen",
+            title = "Fullscreen",
+            description = "Toggles fullscreen mode.",
+            kind = "toggle"
+        },
+        {
+            key = "vsync",
+            title = "VSync",
+            description = "Syncs the framerate to your display's refresh rate to prevent screen tearing.",
+            kind = "toggle"
+        },
+        {
+            key = "uiScale",
+            title = "UI Scale",
+            description = "The scale of the interface.",
+            kind = "slider",
+            min = 50,
+            max = 200,
+            deferred = true,
+            format = percent
+        },
+        {
+            key = "showFps",
+            title = "Show FPS",
+            description = "Displays the frame rate on screen within the Editor.",
+            kind = "toggle"
+        },
+        {
+            key = "animatedBackground",
+            title = "Animated Background",
+            description = "Animates the grid background behind menus like this one.",
+            kind = "toggle"
+        },
+        {
+            key = "cellAnimation",
+            title = "Cell Animation",
+            description = "Animates cell movement and rotation.",
+            kind = "toggle"
+        },
+        {
+            key = "cellShadows",
+            title = "Cell Shadows",
+            description = "Draws shadows under cells.",
+            kind = "toggle"
+        },
+        {
+            key = "explosions",
+            title = "Explosions",
+            description = "Draws particles when cells explode.",
+            kind = "toggle"
+        },
+        {
+            key = "detailZoom",
+            title = "Detail Zoom",
+            description = "The zoom level at which cells stop being animated, shadows stop being drawn, and cell textures lose detail.",
+            kind = "slider",
+            min = 5,
+            max = 100,
+            format = percent
+        }
+    }),
+    audio = page("Audio", {
+        {
+            key = "musicVolume",
+            title = "Music Volume",
+            description = "The volume of the music.",
+            kind = "slider",
+            min = 0,
+            max = 100,
+            format = percent
+        },
+        {
+            key = "musicSpeed",
+            title = "Music Speed",
+            description = "The playback speed of the music.",
+            kind = "slider",
+            min = 50,
+            max = 200,
+            format = percent
+        },
+        {
+            key = "sfxVolume",
+            title = "SFX Volume",
+            description = "The volume of sound effects.",
+            kind = "slider",
+            min = 0,
+            max = 100,
+            format = percent
+        }
+    })
 }
 
 return {
@@ -297,6 +343,7 @@ return {
         }
     },
 
+    rows = rows,
     options = options,
 
     selector = {

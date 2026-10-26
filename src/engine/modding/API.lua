@@ -382,7 +382,7 @@ function API.new(mods, mod)
     function api.options.add(spec)
         if spec.default ~= nil then api.settings.define(spec.key, spec.default) end
 
-        table.insert(constants.options.rows, {
+        table.insert(constants.options.pages.main.rows, {
             key = key(spec.key),
             title = spec.title,
             kind = spec.kind,
@@ -390,7 +390,7 @@ function API.new(mods, mod)
             max = spec.max,
             format = spec.format or tostring,
             deferred = spec.deferred,
-            height = constants.options.row.height
+            height = constants.rows.row.height
         })
     end
 

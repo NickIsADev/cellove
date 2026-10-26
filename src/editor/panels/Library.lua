@@ -64,6 +64,7 @@ function Library.new(data)
     local self = setmetatable({}, Library)
     self.renderer = data.renderer
     self.registry = data.registry
+    self.hotkeys = data.hotkeys
     self.toolbar = data.toolbar
     self.prompt = data.prompt
     self.fresh = data.fresh
@@ -405,7 +406,7 @@ end
 function Library:keypressed(key)
     if not self.active then return false end
 
-    if key == "escape" or key == "tab" then
+    if key == "escape" or self.hotkeys:pressed("library", key) then
         self:close()
     elseif key == "return" or key == "kpenter" then
         local class = self.cells:current() or self.cells.items[1]

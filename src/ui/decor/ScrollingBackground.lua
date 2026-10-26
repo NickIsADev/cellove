@@ -52,7 +52,7 @@ function ScrollingBackground:_drawLogos(tileWidth, tileHeight)
 end
 
 function ScrollingBackground:update(dt)
-    self.offset = self.offset + dt * config.speed
+    if self.renderer.scrolling then self.offset = self.offset + dt * config.speed end
 end
 
 function ScrollingBackground:draw()

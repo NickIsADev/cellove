@@ -7,8 +7,9 @@ local tile = constants.grid.tile
 local Camera = {}
 Camera.__index = Camera
 
-function Camera.new()
+function Camera.new(data)
     local self = setmetatable({}, Camera)
+    self.hotkeys = data.hotkeys
     self.x = 0
     self.y = 0
     self.vx = 0
@@ -44,10 +45,10 @@ end
 function Camera:update(dt, locked)
     local ix, iy = 0, 0
     if not (locked or love.keyboard.isDown("lctrl", "rctrl")) then
-        if love.keyboard.isDown("w") then iy = iy - 1 end
-        if love.keyboard.isDown("s") then iy = iy + 1 end
-        if love.keyboard.isDown("a") then ix = ix - 1 end
-        if love.keyboard.isDown("d") then ix = ix + 1 end
+        if self.hotkeys:down("moveUp") then iy = iy - 1 end
+        if self.hotkeys:down("moveDown") then iy = iy + 1 end
+        if self.hotkeys:down("moveLeft") then ix = ix - 1 end
+        if self.hotkeys:down("moveRight") then ix = ix + 1 end
     end
 
     local speed = view.speed / self.zoom

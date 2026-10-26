@@ -21,11 +21,13 @@ function Particles:blast(cell, progress)
     if not start and progress >= 0.5 then
         start = love.timer.getTime()
         self.blasted[cell] = start
-        self.blasts[#self.blasts + 1] = {
-            x = cell.x,
-            y = cell.y,
-            start = start
-        }
+        if self.enabled then
+            self.blasts[#self.blasts + 1] = {
+                x = cell.x,
+                y = cell.y,
+                start = start
+            }
+        end
     end
     return start and (love.timer.getTime() - start) / blast.pop or 0
 end

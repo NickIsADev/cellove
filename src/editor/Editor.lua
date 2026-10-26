@@ -44,6 +44,7 @@ function Editor.new(data)
     self.registry = data.registry
     self.renderer = data.renderer
     self.settings = data.settings
+    self.hotkeys = data.hotkeys
     self.markers = data.markers
     self.contraptions = data.contraptions
     self.stamps = data.stamps
@@ -67,7 +68,7 @@ function Editor.new(data)
             back = data.menu.back
         }
     })
-    self.toolMenu = ToolMenu.new({ renderer = data.renderer, onPick = function(id) self:setTool(id) end })
+    self.toolMenu = ToolMenu.new({ renderer = data.renderer, hotkeys = data.hotkeys, onPick = function(id) self:setTool(id) end })
     self.fresh = Fresh.new({ registry = data.registry, settings = data.settings })
     self.toolbar = Toolbar.new({
         renderer = data.renderer,
@@ -83,6 +84,7 @@ function Editor.new(data)
     self.library = Library.new({
         renderer = data.renderer,
         registry = data.registry,
+        hotkeys = data.hotkeys,
         toolbar = self.toolbar,
         prompt = self.prompt,
         fresh = self.fresh,
@@ -96,10 +98,8 @@ function Editor.new(data)
     })
 
     self.tools = {}
-    self.keys = {}
     for _, tool in ipairs(config.tools.list) do
         self.tools[tool.id] = (tool.class or tools[tool.id]).new(self)
-        if tool.key then self.keys[tool.key] = tool.id end
     end
 
     self.actions = { initial = self._setInitial }
@@ -130,6 +130,12 @@ function Editor:_undo()
         stroke[i]()
     end
     self.simulator:save()
+end
+
+function Editor:_toolAt(key)
+    for _, tool in ipairs(config.tools.list) do
+        if self.hotkeys:pressed(tool.id, key) then return tool.id end
+    end
 end
 
 function Editor:_overUi(x, y)
@@ -393,23 +399,23 @@ end
 function Editor:keypressed(key)
     if self.prompt:keypressed(key) or self.picker:keypressed(key) or self.library:keypressed(key) or self.stampList:keypressed(key) or self.toolMenu:keypressed(key) or self.pauseMenu:keypressed(key) or self.properties:keypressed(key) then return true end
 
-    local ctrl = love.keyboard.isDown("lctrl", "rctrl")
-    local tool = self.keys[key]
+    local hotkeys = self.hotkeys
+    local tool = self:_toolAt(key)
 
     if self.tool:keypressed(key) then
         return true
     elseif key == "escape" then
         self.pauseMenu:open()
-    elseif key == "tab" then
+    elseif hotkeys:pressed("library", key) then
         self.library:open()
-    elseif key == "`" then
+    elseif hotkeys:pressed("toolMenu", key) then
         self.toolMenu:open(self.toolId)
-    elseif ctrl and key == "z" then
+    elseif hotkeys:pressed("undo", key) then
         self:_undo()
-    elseif tool and not ctrl then
+    elseif tool then
         if not self.drag and tool ~= self.toolId then self:setTool(tool) end
     else
-        if not ctrl then self.targetRotation = self.targetRotation + (config.turns[key] or 0) end
+        self.targetRotation = self.targetRotation + hotkeys:turn(key)
         return false
     end
     return true

@@ -9,7 +9,6 @@ local shadow = constants.renderer.shadow
 local box = constants.renderer.box
 local mark = constants.renderer.marker
 local blast = constants.renderer.explosion
-local far = constants.renderer.far
 local flat = constants.renderer.flat
 local clear = constants.renderer.clear
 local tag = constants.renderer.tag
@@ -63,11 +62,14 @@ function Renderer.new(data)
     self.labels = setmetatable({}, weak)
     self.shadowShader = love.graphics.newShader(shadow.shader)
     self.backgroundQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
-    self.camera = Camera.new()
+    self.camera = Camera.new({ hotkeys = data.hotkeys })
 
     data.settings:listen("packs", function() self:loadTextures() end)
     data.settings:listen("uiScale", function() self.fonts = {} end)
     data.settings:listen("cellShadows", function(enabled) self.shadows = enabled end)
+    data.settings:listen("explosions", function(enabled) self.particles.enabled = enabled end)
+    data.settings:listen("animatedBackground", function(enabled) self.scrolling = enabled end)
+    data.settings:listen("detailZoom", function(percent) self.far = percent / 100 end)
     data.settings:listen("cellAnimation", function(enabled) self.animated = enabled end)
     return self
 end
@@ -280,7 +282,7 @@ function Renderer:_drawLayer(simulator, progress)
     self:_collect(simulator, progress)
     profile.collect = (love.timer.getTime() - start) * 1000
 
-    if self.shadows and self.camera.zoom >= far then
+    if self.shadows and self.camera.zoom >= self.far then
         love.graphics.setShader(self.shadowShader)
         love.graphics.setColor(utils.fromHex(0x000000, shadow.alpha))
         self:_drawCells(shadow.offset)
@@ -529,7 +531,7 @@ end
 
 function Renderer:draw(simulator, progress, markers)
     local grid, back = simulator.grid, self.back
-    local distant, minimal = self.camera.zoom < far, self.camera.zoom < flat
+    local distant, minimal = self.camera.zoom < self.far, self.camera.zoom < flat
 
     if distant or not self.animated then progress = 1 end
 

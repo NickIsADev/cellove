@@ -18,6 +18,7 @@ function PuzzleScene.new(data)
     local self = setmetatable({}, PuzzleScene)
     self.manager = data.manager
     self.renderer = data.renderer
+    self.hotkeys = data.hotkeys
     self.puzzles = data.puzzles
     self.progress = data.progress
     self.puzzle = Puzzle.new({ registry = data.registry, settings = data.settings })
@@ -186,13 +187,15 @@ end
 function PuzzleScene:keypressed(key)
     if self.victory:keypressed(key) or self.pauseMenu:keypressed(key) or self.puzzle.held then return end
 
+    local hotkeys = self.hotkeys
+
     if key == "escape" then
         self.pauseMenu:open()
-    elseif key == "space" then
+    elseif hotkeys:pressed("toggle", key) then
         self.simulator:toggle()
-    elseif key == "f" then
+    elseif hotkeys:pressed("step", key) then
         self.simulator:step()
-    elseif key == "r" and love.keyboard.isDown("lctrl", "rctrl") then
+    elseif hotkeys:pressed("reset", key) then
         self.simulator:reset()
     end
 end

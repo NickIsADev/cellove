@@ -62,6 +62,7 @@ local function boot()
     local Registry = require("src/engine/registry/Registry")
     local Progress = require("src/engine/data/Progress")
     local Updates = require("src/engine/data/Updates")
+    local Hotkeys = require("src/engine/data/Hotkeys")
     local Audio = require("src/engine/audio/Audio")
     local Window = require("src/engine/graphics/Window")
     local Display = require("src/engine/graphics/Display")
@@ -69,10 +70,12 @@ local function boot()
     local TexturePacks = require("src/engine/sources/TexturePacks")
     local Debug = require("src/engine/debug/Debug")
     local Events = require("src/engine/modding/Events")
+    local hotkeys = Hotkeys.new({ settings = settings })
 
     local scenes = {
         menu = require("src/scenes/MenuScene"),
         options = require("src/scenes/OptionsScene"),
+        hotkeys = require("src/scenes/HotkeysScene"),
         packs = require("src/scenes/PacksScene"),
         mods = require("src/scenes/ModsScene"),
         contraptions = require("src/scenes/ContraptionsScene"),
@@ -88,7 +91,7 @@ local function boot()
     Display.new({ settings = settings })
     local texturePacks = TexturePacks.new({ settings = settings, mods = mods })
     Audio.new({ settings = settings, texturePacks = texturePacks })
-    local renderer = Renderer.new({ texturePacks = texturePacks, settings = settings })
+    local renderer = Renderer.new({ texturePacks = texturePacks, settings = settings, hotkeys = hotkeys })
 
     step("registry")
     local registry = Registry.new({ mods = mods })
@@ -114,6 +117,7 @@ local function boot()
         manager = manager,
         renderer = renderer,
         settings = settings,
+        hotkeys = hotkeys,
         texturePacks = texturePacks,
         contraptions = contraptions,
         stamps = stamps,

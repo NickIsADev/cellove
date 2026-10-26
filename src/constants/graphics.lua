@@ -4,7 +4,6 @@ return {
     },
 
     renderer = {
-        far = 0.3,
         flat = 0.08,
         clear = { 0, 0, 0, 0 },
         box = {

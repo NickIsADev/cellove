@@ -13,6 +13,7 @@ ToolMenu.__index = ToolMenu
 function ToolMenu.new(data)
     local self = setmetatable({}, ToolMenu)
     self.renderer = data.renderer
+    self.hotkeys = data.hotkeys
     self.onPick = data.onPick
     self.active = false
     self.current = 1
@@ -73,7 +74,7 @@ function ToolMenu:_drawCard(index)
 
     love.graphics.setFont(keyFont)
     love.graphics.setColor(utils.fromHex(colors.white, 0.4))
-    love.graphics.print(tool.key or "", x + card.pad, y + card.pad)
+    love.graphics.print(tool.key and self.hotkeys:label(tool.id) or "", x + card.pad, y + card.pad)
 end
 
 function ToolMenu:_measure()
@@ -126,7 +127,7 @@ end
 function ToolMenu:keypressed(key)
     if not self.active then return false end
 
-    if key == "escape" or key == "`" then
+    if key == "escape" or self.hotkeys:pressed("toolMenu", key) then
         self:close()
     elseif key == "return" or key == "kpenter" then
         self:_pick(self.index)
@@ -134,7 +135,7 @@ function ToolMenu:keypressed(key)
         self.index = utils.clamp(self.index + (key == "right" and 1 or -1), 1, #tools)
     else
         for index, tool in ipairs(tools) do
-            if tool.key == key then self:_pick(index) end
+            if self.hotkeys:pressed(tool.id, key) then self:_pick(index) end
         end
     end
     return true
