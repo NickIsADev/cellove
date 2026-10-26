@@ -26,7 +26,7 @@ return {
         zoom = {
             default = 1,
             step = 1.25,
-            min = 0.1,
+            min = 0.02,
             max = 10,
             ease = 15
         }
