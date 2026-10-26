@@ -1,8 +1,11 @@
 return {
     updates = {
         thread = "src/engine/data/UpdatesThread.lua",
-        url = "https://api.github.com/repos/nickisadev/CelLove/releases/latest",
-        releases = "https://github.com/nickisadev/CelLove/releases/latest",
+        url = {
+            stable = "https://api.github.com/repos/nickisadev/CelLove/releases/latest",
+            prerelease = "https://api.github.com/repos/nickisadev/CelLove/releases?per_page=1"
+        },
+        releases = "https://github.com/nickisadev/CelLove/releases/tag/v%s",
         agent = "CelLove",
         pattern = '"tag_name"%s*:%s*"v?([^"]+)"',
         notice = {

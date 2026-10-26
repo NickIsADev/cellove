@@ -278,7 +278,7 @@ function MenuScene:_notify()
             title = notice.outdated.title,
             message = string.format(notice.outdated.message, latest),
             confirm = notice.outdated.confirm,
-            onConfirm = function() love.system.openURL(constants.updates.releases) end
+            onConfirm = function() love.system.openURL(string.format(constants.updates.releases, latest)) end
         })
     end
 end

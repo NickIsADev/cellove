@@ -12,7 +12,8 @@ function Updates.new(data)
     self.channel = love.thread.newChannel()
 
     if data.settings:get("checkUpdates") then
-        love.thread.newThread(config.thread):start(self.channel, config.url, config.agent, config.pattern)
+        local url = config.url[utils.prerelease(current) and "prerelease" or "stable"]
+        love.thread.newThread(config.thread):start(self.channel, url, config.agent, config.pattern)
     end
     return self
 end
