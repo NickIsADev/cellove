@@ -45,6 +45,13 @@ function sorts.subtick(a, b)
     return sorts.name(a, b)
 end
 
+local function rank(text, word)
+    if text == word then return 0 end
+    if text:sub(1, #word) == word then return 1 end
+    if text:find(" " .. word, 1, true) then return 2 end
+    if text:find(word, 1, true) then return 3 end
+end
+
 local function addBox(x, y, width, height)
     local size = config.row.add
     return x + width - size - config.row.pad, y + (height - size) / 2, size
@@ -156,23 +163,30 @@ function Library:_load()
     self:_refresh()
 end
 
-function Library:_matches(class)
-    local text = (class.title .. " " .. class.name .. " " .. categoryLine(class)):lower()
+function Library:_score(class)
+    local total = 0
     for word in self.search.text:lower():gmatch("%S+") do
-        if not text:find(word, 1, true) then return false end
+        local title, name = rank(class.title:lower(), word), rank(class.name:lower(), word)
+        if not (title or name) then return end
+        total = total + math.min(title or 3, name or 3)
     end
-    return true
+    return total
 end
 
 function Library:_refresh()
-    local items = {}
+    local items, scores = {}, {}
     for _, class in ipairs(self.all) do
-        if (self.category == "all" or utils.has(class.categories, self.category)) and self:_matches(class) then
+        local score = self:_score(class)
+        if score and (self.category == "all" or utils.has(class.categories, self.category)) then
             items[#items + 1] = class
+            scores[class] = score
         end
     end
 
-    table.sort(items, sorts[self.sort])
+    table.sort(items, function(a, b)
+        if scores[a] ~= scores[b] then return scores[a] < scores[b] end
+        return sorts[self.sort](a, b)
+    end)
     self.cells:setItems(items, 1)
     self.cells:resetScroll()
 end
