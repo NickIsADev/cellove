@@ -437,7 +437,7 @@ function Editor:mousepressed(x, y, button)
 
     local gx, gy = self.renderer.camera:screenToGrid(x, y)
     if button == 3 then
-        self:_pick(gx, gy)
+        self.renderer.camera:grab(x, y)
         return true
     end
 
@@ -458,6 +458,7 @@ function Editor:mousemoved(x, y)
     self.stampList:mousemoved(x, y)
     self.panel:mousemoved(x, y)
     self.properties:mousemoved(x, y)
+    self.renderer.camera:drag(x, y)
 
     if self.drag then self.tool:move(self.renderer.camera:screenToGrid(x, y)) end
 end
@@ -470,6 +471,12 @@ function Editor:mousereleased(x, y, button)
     self.stampList:mousereleased()
     self.panel:mousereleased(x, y, button)
     self.properties:mousereleased(x, y, button)
+
+    if button == 3 then
+        local camera = self.renderer.camera
+        local grip = camera:release()
+        if grip and not grip.moved then self:_pick(camera:screenToGrid(x, y)) end
+    end
 
     if button ~= self.drag then return end
 

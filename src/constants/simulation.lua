@@ -23,6 +23,7 @@ return {
     camera = {
         speed = 600,
         ease = 8,
+        threshold = 4,
         zoom = {
             default = 1,
             step = 1.25,

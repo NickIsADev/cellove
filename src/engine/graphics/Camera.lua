@@ -61,6 +61,27 @@ function Camera:update(dt, locked)
     self.zoom = utils.lerp(self.zoom, self.targetZoom, math.min(1, view.zoom.ease * dt))
 end
 
+function Camera:grab(x, y)
+    self.grip = { x = x, y = y, moved = false }
+end
+
+function Camera:drag(x, y)
+    local grip = self.grip
+    if not (grip and love.mouse.isDown(3)) then return end
+    if not grip.moved and math.abs(x - grip.x) + math.abs(y - grip.y) < view.threshold then return end
+
+    grip.moved = true
+    self.x = self.x - (x - grip.x) / self.zoom
+    self.y = self.y - (y - grip.y) / self.zoom
+    grip.x, grip.y = x, y
+end
+
+function Camera:release()
+    local grip = self.grip
+    self.grip = nil
+    return grip
+end
+
 function Camera:wheelmoved(_, y)
     local zoom = view.zoom
 

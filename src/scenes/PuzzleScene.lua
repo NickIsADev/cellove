@@ -153,7 +153,9 @@ function PuzzleScene:update(dt)
 end
 
 function PuzzleScene:mousepressed(x, y, button)
-    if self.victory:mousepressed(x, y, button) or self.pauseMenu:mousepressed(x, y, button) or button ~= 1 then return end
+    if self.victory:mousepressed(x, y, button) or self.pauseMenu:mousepressed(x, y, button) then return end
+    if button == 3 and not self:_locked() then return self.renderer.camera:grab(x, y) end
+    if button ~= 1 then return end
 
     local control = self.controls:buttonAt(x, y)
     if control then
@@ -166,9 +168,11 @@ end
 
 function PuzzleScene:mousemoved(x, y)
     self.pauseMenu:mousemoved(x, y)
+    self.renderer.camera:drag(x, y)
 end
 
 function PuzzleScene:mousereleased(x, y, button)
+    if button == 3 then self.renderer.camera:release() end
     if button ~= 1 or not self.puzzle.held then return end
 
     Audio.play("click")
