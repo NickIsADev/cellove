@@ -48,15 +48,22 @@ return {
                     description = "Paints the selected cell."
                 },
                 {
-                    id = "selector",
+                    id = "bucket",
                     key = "2",
+                    texture = "bucket",
+                    title = "Bucket",
+                    description = "Fills an area with the selected cell."
+                },
+                {
+                    id = "selector",
+                    key = "3",
                     texture = "select",
                     title = "Selector",
                     description = "Selects an area to copy, cut and paste."
                 },
                 {
                     id = "marker",
-                    key = "3",
+                    key = "4",
                     texture = "marker",
                     title = "Marker",
                     description = "Places visual markers and backgrounds."

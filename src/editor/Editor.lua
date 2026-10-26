@@ -9,6 +9,7 @@ local Controls = require("src/editor/panels/Controls")
 local Brush = require("src/editor/tools/Brush")
 local Selector = require("src/editor/tools/Selector")
 local Marker = require("src/editor/tools/Marker")
+local Bucket = require("src/editor/tools/Bucket")
 local Prompt = require("src/ui/overlays/Prompt")
 local ColorPicker = require("src/ui/overlays/ColorPicker")
 local Fresh = require("src/engine/data/Fresh")
@@ -25,7 +26,8 @@ local colors = constants.ui.colors
 local tools = {
     brush = Brush,
     selector = Selector,
-    marker = Marker
+    marker = Marker,
+    bucket = Bucket
 }
 
 local function same(a, b)
