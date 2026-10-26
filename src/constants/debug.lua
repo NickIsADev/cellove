@@ -79,6 +79,7 @@ return {
                 { label = "1", keys = { "1" } },
                 { label = "2", keys = { "2" } },
                 { label = "3", keys = { "3" } },
+                { label = "4", keys = { "4" } },
                 { label = "Tab", keys = { "tab" } }
             },
             {
