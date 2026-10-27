@@ -1,17 +1,11 @@
-local BaseCell = require("content/cells/abstract/BaseCell")
+local BaseRotator = require("content/cells/abstract/BaseRotator")
 
 local RotatorCW = setmetatable({
     name = "rotator_cw",
     k3 = 9,
     title = "Rotator (CW)",
-    description = "Rotates adjacent cells clockwise every tick.",
-    categories = { "rotators" },
-    subtick = { 1 }
-}, { __index = BaseCell })
+    description = "Rotates adjacent cells clockwise every tick."
+}, { __index = BaseRotator })
 RotatorCW.__index = RotatorCW
-
-function RotatorCW:update()
-    self:rotateNeighbors(1)
-end
 
 return RotatorCW
