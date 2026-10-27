@@ -67,6 +67,10 @@ function BaseCell:generatable()
     return true
 end
 
+function BaseCell:generated()
+    return getmetatable(self), self.props
+end
+
 function BaseCell:divert(dx, dy, reverse)
 end
 

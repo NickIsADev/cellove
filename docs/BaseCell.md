@@ -70,6 +70,7 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | [`eats`](#basecelleatsdx-dy) | `false` | whether cells moving into this one are deleted |
 | [`absorb`](#basecellabsorbcell-dx-dy) | nothing | called after this cell eats a cell |
 | [`generatable`](#basecellgeneratable) | `true` | whether generators can copy the cell |
+| [`generated`](#basecellgenerated) | the same class and props | what a generator's copy of the cell becomes |
 | [`force`](#basecellforcedx-dy-action) | `0` | force added to a push or pull |
 | [`divert`](#basecelldivertdx-dy-reverse) | nothing | bends the path of a move passing through |
 | [`draw`](#basecelldrawrenderer-x-y-angle-scale-offset) | default sprite | draws the cell |
@@ -151,6 +152,19 @@ Whether generators can copy the cell. Default `true`.
 ```lua
 function Unique:generatable()
     return false
+end
+```
+
+### `BaseCell:generated()`
+
+What a generator's copy of the cell becomes. Only called when [`generatable`](#basecellgeneratable) is true. Default is the cell's own class and props.
+
+**Returns** the class of the copy, and optionally the props it starts with.
+
+```lua
+-- copies turn into an Ungeneratable
+function Fragile:generated()
+    return Ungeneratable
 end
 ```
 

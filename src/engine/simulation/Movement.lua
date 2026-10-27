@@ -384,7 +384,8 @@ function Movement:generate(x, y, dx, dy, options)
     local origin = generator.path and generator.path[1] or { x, y }
     local turn = back.turn + front.turn + (options.turn or 0)
 
-    local clone = getmetatable(source):new({ rotation = source.rotation + turn, props = source.props })
+    local class, props = source:generated()
+    local clone = class:new({ rotation = source.rotation + turn, props = props })
     clone.updated = source.updated
     clone.ran = source.ran
     clone.born = true
