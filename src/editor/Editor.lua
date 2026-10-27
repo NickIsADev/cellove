@@ -455,6 +455,7 @@ function Editor:mousepressed(x, y, button)
         return true
     end
 
+    if self.simulator:click(gx, gy, button) then return true end
     if button == 1 and love.keyboard.isDown("lshift", "rshift") and self:_edit(gx, gy) then return true end
 
     self.drag = self.tool:press(gx, gy, button) and button

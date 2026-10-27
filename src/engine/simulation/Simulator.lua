@@ -221,6 +221,14 @@ function Simulator:substep()
     self:_pass()
 end
 
+function Simulator:click(x, y, button)
+    local cell = self.grid:get(x, y)
+    if not (cell and self:started()) then return false end
+
+    cell.simulator = self
+    return cell:click(button)
+end
+
 function Simulator:save()
     if self.time.subtick ~= 0 then return end
     self.grid:save()

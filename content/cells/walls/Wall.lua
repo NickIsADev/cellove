@@ -13,6 +13,10 @@ function Wall:pushable()
     return false
 end
 
+function Wall:transformable()
+    return false
+end
+
 function Wall:rotate()
 end
 

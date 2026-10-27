@@ -375,6 +375,13 @@ function Movement:cycle(points, forced)
     return true
 end
 
+function Movement:look(x, y, dx, dy, reverse)
+    self.top = 0
+
+    local move = self:_route(x, y, dx, dy, reverse)
+    return move and self.grid:bounds(move.x, move.y) and move
+end
+
 function Movement:generate(x, y, dx, dy, options)
     local grid = self.grid
     local generator = grid:get(x, y)
@@ -422,6 +429,23 @@ function Movement:release(x, y, dx, dy, cell)
     if #chain > 0 then self:_shift(chain, true) end
     cell:rotate(front.turn)
     self:_spawn(cell, front, { x, y })
+    return true
+end
+
+function Movement:transform(x, y, dx, dy, cell)
+    self.top = 0
+
+    local front = self:_route(x, y, dx, dy)
+    local target = front and front.target
+    if not (target and target:transformable()) then return false end
+
+    cell:rotate(front.turn)
+    cell.grow = 0
+    target.simulator = self.simulator
+    target:kill()
+
+    self.grid:set(front.x, front.y, cell)
+    self.grid:touch(cell)
     return true
 end
 

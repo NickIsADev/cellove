@@ -12,6 +12,10 @@ function Storage:pushable()
     return false
 end
 
+function Storage:transformable()
+    return false
+end
+
 function Storage:absorb(cell, dx, dy)
     local old = self.props.stored
     BaseHolder.absorb(self, cell)

@@ -63,7 +63,14 @@ end
 function BaseCell:absorb(cell, dx, dy)
 end
 
+function BaseCell:click(button)
+end
+
 function BaseCell:generatable()
+    return true
+end
+
+function BaseCell:transformable()
     return true
 end
 
@@ -132,6 +139,16 @@ end
 function BaseCell:generate(direction, options)
     local facing = constants.directions[direction or self.rotation]
     return self.simulator.movement:generate(self.x, self.y, facing[1], facing[2], options)
+end
+
+function BaseCell:look(direction, reverse)
+    local facing = constants.directions[direction]
+    return self.simulator.movement:look(self.x, self.y, facing[1], facing[2], reverse)
+end
+
+function BaseCell:transform(direction, cell)
+    local facing = constants.directions[direction]
+    return self.simulator.movement:transform(self.x, self.y, facing[1], facing[2], cell)
 end
 
 function BaseCell:update(subtick, direction)

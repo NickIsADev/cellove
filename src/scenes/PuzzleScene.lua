@@ -164,7 +164,10 @@ function PuzzleScene:mousepressed(x, y, button)
         return self.simulator[control](self.simulator)
     end
 
-    self.puzzle:lift(self.renderer.camera:screenToGrid(x, y))
+    local gx, gy = self.renderer.camera:screenToGrid(x, y)
+    if self.simulator:click(gx, gy, button) then return end
+
+    self.puzzle:lift(gx, gy)
 end
 
 function PuzzleScene:mousemoved(x, y)
