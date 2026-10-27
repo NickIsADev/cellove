@@ -2,7 +2,7 @@ local BaseCell = require("content/cells/abstract/BaseCell")
 local constants = require("src/constants")
 
 local BaseMirror = setmetatable({
-    categories = { "mirrors" },
+    categories = { "mirrors", "forces" },
     subtick = { 0 },
     outputs = { 0, 1, 2, 3 },
     directional = true,
