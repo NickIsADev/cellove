@@ -237,6 +237,7 @@ Call these from your own methods, usually from `update`. Where `dx` and `dy` are
 | [`nudge`](#basecellnudgedx-dy) | moves the cell one tile without pushing |
 | [`swap`](#basecellswapax-ay-bx-by) | swaps the cells at two offsets from this one |
 | [`generate`](#basecellgeneratedirection-options) | copies the cell behind this one into the tile in front |
+| [`repel`](#basecellrepeldirection) | pushes the cell in front of this one away without moving this cell |
 | [`rotate`](#basecellrotateamount) | rotates the cell |
 | [`rotateNeighbors`](#basecellrotateneighborsamount-predicate) | rotates the four adjacent cells |
 | [`neighbors`](#basecellneighborsdistance-callback) | loops over nearby tiles, no diagonals |
@@ -347,6 +348,24 @@ Copies the cell behind this one into the tile in front, pushing out what is ther
 ```lua
 function Copier:update(_, direction)
     self:generate(direction)
+end
+```
+
+### `BaseCell:repel(direction)`
+
+Pushes the cell next to this one away, along with whatever is in its way. This cell does not move.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `direction` | `number` | direction to push towards (0-3) |
+
+**Returns** `boolean`, true if the push succeeded.
+
+```lua
+function Repulsor:update()
+    for direction = 0, 3 do
+        self:repel(direction)
+    end
 end
 ```
 

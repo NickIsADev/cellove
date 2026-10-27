@@ -432,6 +432,19 @@ function Movement:release(x, y, dx, dy, cell)
     return true
 end
 
+function Movement:repel(x, y, dx, dy)
+    self.top = 0
+    local front = self:_route(x, y, dx, dy)
+    if not front then return false end
+
+    local chain = self:_line(front.x, front.y, front.dx, front.dy, constants.force.push + constants.force.strength)
+    if not chain then return false end
+
+    self:_drive(chain, "push")
+    self:_shift(chain, true)
+    return true
+end
+
 function Movement:transform(x, y, dx, dy, cell)
     self.top = 0
 
