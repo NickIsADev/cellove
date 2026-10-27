@@ -21,6 +21,14 @@ function lists.indexOf(list, value)
     end
 end
 
+function lists.copy(source)
+    local copy = {}
+    for key, value in pairs(source) do
+        copy[key] = value
+    end
+    return copy
+end
+
 function lists.merge(target, source)
     for key, value in pairs(source) do
         if type(value) == "table" and type(target[key]) == "table" then

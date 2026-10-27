@@ -44,6 +44,22 @@ function Brush:_paint(gx, gy)
     end
 end
 
+function Brush:_stock(gx, gy)
+    local editor = self.editor
+    local cell = editor.simulator.grid:get(gx, gy)
+    if not (cell and cell.held and (not self.erasing or cell:held())) then return false end
+
+    local props = utils.copy(cell.props)
+    props.stored = not self.erasing and {
+        class = editor.selected,
+        rotation = editor.targetRotation % 4,
+        props = editor.properties:values(editor.selected)
+    } or nil
+
+    editor:setCell(gx, gy, { class = getmetatable(cell), rotation = cell.rotation, props = props })
+    return true
+end
+
 function Brush:_set(size, shape)
     self.size = utils.clamp(size, config.size.min, config.size.max)
     self.shape = shape
@@ -86,7 +102,7 @@ function Brush:press(gx, gy, button)
 
     self.erasing = button == 2
     self.x, self.y = gx, gy
-    self:_paint(gx, gy)
+    if not self:_stock(gx, gy) then self:_paint(gx, gy) end
     return true
 end
 

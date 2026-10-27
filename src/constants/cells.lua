@@ -88,6 +88,11 @@ return {
                 icon = "trash"
             },
             {
+                id = "storage",
+                title = "Storage",
+                icon = "storage"
+            },
+            {
                 id = "misc",
                 title = "Miscellaneous",
                 icon = "base",

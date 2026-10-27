@@ -192,7 +192,7 @@ local function parseMarkers(payload, position, width, total)
     return markers, position
 end
 
-local function parseProps(payload, position, byIndex, partial)
+local function parseProps(payload, position, byIndex, partial, registry)
     local count
     count, position = utils.unpackVarint(payload, position)
     if not count then return end
@@ -214,7 +214,7 @@ local function parseProps(payload, position, byIndex, partial)
             local property, value = cell.class.properties[slot]
             if not property then return end
 
-            value, position = Properties.unpack(property, payload, position)
+            value, position = Properties.unpack(property, payload, position, registry)
             if not position then return end
             cell.props[property.id] = value
         end
@@ -258,7 +258,7 @@ local function parse(payload, registry)
             markers, position = parseMarkers(payload, position, width, total)
             if not markers then return end
         elseif gap == total + 1 then
-            position = parseProps(payload, position, byIndex, #missing > 0)
+            position = parseProps(payload, position, byIndex, #missing > 0, registry)
             if not position then return end
         else
             tag, position = utils.unpackVarint(payload, position)

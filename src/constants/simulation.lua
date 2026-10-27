@@ -33,6 +33,7 @@ return {
             leftup = { x = -1, y = -1 }
         },
         hops = 100,
+        flushes = 5,
         subticks = 4,
         interval = 0.2
     },

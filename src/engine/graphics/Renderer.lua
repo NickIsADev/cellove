@@ -12,6 +12,7 @@ local blast = constants.renderer.explosion
 local flat = constants.renderer.flat
 local clear = constants.renderer.clear
 local tag = constants.renderer.tag
+local stored = constants.renderer.stored
 local tile = constants.grid.tile
 local colors = constants.ui.colors
 local stride = 6
@@ -127,6 +128,7 @@ end
 
 function Renderer:_queue(list, cell, x, y, progress, dying)
     local size, fade = 1, 0
+    if cell.grow then size = utils.lerp(cell.grow, 1, progress) end
 
     local path = cell.path
     if path and #path > 1 then
@@ -403,6 +405,12 @@ function Renderer:drawTag(text, x, y, _, scale, offset)
     love.graphics.setColor(r, g, b, a)
     love.graphics.print(text, right, bottom, 0, unit, unit, width, height)
     love.graphics.setFont(previousFont)
+end
+
+function Renderer:drawStored(content, x, y, turn, scale, offset)
+    if offset ~= 0 then return end
+
+    self:drawSprite(content.class.texture, x, y, content.rotation + turn, scale * stored.scale, 0)
 end
 
 function Renderer:drawGhost(name, gx, gy, rotation, alpha)

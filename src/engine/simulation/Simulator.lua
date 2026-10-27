@@ -29,6 +29,7 @@ function Simulator:_rewind()
     self.paused = true
     self.timer = 0
     self.dying = {}
+    self.movement.queue = {}
     self.time = {
         tick = 0,
         subtick = 0,
@@ -61,13 +62,14 @@ function Simulator:_run(cell, subtick, direction)
 
     cell.simulator = self
     cell:update(subtick, direction)
+    self.movement:flush()
 end
 
 function Simulator:_sync()
     self.dying = {}
 
     for _, cell in ipairs(self.grid.touched) do
-        cell.path, cell.own, cell.turn, cell.born = nil, nil, 0, nil
+        cell.path, cell.own, cell.turn, cell.born, cell.grow = nil, nil, 0, nil, nil
     end
     self.grid.touched = {}
 end

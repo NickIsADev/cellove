@@ -21,6 +21,9 @@ return {
             margin = 3,
             shadow = { offset = 5, alpha = 0.9 }
         },
+        stored = {
+            scale = 0.5
+        },
         explosion = {
             pop = 0.1,
             grow = 0.5,

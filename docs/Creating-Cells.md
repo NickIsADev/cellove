@@ -69,6 +69,7 @@ properties = {
 | `number` | stepper | `min` and `max`. `min` is at least 0 and `default` is between them |
 | `boolean` | toggle | nothing |
 | `string` | text field | `limit`, the maximum length |
+| `table` | none | an empty table as `default`. holds a cell as `{ class, rotation, props }`, like Storage does |
 
 Read values from `self.props`:
 

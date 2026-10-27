@@ -41,6 +41,7 @@ function Movement.new(data)
     self.top = 0
     self.stamp = 0
     self.dead = {}
+    self.queue = {}
     self.moves = 0
     return self
 end
@@ -76,6 +77,23 @@ end
 function Movement:_absorb(eater, cell, dx, dy)
     eater.simulator = self.simulator
     eater:absorb(cell, dx, dy)
+end
+
+function Movement:_spawn(clone, front, origin)
+    local grid = self.grid
+    clone.born = true
+    clone.path = { { origin[1], origin[2] } }
+    extend(clone, front)
+    grid:touch(clone)
+
+    local occupant = grid:get(front.x, front.y)
+    if occupant then
+        clone.x, clone.y = front.x, front.y
+        table.insert(self.simulator.dying, clone)
+        self:_absorb(occupant, clone, front.dx, front.dy)
+    else
+        grid:set(front.x, front.y, clone)
+    end
 end
 
 function Movement:_step(x, y, dx, dy, reverse)
@@ -388,21 +406,39 @@ function Movement:generate(x, y, dx, dy, options)
     local clone = class:new({ rotation = source.rotation + turn, props = props })
     clone.updated = source.updated
     clone.ran = source.ran
-    clone.born = true
-    clone.path = { { origin[1], origin[2] } }
-    extend(clone, front)
-    grid:touch(clone)
-
-    local occupant = grid:get(front.x, front.y)
-    if occupant then
-        clone.x, clone.y = front.x, front.y
-        table.insert(self.simulator.dying, clone)
-        self:_absorb(occupant, clone, front.dx, front.dy)
-    else
-        grid:set(front.x, front.y, clone)
-    end
+    self:_spawn(clone, front, origin)
 
     return true
+end
+
+function Movement:release(x, y, dx, dy, cell)
+    self.top = 0
+    local front = self:_route(x, y, dx, dy)
+    if not front then return false end
+
+    local chain = self:_line(front.x, front.y, front.dx, front.dy, constants.force.generate)
+    if not chain then return false end
+
+    if #chain > 0 then self:_shift(chain, true) end
+    cell:rotate(front.turn)
+    self:_spawn(cell, front, { x, y })
+    return true
+end
+
+function Movement:defer(action)
+    self.queue[#self.queue + 1] = action
+end
+
+function Movement:flush()
+    for _ = 1, constants.simulator.flushes do
+        local queue = self.queue
+        if #queue == 0 then return end
+
+        self.queue = {}
+        for _, action in ipairs(queue) do
+            action()
+        end
+    end
 end
 
 return Movement

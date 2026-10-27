@@ -271,12 +271,13 @@ end
 function Editor:_edit(gx, gy)
     local cell = self.simulator.grid:get(gx, gy)
     local class = cell and getmetatable(cell)
-    if not (class and #class.properties > 0) then return false end
+    local fields = class and Properties.specs(class.properties, cell.props)
+    if not (fields and #fields > 0) then return false end
 
     self.prompt:open({
         title = class.title,
         icon = class.texture,
-        fields = Properties.specs(class.properties, cell.props),
+        fields = fields,
         onConfirm = function(_, props)
             self:setCell(gx, gy, { class = class, rotation = cell.rotation, props = props })
             self:commit()
