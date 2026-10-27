@@ -221,6 +221,7 @@ Call these from your own methods, usually from `update`. Where `dx` and `dy` are
 | [`push`](#basecellpushdx-dy-force) | pushes the cell one tile, moving whatever is in the way |
 | [`pull`](#basecellpulldx-dy-force) | moves the cell one tile and drags the cells behind it |
 | [`nudge`](#basecellnudgedx-dy) | moves the cell one tile without pushing |
+| [`swap`](#basecellswapax-ay-bx-by) | swaps the cells at two offsets from this one |
 | [`generate`](#basecellgeneratedirection-options) | copies the cell behind this one into the tile in front |
 | [`rotate`](#basecellrotateamount) | rotates the cell |
 | [`rotateNeighbors`](#basecellrotateneighborsamount-predicate) | rotates the four adjacent cells |
@@ -295,6 +296,26 @@ Moves the cell one tile without pushing. Fails if the tile is occupied.
 ```lua
 function Nudger:update()
     self:nudge()
+end
+```
+
+### `BaseCell:swap(ax, ay, bx, by)`
+
+Swaps the cells at two offsets from this one. A cell that cannot be pushed the way it would move stops the swap, and a cell that [eats](#basecelleatsdx-dy) the other one deletes it instead of moving. Diagonal swaps need the cell to be pushable along both axes.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `ax` | `number` | horizontal offset of the first cell |
+| `ay` | `number` | vertical offset of the first cell |
+| `bx` | `number` | horizontal offset of the second cell |
+| `by` | `number` | vertical offset of the second cell |
+
+**Returns** `boolean`, true if a cell moved.
+
+```lua
+-- swaps the cells on the left and right
+function Swapper:update()
+    self:swap(-1, 0, 1, 0)
 end
 ```
 

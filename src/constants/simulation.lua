@@ -8,6 +8,12 @@ return {
 
     simulator = {
         passes = { 0, 2, 3, 1 },
+        axes = {
+            [0] = 0,   -- horizontal
+            [2] = 1.5, -- diagonal
+            [3] = 0.5, -- diagonal
+            [1] = 1    -- vertical
+        },
         scan = 3,
         hops = 100,
         subticks = 4,

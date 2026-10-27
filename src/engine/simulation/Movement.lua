@@ -1,4 +1,5 @@
 local constants = require("src/constants")
+local utils = require("src/utils")
 
 local none = {}
 
@@ -23,6 +24,10 @@ local function extend(cell, move, own)
     end
 
     if own then cell.own = (cell.own or 0) + #move.via + 1 end
+end
+
+local function movable(cell, dx, dy)
+    return (dx == 0 or cell:pushable(dx, 0)) and (dy == 0 or cell:pushable(0, dy))
 end
 
 local Movement = {}
@@ -135,6 +140,13 @@ function Movement:_line(x, y, dx, dy, force, chain)
 
         x, y, dx, dy, cell = nx, ny, ndx, ndy, target
     end
+end
+
+function Movement:_carry(cell, x, y, dx, dy)
+    local move = self:_take()
+    move.cell, move.x, move.y, move.dx, move.dy = cell, x, y, dx, dy
+    move.turn, move.via = 0, none
+    return move
 end
 
 function Movement:_trail(chain, x, y, dx, dy, force)
@@ -283,6 +295,26 @@ function Movement:advance(x, y, dx, dy)
     self:_trail(chain, x, y, dx, dy, pull)
     self:_drive(chain, "push")
     self:_shift(chain)
+    return true
+end
+
+function Movement:swap(ax, ay, bx, by)
+    local grid = self.grid
+    if not (grid:bounds(ax, ay) and grid:bounds(bx, by)) then return false end
+
+    local a, b = grid:get(ax, ay), grid:get(bx, by)
+    local dx, dy = utils.sign(bx - ax), utils.sign(by - ay)
+    if not (a or b) or a and not movable(a, dx, dy) or b and not movable(b, -dx, -dy) then return false end
+
+    local aEats = a and b and a:eats(-dx, -dy)
+    local bEats = a and b and not aEats and b:eats(dx, dy)
+
+    self.top = 0
+    local chain = {}
+    if a and not aEats then chain[#chain + 1] = self:_carry(a, bx, by, dx, dy) end
+    if b and not bEats then chain[#chain + 1] = self:_carry(b, ax, ay, -dx, -dy) end
+
+    self:_shift(chain, true)
     return true
 end
 

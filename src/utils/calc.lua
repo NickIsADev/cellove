@@ -8,6 +8,10 @@ function calc.clamp(value, min, max)
     return math.max(min, math.min(max, value))
 end
 
+function calc.sign(value)
+    return value > 0 and 1 or value < 0 and -1 or 0
+end
+
 function calc.turn(dx, dy, amount)
     for _ = 1, amount % 4 do
         dx, dy = -dy, dx

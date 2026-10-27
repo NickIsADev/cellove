@@ -89,6 +89,10 @@ function BaseCell:advance(dx, dy)
     return self.simulator.movement:advance(self.x, self.y, dx, dy)
 end
 
+function BaseCell:swap(ax, ay, bx, by)
+    return self.simulator.movement:swap(self.x + ax, self.y + ay, self.x + bx, self.y + by)
+end
+
 function BaseCell:rotate(amount)
     self.turn = (self.turn or 0) + (amount + 2) % 4 - 2
     self.rotation = (self.rotation + amount) % 4

@@ -43,6 +43,11 @@ return {
                 icon = "displacer"
             },
             {
+                id = "mirrors",
+                title = "Mirrors",
+                icon = "mirror"
+            },
+            {
                 id = "rotators",
                 title = "Rotators",
                 icon = "rotator_cw"
