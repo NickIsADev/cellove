@@ -16,6 +16,7 @@ function Simulator.new(data)
     local self = setmetatable({}, Simulator)
     self.maxSubticks = data.subticks or constants.simulator.subticks
     self.rear = data.rear or {}
+    self.sweeps = data.sweeps or {}
     self.grid = Grid.new(data)
     self.movement = Movement.new({ simulator = self })
     self.interval = data.interval or constants.simulator.interval
@@ -71,7 +72,30 @@ function Simulator:_sync()
     self.grid.touched = {}
 end
 
+function Simulator:_sweep(subtick, direction, sweep)
+    local grid = self.grid
+    local rows = grid:lines(subtick, "rows")
+    if direction ~= constants.simulator.scan or not rows then return end
+
+    local cells, width = grid.cells, grid.width
+    local yFrom, yTo, yStep = range(grid.height, sweep.y, true)
+    local xFrom, xTo, xStep = range(width, sweep.x, true)
+
+    for y = yFrom, yTo, yStep do
+        if (rows[y] or 0) > 0 then
+            local base = (y - 1) * width
+            for x = xFrom, xTo, xStep do
+                local cell = cells[base + x]
+                if cell then self:_run(cell, subtick, direction) end
+            end
+        end
+    end
+end
+
 function Simulator:_scan(subtick, direction)
+    local sweep = self.sweeps[subtick]
+    if sweep then return self:_sweep(subtick, direction, sweep) end
+
     local grid = self.grid
     local facing = constants.directions[direction]
     local horizontal = facing[1] ~= 0

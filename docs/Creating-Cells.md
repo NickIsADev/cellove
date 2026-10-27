@@ -103,7 +103,7 @@ end
 ```lua
 local Mover = setmetatable({
     name = "mover",
-    subtick = { 3 },
+    subtick = { 4 },
     drive = { push = true, pull = true },
     directional = true
 }, { __index = BaseCell })

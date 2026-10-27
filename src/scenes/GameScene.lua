@@ -21,8 +21,8 @@ function GameScene.new(data)
     self.toast = Toast.new(data.renderer)
     self.markers = Markers.new()
 
-    local subticks, rear = data.registry:subticks()
-    self.simulator = Simulator.new({ subticks = subticks, rear = rear })
+    local subticks, rear, sweeps = data.registry:subticks()
+    self.simulator = Simulator.new({ subticks = subticks, rear = rear, sweeps = sweeps })
     self.editor = Editor.new({
         simulator = self.simulator,
         renderer = self.renderer,

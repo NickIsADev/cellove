@@ -53,6 +53,11 @@ return {
                 icon = "redirector"
             },
             {
+                id = "gears",
+                title = "Gears",
+                icon = "gear_cw"
+            },
+            {
                 id = "rotators",
                 title = "Rotators",
                 icon = "rotator_cw"

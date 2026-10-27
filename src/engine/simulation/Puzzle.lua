@@ -6,8 +6,8 @@ Puzzle.__index = Puzzle
 
 function Puzzle.new(data)
     local self = setmetatable({}, Puzzle)
-    local subticks, rear = data.registry:subticks()
-    self.simulator = Simulator.new({ subticks = subticks, rear = rear })
+    local subticks, rear, sweeps = data.registry:subticks()
+    self.simulator = Simulator.new({ subticks = subticks, rear = rear, sweeps = sweeps })
     self.markers = Markers.new()
 
     data.settings:listen("tickSpeed", function(tickSpeed)

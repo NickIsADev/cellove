@@ -223,6 +223,22 @@ function Movement:_shift(chain, silent)
     end
 end
 
+function Movement:_pair(chain, ax, ay, bx, by)
+    local grid = self.grid
+    if not (grid:bounds(ax, ay) and grid:bounds(bx, by)) then return false end
+
+    local a, b = grid:get(ax, ay), grid:get(bx, by)
+    local dx, dy = utils.sign(bx - ax), utils.sign(by - ay)
+    if a and not movable(a, dx, dy) or b and not movable(b, -dx, -dy) then return false end
+
+    local aEats = a and b and a:eats(-dx, -dy)
+    local bEats = a and b and not aEats and b:eats(dx, dy)
+
+    if a and not aEats then chain[#chain + 1] = self:_carry(a, bx, by, dx, dy) end
+    if b and not bEats then chain[#chain + 1] = self:_carry(b, ax, ay, -dx, -dy) end
+    return true
+end
+
 function Movement:nudge(x, y, dx, dy)
     local nudger = self.grid:get(x, y)
     if not nudger then return false end
@@ -299,20 +315,43 @@ function Movement:advance(x, y, dx, dy)
 end
 
 function Movement:swap(ax, ay, bx, by)
-    local grid = self.grid
-    if not (grid:bounds(ax, ay) and grid:bounds(bx, by)) then return false end
-
-    local a, b = grid:get(ax, ay), grid:get(bx, by)
-    local dx, dy = utils.sign(bx - ax), utils.sign(by - ay)
-    if not (a or b) or a and not movable(a, dx, dy) or b and not movable(b, -dx, -dy) then return false end
-
-    local aEats = a and b and a:eats(-dx, -dy)
-    local bEats = a and b and not aEats and b:eats(dx, dy)
-
     self.top = 0
     local chain = {}
-    if a and not aEats then chain[#chain + 1] = self:_carry(a, bx, by, dx, dy) end
-    if b and not bEats then chain[#chain + 1] = self:_carry(b, ax, ay, -dx, -dy) end
+    if not self:_pair(chain, ax, ay, bx, by) or #chain == 0 then return false end
+
+    self:_shift(chain, true)
+    return true
+end
+
+function Movement:exchange(pairs)
+    self.top = 0
+    local chain = {}
+
+    for _, pair in ipairs(pairs) do
+        if not self:_pair(chain, unpack(pair)) then return false end
+    end
+
+    self:_shift(chain, true)
+    return true
+end
+
+function Movement:cycle(points, forced)
+    local grid = self.grid
+    local chain = {}
+    self.top = 0
+
+    for i, from in ipairs(points) do
+        if not grid:bounds(from[1], from[2]) then return false end
+
+        local cell = grid:get(from[1], from[2])
+        if cell then
+            local to = points[i % #points + 1]
+            local dx, dy = utils.sign(to[1] - from[1]), utils.sign(to[2] - from[2])
+            if not (forced or movable(cell, dx, dy)) then return false end
+
+            chain[#chain + 1] = self:_carry(cell, to[1], to[2], dx, dy)
+        end
+    end
 
     self:_shift(chain, true)
     return true

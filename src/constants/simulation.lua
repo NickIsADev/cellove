@@ -6,6 +6,20 @@ return {
         [3] = {0, -1}  -- up
     },
 
+    ring = {
+        { 1, 0 }, { 1, 1 }, { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }, { 0, -1 }, { 1, -1 }
+    },
+
+    flip = {
+        reflections = {
+            [0] = { 1, 0, 0, -1 },
+            [1] = { 0, 1, 1, 0 },
+            [2] = { -1, 0, 0, 1 },
+            [3] = { 0, -1, -1, 0 }
+        },
+        shift = { straight = 2, diagonal = 3 }
+    },
+
     simulator = {
         passes = { 0, 2, 3, 1 },
         axes = {
@@ -15,6 +29,9 @@ return {
             [1] = 1    -- vertical
         },
         scan = 3,
+        sweeps = {
+            leftup = { x = -1, y = -1 }
+        },
         hops = 100,
         subticks = 4,
         interval = 0.2

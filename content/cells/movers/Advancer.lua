@@ -7,7 +7,7 @@ local Advancer = setmetatable({
     title = "Advancer",
     description = "Moves forward every tick, pushing whatever is in front of it and pulling everything behind it.",
     categories = { "movers", "pullers" },
-    subtick = { 3 },
+    subtick = { 4 },
     drive = { push = true, pull = true },
     directional = true
 }, { __index = BaseCell })

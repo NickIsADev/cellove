@@ -45,6 +45,8 @@ function Registry:_register(class, namespace, source)
     class.categories = resolved
     rawset(class, "category", resolved[1])
 
+    if class.setup then class:setup() end
+
     class.lookup = {
         subtick = utils.set(class.subtick),
         outputs = utils.set(class.outputs),
@@ -87,15 +89,16 @@ function Registry:list()
 end
 
 function Registry:subticks()
-    local count, rear = 1, {}
+    local count, rear, sweeps = 1, {}, {}
 
     for _, class in pairs(self.cells) do
         for _, subtick in ipairs(class.subtick) do
             count = math.max(count, subtick + 1)
             rear[subtick] = rear[subtick] or class.rear
+            sweeps[subtick] = sweeps[subtick] or class.sweep
         end
     end
-    return count, rear
+    return count, rear, sweeps
 end
 
 return Registry

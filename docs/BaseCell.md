@@ -38,7 +38,7 @@ local Mover = setmetatable({
     title = "Mover",
     description = "Moves forward every tick.",
     categories = { "movers" },
-    subtick = { 3 },
+    subtick = { 4 },
     drive = { push = true, pull = true },
     directional = true
 }, { __index = BaseCell })
