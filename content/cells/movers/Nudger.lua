@@ -8,8 +8,7 @@ local Nudger = setmetatable({
     categories = { "movers" },
     subtick = { 5 },
     drive = { push = true, pull = true },
-    directional = true,
-    rear = false
+    directional = true
 }, { __index = BaseCell })
 Nudger.__index = Nudger
 
