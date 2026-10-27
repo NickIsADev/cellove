@@ -66,6 +66,21 @@ function Grid:surrounding(x, y, distance, callback)
     self:_around(x, y, distance, false, callback)
 end
 
+function Grid:flood(x, y, accept)
+    local seen, points = { [self:_index(x, y)] = true }, { { x, y } }
+
+    for _, point in ipairs(points) do
+        self:neighbors(point[1], point[2], 1, function(cell, nx, ny)
+            local index = self:_index(nx, ny)
+            if seen[index] or not accept(cell, nx, ny) then return end
+
+            seen[index] = true
+            points[#points + 1] = { nx, ny }
+        end)
+    end
+    return points
+end
+
 function Grid:lines(subtick, axis)
     local count = self.counts[subtick]
     return count and count[axis]

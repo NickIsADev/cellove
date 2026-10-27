@@ -30,19 +30,9 @@ function Bucket:press(gx, gy, button)
         props = editor.properties:values(editor.selected)
     } or nil
 
-    local seen, stack = { [gy * grid.width + gx] = true }, { { gx, gy } }
-    local function visit(cell, x, y)
-        local index = y * grid.width + x
-        if seen[index] or not matches(cell, origin) then return end
-
-        seen[index] = true
-        stack[#stack + 1] = { x, y }
-    end
-
-    while #stack > 0 do
-        local point = table.remove(stack)
+    local area = grid:flood(gx, gy, function(cell) return matches(cell, origin) end)
+    for _, point in ipairs(area) do
         editor:setCell(point[1], point[2], state)
-        grid:neighbors(point[1], point[2], 1, visit)
     end
     return false
 end

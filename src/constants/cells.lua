@@ -48,6 +48,11 @@ return {
                 icon = "mirror"
             },
             {
+                id = "redirectors",
+                title = "Redirectors",
+                icon = "redirector"
+            },
+            {
                 id = "rotators",
                 title = "Rotators",
                 icon = "rotator_cw"
