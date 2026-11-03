@@ -15,7 +15,7 @@ MetaGeneratable.__index = MetaGeneratable
 
 function MetaGeneratable:generated()
     local remaining = self.props.layers - 1
-    if remaining == 0 then return Ungeneratable end
+    if remaining == 0 then return self.props.stored end
     return getmetatable(self), { layers = remaining }
 end
 
