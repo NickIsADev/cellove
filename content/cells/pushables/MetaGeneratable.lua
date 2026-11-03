@@ -13,4 +13,10 @@ local MetaGeneratable = setmetatable({
 }, { __index = BaseHolder })
 MetaGeneratable.__index = MetaGeneratable
 
+function MetaGeneratable:generated()
+    local remaining = self.props.layers - 1
+    if remaining == 0 then return Ungeneratable end
+    return getmetatable(self), { layers = remaining }
+end
+
 return MetaGeneratable
