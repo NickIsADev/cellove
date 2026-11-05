@@ -4,12 +4,10 @@ local DirectionalCreator = setmetatable({
     name = "directionalcreator",
     k3 = 427,
     title = "Directional Creator",
-    description = "Like an unbreakable Directional Tetramaker."
+    description = "Like an unbreakable Directional Tetramaker.",
+    fixed = true,
+    anchored = true
 }, { __index = DirectionalTetramaker })
 DirectionalCreator.__index = DirectionalCreator
-
-function DirectionalCreator:transformable()
-    return false
-end
 
 return DirectionalCreator

@@ -5,7 +5,7 @@ local Bimaker = setmetatable({
     k3 = 528,
     title = "Bimaker",
     description = "2 opposite-sided Makers.",
-    outputs = { 1, 3 }
+    outputs = { 0, 2 }
 }, { __index = Maker })
 Bimaker.__index = Bimaker
 

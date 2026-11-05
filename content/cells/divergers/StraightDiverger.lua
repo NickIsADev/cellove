@@ -5,6 +5,7 @@ local StraightDiverger = setmetatable({
     k3 = 38,
     title = "Straight Diverger",
     description = "Lets cells pass straight through along its axis.",
+    faces = { 0, 2 },
     routes = { [0] = 0, [2] = 0 }
 }, { __index = BaseDiverger })
 StraightDiverger.__index = StraightDiverger

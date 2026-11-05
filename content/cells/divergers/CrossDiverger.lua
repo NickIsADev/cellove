@@ -5,6 +5,7 @@ local CrossDiverger = setmetatable({
     k3 = 39,
     title = "Cross Diverger",
     description = "Lets cells pass straight through in every direction.",
+    faces = {},
     routes = {
         [0] = 0,
         [1] = 0,

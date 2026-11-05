@@ -71,7 +71,7 @@ end
 
 function K3:decode(text)
     local width, height, body = text:match("^" .. config.prefix .. "[^;]*;([^;]*);([^;]*);(.*)$")
-    local data = body and (body:match("^.;([^;]*)") or body:match("^.:[^;]*;([^;]*)"))
+    local border, data = (body or ""):match("^(.):?[^;]*;([^;]*)")
     if not data then return end
 
     width, height = number(width), number(height)
@@ -124,6 +124,7 @@ function K3:decode(text)
     return {
         width = width,
         height = height,
+        border = self.classes[config.borders[number(border)] or config.borders[0]],
         cells = cells,
         markers = markers
     }

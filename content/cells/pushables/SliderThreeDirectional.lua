@@ -4,7 +4,8 @@ local SliderThreeDirectional = setmetatable({
     name = "slider_threedirectional",
     k3 = 8,
     title = "Three-Directional Slider",
-    description = "Can only be pushed from behind and from its sides."
+    description = "Can only be pushed from behind and from its sides.",
+    faces = { 0 }
 }, { __index = Slider })
 SliderThreeDirectional.__index = SliderThreeDirectional
 

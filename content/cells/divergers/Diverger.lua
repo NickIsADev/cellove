@@ -5,6 +5,7 @@ local Diverger = setmetatable({
     k3 = 16,
     title = "Diverger",
     description = "Turns cells entering from the side out through its arrow.",
+    faces = { 0, 1 },
     routes = { [0] = -1, [1] = 1 }
 }, { __index = BaseDiverger })
 Diverger.__index = Diverger

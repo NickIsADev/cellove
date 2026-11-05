@@ -5,19 +5,10 @@ local Wall = setmetatable({
     k3 = 1,
     title = "Wall",
     description = "Cannot be pushed, rotated, or destroyed.",
-    categories = { "walls" }
+    categories = { "walls" },
+    fixed = true,
+    anchored = true
 }, { __index = BaseCell })
 Wall.__index = Wall
-
-function Wall:pushable()
-    return false
-end
-
-function Wall:transformable()
-    return false
-end
-
-function Wall:rotate()
-end
 
 return Wall

@@ -4,7 +4,8 @@ local Redirector = setmetatable({
     name = "redirector",
     k3 = 17,
     title = "Redirector",
-    description = "Turns adjacent cells to face the same direction as it every tick. Ignores other redirectors."
+    description = "Turns adjacent cells to face the same direction as it every tick. Ignores other redirectors.",
+    faces = { 0 }
 }, { __index = BaseRedirector })
 Redirector.__index = Redirector
 

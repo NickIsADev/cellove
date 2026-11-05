@@ -5,6 +5,7 @@ local TricurvedMirror = setmetatable({
     k3 = 657,
     title = "Tricurved Mirror",
     description = "Two Curved Mirrors and a Diagonal Mirror in one.",
+    subtick = { 3, 4 },
     swaps = {
         { 0, 1 },
         { 2, 3 },
@@ -12,5 +13,9 @@ local TricurvedMirror = setmetatable({
     }
 }, { __index = BaseMirror })
 TricurvedMirror.__index = TricurvedMirror
+
+function TricurvedMirror:mirrors(dx, dy)
+    return (dx == 0 or dy == 0) and BaseMirror.mirrors(self, dx, dy)
+end
 
 return TricurvedMirror

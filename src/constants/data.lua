@@ -52,6 +52,7 @@ return {
 
     k3 = {
         prefix = "K3",
+        borders = { [0] = 1, 41, 12 },
         alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!$%&+-.=?^{}/#_*':,@~|",
         markers = {
             [117] = "x",

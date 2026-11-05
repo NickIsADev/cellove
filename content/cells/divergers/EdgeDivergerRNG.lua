@@ -5,6 +5,7 @@ local EdgeDivergerRNG = setmetatable({
     k3 = 982,
     title = "Edge Diverger (RNG)",
     description = "Diverger (RNG), but cells entering its front pass straight through.",
+    faces = {},
     routes = {
         [0] = 0,
         [1] = { -1, 0 },

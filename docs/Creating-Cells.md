@@ -5,6 +5,7 @@ Every `.lua` file in a mod's `cells` folder is registered as a cell. Folders nam
 - [A minimal cell](#a-minimal-cell)
 - [Categories](#categories)
 - [Properties](#properties)
+- [Subticks](#subticks)
 - [Common patterns](#common-patterns)
 - [Inheriting](#inheriting)
 - [Talking to other cells](#talking-to-other-cells)
@@ -21,7 +22,7 @@ local Eraser = setmetatable({
     title = "Eraser",
     description = "Deletes the cells around it every tick.",
     categories = { "machines" },
-    subtick = { 1 }
+    subtick = { 9 }
 }, { __index = BaseCell })
 Eraser.__index = Eraser
 
@@ -34,7 +35,7 @@ end
 return Eraser
 ```
 
-This registers `mymod:eraser`. It updates in subtick `1` and removes whatever is on the four tiles around it.
+This registers `mymod:eraser`. It updates in subtick `9` and removes whatever is on the four tiles around it.
 
 > [!TIP]
 > Everything a cell can define is listed on the [BaseCell](BaseCell) page.
@@ -79,6 +80,23 @@ function Eraser:update()
 end
 ```
 
+## Subticks
+
+A tick runs its subticks in ascending order, and a cell's `update` runs in the subticks listed in its `subtick`. Only the order matters, so use any number: `20.5` runs after movers and before nudgers without renumbering anything. These are the ones the built-in cells use.
+
+| subtick | cells |
+| --- | --- |
+| `0` | true gears |
+| `1` | midas |
+| `2`, `3`, `4` | super mirrors, mirrors, curved mirrors |
+| `5`, `6`, `7`, `8` | memory generators, generators, memory replicators, makers |
+| `9`, `10` | rotators, the spin of rotator movers |
+| `11` | flip gears |
+| `12`, `13`, `14`, `15` | gears, counter-clockwise gears, half gears, random gears |
+| `16`, `17` | super redirectors, redirectors |
+| `18`, `19`, `20`, `21` | repulsors, pullers and advancers, movers, nudgers |
+| `22`, `23` | gates, storages |
+
 ## Common patterns
 
 Most cells override one or two methods. These are the usual ones, taken from the built-in cells.
@@ -90,6 +108,9 @@ Most cells override one or two methods. These are the usual ones, taken from the
 | deletes what moves into it | `eats` |
 | can only be pushed in some directions | `pushable` |
 | helps or resists pushes | `force` |
+| looks different when flipped | `twin`, or `faces` when only the rotation changes |
+| reacts to being swapped by a mirror | `swapped` |
+| must run row by row, like gears | `sweep` |
 
 **Deletes cells that move into it**, like Trash:
 
@@ -104,7 +125,7 @@ end
 ```lua
 local Mover = setmetatable({
     name = "mover",
-    subtick = { 4 },
+    subtick = { 20 },
     drive = { push = true, pull = true },
     directional = true
 }, { __index = BaseCell })

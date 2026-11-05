@@ -8,8 +8,12 @@ local TrashDiodeDiverger = setmetatable({
 }, { __index = DiodeDiverger })
 TrashDiodeDiverger.__index = TrashDiodeDiverger
 
+function TrashDiodeDiverger:swappable(dx, dy)
+    return not self:eats(-dx, -dy)
+end
+
 function TrashDiodeDiverger:eats(dx, dy)
-    return self:_entry(dx, dy) == 0
+    return (dx == 0 or dy == 0) and self:_entry(dx, dy) == 0
 end
 
 return TrashDiodeDiverger

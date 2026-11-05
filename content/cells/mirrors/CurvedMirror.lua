@@ -5,6 +5,7 @@ local CurvedMirror = setmetatable({
     k3 = 629,
     title = "Curved Mirror",
     description = "Swaps the cells on two adjacent sides.",
+    subtick = { 4 },
     swaps = { { 0, 1 } }
 }, { __index = BaseMirror })
 CurvedMirror.__index = CurvedMirror

@@ -5,7 +5,9 @@ local Settlestorage = setmetatable({
     k3 = 1150,
     title = "Settlestorage",
     description = "Stores the first cell that moves into it. Turns into it after a tick where it doesn't move.",
-    subtick = { 6 },
+    faces = {},
+    subtick = { 23 },
+    sweep = { x = 1, y = -1 },
     moves = false
 }, { __index = BaseHolder })
 Settlestorage.__index = Settlestorage
@@ -19,9 +21,14 @@ function Settlestorage:absorb(cell)
     self.fed = self.simulator.time.tick
 end
 
+function Settlestorage:swapped()
+    if not self:held() then self:absorb(self) end
+end
+
 function Settlestorage:update()
-    local moved = self.path ~= nil
-    if self:held() and moved == getmetatable(self).moves and self.fed ~= self.simulator.time.tick then self:_become() end
+    local origin = self.path and self.path[1]
+    local moved = origin ~= nil and (origin[1] ~= self.x or origin[2] ~= self.y)
+    if self:held() and moved == self.moves and self.fed ~= self.simulator.time.tick then self:_become() end
 end
 
 return Settlestorage

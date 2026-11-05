@@ -27,7 +27,7 @@ function Grid:_coordinates(index)
 end
 
 function Grid:_count(cell, x, y, amount)
-    for _, subtick in ipairs(getmetatable(cell).subtick) do
+    for _, subtick in ipairs(cell.subtick) do
         local count = self.counts[subtick] or { rows = {}, cols = {} }
 
         tally(count.rows, y, amount)
@@ -54,7 +54,7 @@ function Grid:bounds(x, y)
 end
 
 function Grid:get(x, y)
-    if not self:bounds(x, y) then return end
+    if not self:bounds(x, y) then return self.edge end
     return self.cells[self:_index(x, y)]
 end
 
@@ -110,10 +110,11 @@ function Grid:set(x, y, cell)
     return true
 end
 
-function Grid:resize(width, height)
+function Grid:resize(width, height, border)
     self:clear()
     self.width = width
     self.height = height
+    self.edge = border and border:new()
 end
 
 function Grid:reshape(width, height)

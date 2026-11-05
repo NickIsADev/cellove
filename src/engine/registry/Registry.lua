@@ -9,6 +9,12 @@ for _, category in ipairs(config.categories) do
     categories[category.id] = true
 end
 
+local function sweepOf(class, subtick)
+    local sweep = class.sweep
+    if not sweep then return end
+    return sweep.x and { [constants.simulator.scan] = sweep } or sweep[subtick]
+end
+
 local Registry = {}
 Registry.__index = Registry
 
@@ -23,7 +29,18 @@ function Registry.new(data)
             self:_register(class, mod.id, mod.id .. " cell " .. tostring(class.name))
         end
     end)
+
+    self:_twin()
     return self
+end
+
+function Registry:_twin()
+    for _, class in pairs(self.cells) do
+        local twin = rawget(class, "twin")
+            or class.id:match("_ccw$") and class.name:gsub("_ccw$", "_cw")
+            or class.id:match("_cw$") and class.name:gsub("_cw$", "_ccw")
+        rawset(class, "flipped", twin and self.cells[(class.id:gsub("[^:]+$", twin))] or false)
+    end
 end
 
 function Registry:_register(class, namespace, source)
@@ -89,16 +106,20 @@ function Registry:list()
 end
 
 function Registry:subticks()
-    local count, rear, sweeps = 1, {}, {}
+    local order, seen, rear, sweeps = {}, {}, {}, {}
 
     for _, class in pairs(self.cells) do
         for _, subtick in ipairs(class.subtick) do
-            count = math.max(count, subtick + 1)
+            if not seen[subtick] then
+                seen[subtick] = true
+                order[#order + 1] = subtick
+            end
             rear[subtick] = rear[subtick] or class.rear
-            sweeps[subtick] = sweeps[subtick] or class.sweep
+            sweeps[subtick] = sweeps[subtick] or sweepOf(class, subtick)
         end
     end
-    return count, rear, sweeps
+    table.sort(order)
+    return #order > 0 and order or { 0 }, rear, sweeps
 end
 
 return Registry

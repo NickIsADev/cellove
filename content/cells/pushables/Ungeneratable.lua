@@ -8,8 +8,7 @@ local Ungeneratable = setmetatable({
 }, { __index = Pushable })
 Ungeneratable.__index = Ungeneratable
 
-function Ungeneratable:generatable()
-    return false
+function Ungeneratable:generated()
 end
 
 return Ungeneratable

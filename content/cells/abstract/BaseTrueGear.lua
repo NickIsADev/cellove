@@ -1,12 +1,12 @@
 local BaseGear = require("content/cells/abstract/BaseGear")
 
 local BaseTrueGear = setmetatable({
-    forced = true
+    subtick = { 0 },
+    sweep = { x = 1, y = 1 },
+    forced = true,
+    fixed = true,
+    anchored = true
 }, { __index = BaseGear })
 BaseTrueGear.__index = BaseTrueGear
-
-function BaseTrueGear:pushable()
-    return false
-end
 
 return BaseTrueGear

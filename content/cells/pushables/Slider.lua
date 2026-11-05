@@ -5,6 +5,7 @@ local Slider = setmetatable({
     k3 = 5,
     title = "Slider",
     description = "Can only be pushed along its own axis, not sideways.",
+    faces = { 0, 2 },
     categories = { "pushables" }
 }, { __index = BaseCell })
 Slider.__index = Slider

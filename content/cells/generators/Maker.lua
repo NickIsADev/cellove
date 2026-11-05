@@ -9,14 +9,14 @@ local Maker = setmetatable({
     title = "Maker",
     description = "Creates cells of any type. (Click to insert cell)",
     categories = { "generators" },
-    subtick = { 0 },
+    subtick = { 8 },
     directional = true,
     fit = stored.maker
 }, { __index = BaseHolder })
 Maker.__index = Maker
 
 function Maker:update(_, direction)
-    if self:held() then self:_release(direction) end
+    if self:held() then self:_release(direction, "keep") end
 end
 
 return Maker

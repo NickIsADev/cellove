@@ -5,6 +5,7 @@ local Pushable = setmetatable({
     k3 = 4,
     title = "Pushable",
     description = "Does nothing on its own, but can be pushed in any direction.",
+    faces = {},
     categories = { "pushables" }
 }, { __index = BaseCell })
 Pushable.__index = Pushable

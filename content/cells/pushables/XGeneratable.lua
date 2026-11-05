@@ -1,5 +1,6 @@
 local BaseCell = require("content/cells/abstract/BaseCell")
 local Pushable = require("content/cells/pushables/Pushable")
+local Monogeneratable = require("content/cells/pushables/Monogeneratable")
 local Ungeneratable = require("content/cells/pushables/Ungeneratable")
 
 local XGeneratable = setmetatable({
@@ -16,6 +17,7 @@ XGeneratable.__index = XGeneratable
 function XGeneratable:generated()
     local remaining = self.props.layers - 1
     if remaining == 0 then return Ungeneratable end
+    if remaining == 1 then return Monogeneratable end
     return getmetatable(self), { layers = remaining }
 end
 
