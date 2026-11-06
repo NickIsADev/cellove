@@ -6,6 +6,7 @@ return {
         margin = 12,
         top = 72,
         pad = 8,
+        gap = 8,
         alpha = 0.85,
         colors = {
             warn = 0xFFD84D,
@@ -107,6 +108,12 @@ return {
             }
         },
         text = {
+            titles = {
+                performance = "performance",
+                game = "game",
+                system = "system",
+                audio = "audio"
+            },
             fps = "fps: %d  frame: %.1f ms  worst: %.1f ms",
             memory = "lua memory: %.2f MB",
             draw = "draw calls: %d (batched %d)  canvas switches: %d",
