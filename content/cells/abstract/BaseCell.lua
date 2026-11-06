@@ -56,6 +56,10 @@ function BaseCell:swappable(dx, dy)
     return not self.fixed
 end
 
+function BaseCell:rotatable(amount)
+    return not self.fixed
+end
+
 function BaseCell:eats(dx, dy)
     return false
 end
@@ -112,6 +116,7 @@ end
 
 function BaseCell:rotate(amount, forced)
     if self.anchored and not forced then return false end
+    if not self:rotatable(amount) and not forced then return false end
 
     self.turn = (self.turn or 0) + (amount + 2) % 4 - 2
     self.rotation = (self.rotation + amount) % 4
