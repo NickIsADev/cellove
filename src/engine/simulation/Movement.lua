@@ -473,13 +473,13 @@ function Movement:generate(x, y, dx, dy, options)
 
     if #chain > 0 then self:_shift(chain, true) end
 
-    local class, props = source:generated()
+    local class, props, rotation = source:generated()
     if not class then return true end
 
     local origin = generator.path and generator.path[1] or { x, y }
     local turn = back.turn + front.turn + (options.turn or 0)
 
-    local clone = class:new({ rotation = source.rotation, props = props })
+    local clone = class:new({ rotation = rotation or source.rotation, props = props })
     clone:rotate(turn, true)
     clone.updated = source.updated
     clone.ran = source.ran
