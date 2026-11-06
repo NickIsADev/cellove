@@ -4,7 +4,8 @@ local Arrow = setmetatable({
     name = "arrow",
     title = "Arrow",
     description = "Pushable that cannot be rotated by other cells.",
-    categories = { "pushables" }
+    categories = { "pushables" },
+    faces = { 0 }
 }, { __index = BaseCell })
 Arrow.__index = Arrow
 
@@ -12,4 +13,4 @@ function Arrow:rotatable()
     return false
 end
 
-return Slider
+return Arrow
