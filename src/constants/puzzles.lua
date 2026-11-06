@@ -54,8 +54,7 @@ return {
             margin = 16,
             gap = 6,
             width = 480
-        },
-        held = { alpha = 0.85 }
+        }
     },
 
     victory = {
