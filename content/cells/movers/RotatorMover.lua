@@ -6,7 +6,7 @@ local RotatorMover = setmetatable({
     title = "Rotator Mover",
     description = "Rotates the cell in front of it clockwise and the cell behind it counterclockwise, then pushes forward.",
     categories = { "movers", "rotators" },
-    subtick = { 1, 4 }
+    subtick = { 11, 21 }
 }, { __index = Mover })
 RotatorMover.__index = RotatorMover
 
@@ -23,7 +23,7 @@ function RotatorMover:_spin()
 end
 
 function RotatorMover:update(subtick)
-    if subtick == 1 then self:_spin() else self:push() end
+    if subtick == self.subtick[1] then self:_spin() else self:push() end
 end
 
 return RotatorMover

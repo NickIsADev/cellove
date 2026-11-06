@@ -14,10 +14,12 @@ Simulator.__index = Simulator
 
 function Simulator.new(data)
     local self = setmetatable({}, Simulator)
-    self.maxSubticks = data.subticks or constants.simulator.subticks
+    self.order = data.subticks or { 0 }
+    self.maxSubticks = #self.order
     self.rear = data.rear or {}
     self.sweeps = data.sweeps or {}
     self.grid = Grid.new(data)
+    self.grid.simulator = self
     self.movement = Movement.new({ simulator = self })
     self.interval = data.interval or constants.simulator.interval
     self.profile = { sim = 0, post = 0, memory = 0, moves = 0 }
@@ -37,94 +39,62 @@ function Simulator:_rewind()
     }
 end
 
-function Simulator:_run(cell, subtick, direction)
-    local class = getmetatable(cell)
-    local lookup = class.lookup
-    if not lookup.subtick[subtick] then return end
-
-    local multi = false
-    if class.directional then
-        if not lookup.outputs[(direction - cell.rotation) % 4] then return end
-        multi = #class.outputs > 1
-    elseif direction ~= constants.simulator.scan then return end
-
-    local stamp = self.time.subtick
-    if class.drive and cell.updated == self.time.tick then return end
-
-    if multi then
-        cell.dirs = cell.dirs or {}
-        if cell.dirs[direction] == stamp then return end
-        cell.dirs[direction] = stamp
-    else
-        if cell.ran == stamp then return end
-        cell.ran = stamp
-    end
-
-    cell.simulator = self
-    cell:update(subtick, direction)
-    self.movement:flush()
-end
-
 function Simulator:_sync()
     self.dying = {}
 
     for _, cell in ipairs(self.grid.touched) do
-        cell.path, cell.own, cell.turn, cell.born, cell.grow = nil, nil, 0, nil, nil
+        cell.path, cell.own, cell.turn, cell.born, cell.grow, cell.shrink, cell.arriving = nil, nil, 0, nil, nil, nil, nil
     end
     self.grid.touched = {}
 end
 
 function Simulator:_sweep(subtick, direction, sweep)
     local grid = self.grid
-    local rows = grid:lines(subtick, "rows")
-    if direction ~= constants.simulator.scan or not rows then return end
+    local columns = sweep.columns
+    local lines = grid:lines(subtick, columns and "cols" or "rows")
+    if not lines then return end
 
     local cells, width = grid.cells, grid.width
-    local yFrom, yTo, yStep = range(grid.height, sweep.y, true)
-    local xFrom, xTo, xStep = range(width, sweep.x, true)
+    local outerFrom, outerTo, outerStep = range(columns and width or grid.height, columns and sweep.x or sweep.y, true)
+    local innerFrom, innerTo, innerStep = range(columns and grid.height or width, columns and sweep.y or sweep.x, true)
 
-    for y = yFrom, yTo, yStep do
-        if (rows[y] or 0) > 0 then
-            local base = (y - 1) * width
-            for x = xFrom, xTo, xStep do
-                local cell = cells[base + x]
-                if cell then self:_run(cell, subtick, direction) end
+    for outer = outerFrom, outerTo, outerStep do
+        if (lines[outer] or 0) > 0 then
+            for inner = innerFrom, innerTo, innerStep do
+                local x, y = inner, outer
+                if columns then x, y = outer, inner end
+
+                local cell = cells[(y - 1) * width + x]
+                if cell then self:run(cell, subtick, direction) end
             end
         end
     end
 end
 
 function Simulator:_scan(subtick, direction)
-    local sweep = self.sweeps[subtick]
-    if sweep then return self:_sweep(subtick, direction, sweep) end
+    local sweeps = self.sweeps[subtick]
+    if sweeps then
+        local sweep = sweeps[direction]
+        return sweep and self:_sweep(subtick, direction, sweep)
+    end
 
     local grid = self.grid
     local facing = constants.directions[direction]
     local horizontal = facing[1] ~= 0
 
-    local lines = grid:lines(subtick, horizontal and "rows" or "cols")
+    local lines = grid:lines(subtick, horizontal and "cols" or "rows")
     if not lines then return end
 
     local cells, width, height = grid.cells, grid.width, grid.height
-
-    local outerFrom, outerTo, outerStep, outerStride
-    local innerFrom, innerTo, innerStep, innerStride
-    if horizontal then
-        outerFrom, outerTo, outerStep, outerStride = 1, height, 1, width
-        innerFrom, innerTo, innerStep = range(width, facing[1], self.rear[subtick])
-        innerStride = 1
-    else
-        outerFrom, outerTo, outerStep, outerStride = width, 1, -1, 1
-        innerFrom, innerTo, innerStep = range(height, facing[2], self.rear[subtick])
-        innerStride = width
-    end
+    local outerFrom, outerTo, outerStep = range(horizontal and width or height, horizontal and facing[1] or facing[2], self.rear[subtick])
+    local innerFrom, innerTo, innerStep = 1, width, 1
+    if horizontal then innerFrom, innerTo, innerStep = height, 1, -1 end
 
     for outer = outerFrom, outerTo, outerStep do
         if (lines[outer] or 0) > 0 then
-            local base = outer * outerStride - width
             for inner = innerFrom, innerTo, innerStep do
-                local cell = cells[base + inner * innerStride]
-                if cell then self:_run(cell, subtick, direction) end
+                local cell = cells[horizontal and (inner - 1) * width + outer or (outer - 1) * width + inner]
+                if cell then self:run(cell, subtick, direction) end
             end
         end
     end
@@ -166,8 +136,36 @@ function Simulator:_pass()
     end
 
     time.pass = time.pass + 1
-    self:_scan((time.subtick - 1) % self.maxSubticks, passes[time.pass])
+    self:_scan(self.order[(time.subtick - 1) % self.maxSubticks + 1], passes[time.pass])
     if time.pass == #passes then time.pass = 0 end
+end
+
+function Simulator:run(cell, subtick, direction)
+    local class = getmetatable(cell)
+    local lookup = class.lookup
+    if not lookup.subtick[subtick] then return end
+
+    local multi = false
+    if class.directional then
+        if not lookup.outputs[(direction - cell.rotation) % 4] then return end
+        multi = #class.outputs > 1
+    elseif direction ~= constants.simulator.scan then return end
+
+    local stamp = self.time.subtick
+    if cell.updated == self.time.tick then return end
+
+    if multi then
+        cell.dirs = cell.dirs or {}
+        if cell.dirs[direction] == stamp then return end
+        cell.dirs[direction] = stamp
+    else
+        if cell.ran == stamp then return end
+        cell.ran = stamp
+    end
+
+    cell.simulator = self
+    cell:update(subtick, direction)
+    self.movement:flush()
 end
 
 function Simulator:started()
@@ -240,7 +238,7 @@ end
 
 function Simulator:load(data)
     self:_rewind()
-    self.grid:resize(data.width, data.height)
+    self.grid:resize(data.width, data.height, data.border)
     self.grid:populate(data.cells)
     self.grid:save()
 end

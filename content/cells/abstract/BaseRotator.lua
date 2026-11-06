@@ -2,14 +2,15 @@ local BaseCell = require("content/cells/abstract/BaseCell")
 
 local BaseRotator = setmetatable({
     categories = { "rotators" },
-    subtick = { 1 },
+    faces = {},
+    subtick = { 10 },
+    sweep = { x = 1, y = -1 },
     spin = 1
 }, { __index = BaseCell })
 BaseRotator.__index = BaseRotator
 
 function BaseRotator:update()
-    local class = getmetatable(self)
-    self:rotateNeighbors(class.random and math.random(0, 1) * 2 - 1 or class.spin)
+    self:rotateNeighbors(self.random and math.random(0, 1) * 2 - 1 or self.spin)
 end
 
 return BaseRotator

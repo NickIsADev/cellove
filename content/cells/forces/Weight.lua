@@ -6,6 +6,7 @@ local Weight = setmetatable({
     k3 = 22,
     title = "Weight",
     description = "Absorbs 1 unit of force from anything pushing or pulling it.",
+    faces = {},
     categories = { "forces" }
 }, { __index = BaseCell })
 Weight.__index = Weight

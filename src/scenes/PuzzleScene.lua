@@ -1,6 +1,8 @@
 local Victory = require("src/ui/overlays/Victory")
+local Lift = require("src/ui/decor/Lift")
 local PauseMenu = require("src/editor/panels/PauseMenu")
 local Controls = require("src/editor/panels/Controls")
+local Toast = require("src/ui/overlays/Toast")
 local Puzzle = require("src/engine/simulation/Puzzle")
 local Events = require("src/engine/modding/Events")
 local Audio = require("src/engine/audio/Audio")
@@ -10,6 +12,7 @@ local utils = require("src/utils")
 local config = constants.puzzles
 local colors = constants.ui.colors
 local shadow = constants.ui.shadow
+local tile = constants.grid.tile
 
 local PuzzleScene = {}
 PuzzleScene.__index = PuzzleScene
@@ -21,6 +24,8 @@ function PuzzleScene.new(data)
     self.hotkeys = data.hotkeys
     self.puzzles = data.puzzles
     self.progress = data.progress
+    self.screenshots = data.screenshots
+    self.toast = Toast.new(data.renderer)
     self.puzzle = Puzzle.new({ registry = data.registry, settings = data.settings })
     self.simulator = self.puzzle.simulator
     self.controls = Controls.new(data.renderer, self.simulator, config.hidden)
@@ -35,6 +40,7 @@ function PuzzleScene.new(data)
             back = function() self:_exit() end
         }
     })
+    self.landings = {}
     self.cleared = false
     return self
 end
@@ -45,7 +51,13 @@ end
 
 function PuzzleScene:_reset()
     self.puzzle:load(self.info.data)
+    self.landings = {}
     self.timer, self.cleared = nil, false
+end
+
+function PuzzleScene:_screenshot()
+    self.screenshots:take(self.simulator, self.puzzle.markers.items)
+    self.toast:show(constants.screenshots.text.saved)
 end
 
 function PuzzleScene:_locked()
@@ -84,13 +96,54 @@ function PuzzleScene:_watch(dt)
     end
 end
 
+function PuzzleScene:_size()
+    return tile * self.renderer.camera.zoom
+end
+
+function PuzzleScene:_follow(dt)
+    local x, y = love.mouse.getPosition()
+    local half = self:_size() / 2
+
+    Lift.follow(self.card, x - half, y - half, dt)
+end
+
+function PuzzleScene:_drawCard(cell, state)
+    local renderer = self.renderer
+    local zoom, size = renderer.camera.zoom, self:_size()
+
+    local function sprite(offset)
+        love.graphics.push()
+        love.graphics.translate(size / 2, size / 2)
+        love.graphics.scale(zoom)
+        renderer:drawSprite(cell.texture, 0.5, 0.5, cell.rotation, 1, offset / zoom)
+        love.graphics.pop()
+    end
+
+    Lift.draw(state, size, size,
+        function(offset, alpha)
+            love.graphics.setColor(0, 0, 0, alpha)
+            sprite(offset)
+        end,
+        function()
+            love.graphics.setColor(utils.fromHex(colors.white))
+            sprite(0)
+        end)
+end
+
+function PuzzleScene:_drawLanding(item)
+    local x, y = self.renderer.camera:gridToScreen(item.x, item.y)
+
+    self:_drawCard(item.cell, Lift.at(item.landing, x, y))
+end
+
 function PuzzleScene:_drawHeld()
-    local held, renderer = self.puzzle.held, self.renderer
-    if not held then return end
+    local held = self.puzzle.held
 
-    local x, y = renderer.camera:screenToTile(love.mouse.getPosition())
+    if held then return self:_drawCard(held.cell, self.card) end
 
-    renderer:drawGhost(held.cell.texture, x, y, held.cell.rotation, config.held.alpha)
+    for _, item in ipairs(self.landings) do
+        self:_drawLanding(item)
+    end
 end
 
 function PuzzleScene:_drawEnemies()
@@ -128,6 +181,7 @@ function PuzzleScene:_drawHud()
 end
 
 function PuzzleScene:enter(_, data)
+    self.toast:clear()
     if data.resume then return end
 
     self.info = data.id and self.puzzles:get(data.id) or data
@@ -143,14 +197,30 @@ function PuzzleScene:leave()
     self.simulator:pause()
     self.victory:close()
     self.pauseMenu:close()
+    self.toast:clear()
 end
 
 function PuzzleScene:update(dt)
     self.renderer.camera:update(dt, self:_locked())
     self.simulator:update(dt)
+    if self.puzzle.held then self:_follow(dt) end
+
+    local hidden = {}
+    for index = #self.landings, 1, -1 do
+        local item = self.landings[index]
+
+        if Lift.land(item.landing, dt) then
+            hidden[item.cell] = true
+        else
+            table.remove(self.landings, index)
+        end
+    end
+
+    self.renderer.hidden = hidden
     self:_watch(dt)
     self.pauseMenu:update(dt)
     self.victory:update(dt)
+    self.toast:update(dt)
 end
 
 function PuzzleScene:mousepressed(x, y, button)
@@ -167,7 +237,9 @@ function PuzzleScene:mousepressed(x, y, button)
     local gx, gy = self.renderer.camera:screenToGrid(x, y)
     if self.simulator:click(gx, gy, button) then return end
 
-    self.puzzle:lift(gx, gy)
+    if not self.puzzle:lift(gx, gy) then return end
+
+    self.card, self.landings = Lift.new(self.renderer.camera:gridToScreen(gx, gy)), {}
 end
 
 function PuzzleScene:mousemoved(x, y)
@@ -177,10 +249,28 @@ end
 
 function PuzzleScene:mousereleased(x, y, button)
     if button == 3 then self.renderer.camera:release() end
-    if button ~= 1 or not self.puzzle.held then return end
+    local held = self.puzzle.held
+    if button ~= 1 or not held then return end
 
     Audio.play("click")
-    self.puzzle:drop(self.renderer.camera:screenToGrid(x, y))
+    local gx, gy, other = self.puzzle:drop(self.renderer.camera:screenToGrid(x, y))
+    self.landings = {}
+
+    if other then
+        table.insert(self.landings, {
+            cell = other,
+            x = held.x,
+            y = held.y,
+            landing = Lift.release(Lift.new(self.renderer.camera:gridToScreen(gx, gy)))
+        })
+    end
+
+    table.insert(self.landings, {
+        cell = held.cell,
+        x = gx,
+        y = gy,
+        landing = Lift.release(self.card)
+    })
 end
 
 function PuzzleScene:wheelmoved(x, y)
@@ -200,6 +290,8 @@ function PuzzleScene:keypressed(key)
         self.simulator:step()
     elseif hotkeys:pressed("reset", key) then
         self.simulator:reset()
+    elseif hotkeys:pressed("screenshot", key) then
+        self:_screenshot()
     end
 end
 
@@ -213,6 +305,7 @@ function PuzzleScene:draw()
     self.controls:draw()
     self.pauseMenu:draw()
     self.victory:draw()
+    self.toast:draw(constants.toast.top)
 end
 
 return PuzzleScene

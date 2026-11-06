@@ -43,10 +43,12 @@ function Puzzle:drop(x, y)
     local held, grid = self.held, self.simulator.grid
     if not self:placeable(x, y) then x, y = held.x, held.y end
 
-    grid:set(held.x, held.y, grid:get(x, y))
+    local other = grid:get(x, y)
+    grid:set(held.x, held.y, other)
     grid:set(x, y, held.cell)
     self.held = nil
     self.simulator:save()
+    return x, y, other
 end
 
 function Puzzle:cancel()

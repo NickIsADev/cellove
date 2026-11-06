@@ -16,11 +16,7 @@ function BaseCell:new(data)
     assert(self ~= BaseCell, "BaseCell is abstract")
     data = data or {}
 
-    local cell = setmetatable({}, self)
-    cell.rotation = 0
-    cell:rotate(data.rotation or 0)
-    cell.turn = 0
-    cell.props = {}
+    local cell = setmetatable({ rotation = (data.rotation or 0) % 4, turn = 0, props = {} }, self)
 
     for _, property in ipairs(self.properties) do
         cell.props[property.id] = Properties.value(data.props, property)
@@ -48,12 +44,16 @@ function BaseCell:force(dx, dy, action)
 end
 
 function BaseCell:driven(dx, dy, action)
-    local drive = getmetatable(self).drive
+    local drive = self.drive
     return drive and drive[action] and self:_alignment(dx, dy) > 0
 end
 
 function BaseCell:pushable(dx, dy)
-    return true
+    return not self.fixed
+end
+
+function BaseCell:swappable(dx, dy)
+    return not self.fixed
 end
 
 function BaseCell:eats(dx, dy)
@@ -61,6 +61,12 @@ function BaseCell:eats(dx, dy)
 end
 
 function BaseCell:absorb(cell, dx, dy)
+end
+
+function BaseCell:bump(dx, dy)
+end
+
+function BaseCell:swapped(dx, dy)
 end
 
 function BaseCell:click(button)
@@ -71,7 +77,7 @@ function BaseCell:generatable()
 end
 
 function BaseCell:transformable()
-    return true
+    return not self.fixed
 end
 
 function BaseCell:generated()
@@ -100,14 +106,17 @@ function BaseCell:advance(dx, dy)
     return self.simulator.movement:advance(self.x, self.y, dx, dy)
 end
 
-function BaseCell:swap(ax, ay, bx, by)
-    return self.simulator.movement:swap(self.x + ax, self.y + ay, self.x + bx, self.y + by)
+function BaseCell:swap(ax, ay, bx, by, heading)
+    return self.simulator.movement:swap(self.x + ax, self.y + ay, self.x + bx, self.y + by, heading)
 end
 
-function BaseCell:rotate(amount)
+function BaseCell:rotate(amount, forced)
+    if self.anchored and not forced then return false end
+
     self.turn = (self.turn or 0) + (amount + 2) % 4 - 2
     self.rotation = (self.rotation + amount) % 4
     if self.grid then self.grid:touch(self) end
+    return true
 end
 
 function BaseCell:neighbors(distance, callback)

@@ -8,7 +8,8 @@ local Dimirror = setmetatable({
     swaps = {
         { 0, 2 },
         { 0.5, 2.5 }
-    }
+    },
+    twin = "bimirror"
 }, { __index = BaseMirror })
 Dimirror.__index = Dimirror
 

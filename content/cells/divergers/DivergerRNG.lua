@@ -5,6 +5,7 @@ local DivergerRNG = setmetatable({
     k3 = 980,
     title = "Diverger (RNG)",
     description = "Sends cells out in a random direction.",
+    faces = {},
     routes = {
         [0] = { -1, 0, 1 },
         [1] = { -1, 0, 1 },

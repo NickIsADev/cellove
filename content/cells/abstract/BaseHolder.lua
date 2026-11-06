@@ -6,6 +6,7 @@ local stored = constants.renderer.stored
 
 local BaseHolder = setmetatable({
     categories = { "storage" },
+    stockable = true,
     properties = {
         { id = "stored", title = "Stored", default = {} }
     },
@@ -24,16 +25,15 @@ function BaseHolder:_cell(content, turn)
 end
 
 function BaseHolder:_make(direction)
-    local turn = getmetatable(self).aligns and direction - self.rotation or 0
+    local turn = self.aligns and direction - self.rotation or 0
     return self:_cell(self.props.stored, turn)
 end
 
-function BaseHolder:_release(direction)
+function BaseHolder:_release(direction, mode)
     local cell = self:_make(direction)
-    cell.updated, cell.ran = self.simulator.time.tick, self.simulator.time.subtick
 
     local facing = constants.directions[direction]
-    return self.simulator.movement:release(self.x, self.y, facing[1], facing[2], cell)
+    return self.simulator.movement:release(self.x, self.y, facing[1], facing[2], cell, mode)
 end
 
 function BaseHolder:_shrink()
@@ -47,7 +47,7 @@ end
 
 function BaseHolder:_become()
     local cell = self:_cell(self.props.stored)
-    cell.path, cell.own, cell.turn, cell.grow = self.path, self.own, self.turn, getmetatable(self).fit
+    cell.path, cell.own, cell.turn, cell.grow = self.path, self.own, self.turn, self.fit
     self:_shrink()
 
     self.grid:set(self.x, self.y, cell)
@@ -59,26 +59,28 @@ function BaseHolder:held()
 end
 
 function BaseHolder:eats()
-    return true
+    return false
 end
 
 function BaseHolder:absorb(cell)
-    self:_hold({ class = getmetatable(cell), rotation = cell.rotation, props = cell.props })
+    self:_hold({ class = getmetatable(cell), rotation = cell.rotation })
 end
 
-function BaseHolder:rotate(amount)
-    BaseCell.rotate(self, amount)
+function BaseHolder:rotate(amount, forced)
+    if not BaseCell.rotate(self, amount, forced) then return end
 
     local content = self.props and self.props.stored
     if content and content.class then
-        self:_hold({ class = content.class, rotation = (content.rotation + amount) % 4, props = content.props })
+        local held = utils.copy(content)
+        held.rotation = (content.rotation + amount) % 4
+        self:_hold(held)
     end
 end
 
 function BaseHolder:draw(renderer, x, y, angle, scale, offset)
     BaseCell.draw(self, renderer, x, y, angle, scale, offset)
-    if self:held() then
-        renderer:drawStored(self.props.stored, x, y, angle - self.rotation, scale * getmetatable(self).fit, offset)
+    if self:held() and not self.arriving then
+        renderer:drawStored(self.props.stored, x, y, angle - self.rotation, scale * self.fit, offset)
     end
 end
 

@@ -25,12 +25,17 @@ Set these in the table you pass to `setmetatable`.
 | `description` | `string` | `""` | description in the library |
 | `categories` | `table` | | required, list of [category IDs](Creating-Cells#categories) |
 | `properties` | `table` | `{}` | [property definitions](Creating-Cells#properties) |
-| `subtick` | `table` | `{}` | subticks `update` runs in. empty means never |
+| `subtick` | `table` | `{}` | subticks `update` runs in. lower runs first and cells sharing a number run together. only the order matters, so any number works, like `21.5` to run between movers (`21`) and nudgers (`22`). see [built-in subticks](Creating-Cells#subticks). empty means never |
 | `directional` | `boolean` | | calls `update` once per entry in `outputs` |
 | `outputs` | `table` | `{ 0 }` | output directions relative to rotation: `0` forward, `1` right, `2` back, `3` left |
 | `drive` | `table` | | actions that move the cell forward, like `{ push = true, pull = true }`. a cell moved that way skips its update that tick |
+| `sweep` | `table` | | scans the subtick row by row (or column by column) instead of by facing, as `{ x = 1, y = -1 }`. `x` and `y` are `1` or `-1`, and `columns = true` makes `x` the outer loop. a directional cell maps each of its subticks to a table that maps a pass direction to one of these |
 | `rear` | `boolean` | | scans from the back of the pass direction instead of the front |
 | `hostile` | `boolean` | `false` | counts as an enemy. a puzzle is solved when none remain |
+| `fixed` | `boolean` | | cannot be pushed, swapped or transformed |
+| `anchored` | `boolean` | | cannot be rotated |
+| `faces` | `table` | `outputs` | directions relative to rotation that flip gears mirror, in the same format as `outputs`. `{}` keeps the rotation when flipped |
+| `twin` | `string` | | the name of the cell this one becomes when flipped by a flip gear, such as a clockwise gear's counter-clockwise twin. cells that look the same mirrored don't need one |
 
 ```lua
 local Mover = setmetatable({
@@ -38,7 +43,7 @@ local Mover = setmetatable({
     title = "Mover",
     description = "Moves forward every tick.",
     categories = { "movers" },
-    subtick = { 4 },
+    subtick = { 20 },
     drive = { push = true, pull = true },
     directional = true
 }, { __index = BaseCell })
@@ -66,9 +71,11 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | method | default | description |
 | --- | --- | --- |
 | [`update`](#basecellupdatesubtick-direction) | nothing | runs during the cell's subticks |
-| [`pushable`](#basecellpushabledx-dy) | `true` | whether the cell can be pushed |
-| [`eats`](#basecelleatsdx-dy) | `false` | whether cells moving into this one are deleted |
-| [`absorb`](#basecellabsorbcell-dx-dy) | nothing | called after this cell eats a cell |
+| [`pushable`](#basecellpushabledx-dy-bare) | `true` | whether the cell can be pushed |
+| [`eats`](#basecelleatsdx-dy-action) | `false` | whether cells moving into this one are deleted |
+| [`absorb`](#basecellabsorbcell-dx-dy-action) | nothing | called after this cell eats a cell |
+| [`bump`](#basecellbumpdx-dy) | nothing | called when a repulsor pushes this cell and it eats the push |
+| [`swapped`](#basecellswappeddx-dy) | nothing | called after a swap carried this cell to the other cell's place |
 | [`generatable`](#basecellgeneratable) | `true` | whether generators can copy the cell |
 | [`generated`](#basecellgenerated) | the same class and props | what a generator's copy of the cell becomes |
 | [`force`](#basecellforcedx-dy-action) | `0` | force added to a push or pull |
@@ -92,14 +99,15 @@ function Eraser:update(subtick, direction)
 end
 ```
 
-### `BaseCell:pushable(dx, dy)`
+### `BaseCell:pushable(dx, dy, bare)`
 
-Whether the cell can be pushed. Default `true`.
+Whether the cell can be pushed. Default `true`, or `false` for a `fixed` cell.
 
 | parameter | type | description |
 | --- | --- | --- |
 | `dx` | `number` | horizontal push direction: `-1`, `0` or `1` |
 | `dy` | `number` | vertical push direction: `-1`, `0` or `1` |
+| `bare` | `boolean` | the cell is first in a push that has no pusher, like a Repulsor's |
 
 **Returns** `boolean`
 
@@ -110,7 +118,7 @@ function Rail:pushable(dx, dy)
 end
 ```
 
-### `BaseCell:eats(dx, dy)`
+### `BaseCell:eats(dx, dy, action)`
 
 Whether cells moving into this one are deleted. Default `false`.
 
@@ -118,6 +126,7 @@ Whether cells moving into this one are deleted. Default `false`.
 | --- | --- | --- |
 | `dx` | `number` | horizontal direction the other cell is moving |
 | `dy` | `number` | vertical direction the other cell is moving |
+| `action` | `string?` | how the other cell arrives: `nil` when pushed, `"pull"` when a puller or nudger moves itself in, `"swap"` when it swaps places with this cell. a Storage or Converter accepts the last two even when it cannot eject what it holds |
 
 **Returns** `boolean`
 
@@ -127,7 +136,7 @@ function Trash:eats()
 end
 ```
 
-### `BaseCell:absorb(cell, dx, dy)`
+### `BaseCell:absorb(cell, dx, dy, action)`
 
 Called after this cell eats `cell`.
 
@@ -136,10 +145,41 @@ Called after this cell eats `cell`.
 | `cell` | `BaseCell` | the cell that was eaten |
 | `dx` | `number` | horizontal direction it was moving |
 | `dy` | `number` | vertical direction it was moving |
+| `action` | `string?` | how it arrived, as in [`eats`](#basecelleatsdx-dy-action) |
 
 ```lua
 function Counter:absorb(cell)
     print("ate a " .. cell.name)
+end
+```
+
+### `BaseCell:bump(dx, dy)`
+
+Called when a Repulsor pushes this cell and it eats the push instead of moving. Storage uses it to release its content.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `dx` | `number` | horizontal direction of the push |
+| `dy` | `number` | vertical direction of the push |
+
+```lua
+function Storage:bump(dx, dy)
+    self:_hold({})
+end
+```
+
+### `BaseCell:swapped(dx, dy)`
+
+Called after a mirror swap carried this cell onto the other cell's place, with the direction it counts as moving. A curved mirror counts its cells as moving straight toward the other cell's side, not along the diagonal they travel. CelLua handles that cell as if it had swapped with itself, so gates are fed from the side it moved in and storages store themselves.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `dx` | `number` | horizontal direction it moved |
+| `dy` | `number` | vertical direction it moved |
+
+```lua
+function BaseGate:swapped(dx, dy)
+    if self:eats(dx, dy) then self:absorb(self, dx, dy) end
 end
 ```
 
@@ -159,7 +199,7 @@ end
 
 What a generator's copy of the cell becomes. Only called when [`generatable`](#basecellgeneratable) is true. Default is the cell's own class and props.
 
-**Returns** the class of the copy, and optionally the props it starts with.
+**Returns** the class of the copy, and optionally the props it starts with and its rotation. Return nothing to generate nothing. The rotation defaults to the cell's own.
 
 ```lua
 -- copies turn into an Ungeneratable
@@ -238,7 +278,7 @@ Call these from your own methods, usually from `update`. Where `dx` and `dy` are
 | [`swap`](#basecellswapax-ay-bx-by) | swaps the cells at two offsets from this one |
 | [`generate`](#basecellgeneratedirection-options) | copies the cell behind this one into the tile in front |
 | [`repel`](#basecellrepeldirection) | pushes the cell in front of this one away without moving this cell |
-| [`rotate`](#basecellrotateamount) | rotates the cell |
+| [`rotate`](#basecellrotateamount-forced) | rotates the cell |
 | [`rotateNeighbors`](#basecellrotateneighborsamount-predicate) | rotates the four adjacent cells |
 | [`neighbors`](#basecellneighborsdistance-callback) | loops over nearby tiles, no diagonals |
 | [`surrounding`](#basecellsurroundingdistance-callback) | loops over the square around the cell, diagonals included |
@@ -316,7 +356,7 @@ end
 
 ### `BaseCell:swap(ax, ay, bx, by)`
 
-Swaps the cells at two offsets from this one. A cell that cannot be pushed the way it would move stops the swap, and a cell that [eats](#basecelleatsdx-dy) the other one deletes it instead of moving. Diagonal swaps need the cell to be pushable along both axes.
+Swaps the cells at two offsets from this one. A cell that cannot be pushed the way it would move stops the swap, and a cell that [eats](#basecelleatsdx-dy-action) the other one deletes it instead of moving. Curved mirrors count each cell as moving straight toward the other cell's side, not along the diagonal it travels.
 
 | parameter | type | description |
 | --- | --- | --- |
@@ -369,13 +409,14 @@ function Repulsor:update()
 end
 ```
 
-### `BaseCell:rotate(amount)`
+### `BaseCell:rotate(amount, forced)`
 
-Rotates the cell by `amount` clockwise quarter turns.
+Rotates the cell by `amount` clockwise quarter turns. Does nothing to an `anchored` cell unless `forced` is set.
 
 | parameter | type | description |
 | --- | --- | --- |
 | `amount` | `number` | quarter turns. negative turns counterclockwise |
+| `forced` | `boolean` | rotates even an `anchored` cell |
 
 ```lua
 self:rotate(1)  -- clockwise

@@ -5,7 +5,7 @@ local Bimidas = setmetatable({
     k3 = 739,
     title = "Bimidas",
     description = "2-sided Midas.",
-    outputs = { 1, 3 }
+    outputs = { 0, 2 }
 }, { __index = Midas })
 Bimidas.__index = Bimidas
 

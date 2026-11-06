@@ -63,7 +63,7 @@ function Debug.new(data)
     self.enabled = false
     self.timer = config.interval
     self.frames = {}
-    self.lines = {}
+    self.panels = {}
     self.clicks = {}
     self.drags = {}
     self.log = {}
@@ -122,24 +122,35 @@ function Debug:_collect(manager)
     local scene = string.format(text.scene, manager.name, manager.fade)
     if manager.pending then scene = string.format(text.pending, manager.name, manager.pending.name, manager.fade) end
 
-    self.lines = {
-        string.format(text.fps, love.timer.getFPS(), total / math.max(1, #self.frames) * 1000, worst * 1000),
-        string.format(text.memory, collectgarbage("count") / 1024),
-        string.format(text.draw, stats.drawcalls, stats.drawcallsbatched, stats.canvasswitches),
-        string.format(text.gpu, stats.texturememory / 1048576, stats.images, stats.canvases, stats.fonts),
-        string.format(text.window, w, h, uiW, uiH, settings:get("uiScale")),
-        scene,
-        string.format(text.music, audio.track and audio.track:match("[^/]+$") or text.none, audio.index, audio.count, audio.time, audio.duration),
-        string.format(text.sound, audio.sources, settings:get("musicVolume"), settings:get("sfxVolume"), settings:get("musicSpeed"))
+    local system = { string.format(text.window, w, h, uiW, uiH, Display.scale * 100), scene }
+    table.move(self.system, 1, #self.system, #system + 1, system)
+
+    self.panels = {
+        {
+            side = "left",
+            title = text.titles.performance,
+            graph = true,
+            lines = {
+                string.format(text.fps, love.timer.getFPS(), total / math.max(1, #self.frames) * 1000, worst * 1000),
+                string.format(text.memory, collectgarbage("count") / 1024),
+                string.format(text.draw, stats.drawcalls, stats.drawcallsbatched, stats.canvasswitches),
+                string.format(text.gpu, stats.texturememory / 1048576, stats.images, stats.canvases, stats.fonts)
+            }
+        },
+        { side = "right", title = text.titles.system, lines = system },
+        {
+            side = "right",
+            title = text.titles.audio,
+            lines = {
+                string.format(text.music, audio.track and audio.track:match("[^/]+$") or text.none, audio.index, audio.count, audio.time, audio.duration),
+                string.format(text.sound, audio.sources, settings:get("musicVolume"), settings:get("sfxVolume"), settings:get("musicSpeed"))
+            }
+        }
     }
 
-    table.move(self.system, 1, #self.system, #self.lines + 1, self.lines)
-
     local current = manager.current
-    if not (current and current.debugInfo) then return end
-
-    for _, line in ipairs(current:debugInfo()) do
-        self.lines[#self.lines + 1] = line
+    if current and current.debugInfo then
+        table.insert(self.panels, 2, { side = "left", title = text.titles.game, lines = current:debugInfo() })
     end
 end
 
@@ -202,25 +213,49 @@ function Debug:_drawFrames(x, y, width)
     Panel.fill(x, warn, width, 1, colors.white, 0.3)
 end
 
-function Debug:_drawPanel()
-    local graph = config.frames
-    local font = self.renderer:font(config.font)
-    local x, y, pad = config.margin, config.top, config.pad
+function Debug:_measure(panel, font)
+    local graph, pad = config.frames, config.pad
+    local width = math.max(panel.graph and graph.count * graph.bar or 0, font:getWidth(panel.title))
+    local height = (#panel.lines + 1) * font:getHeight()
 
-    local width = graph.count * graph.bar
-    for _, line in ipairs(self.lines) do
+    for _, line in ipairs(panel.lines) do
         width = math.max(width, font:getWidth(line))
     end
+    if panel.graph then height = height + graph.gap + graph.height end
 
-    local textHeight = #self.lines * font:getHeight()
-    Panel.draw(x, y, width + pad * 2, textHeight + graph.gap + graph.height + pad * 2, { alpha = config.alpha })
+    return width + pad * 2, height + pad * 2
+end
+
+function Debug:_drawPanel(panel, font, x, y, width, height)
+    local graph, pad = config.frames, config.pad
+    local lineHeight = font:getHeight()
+    local top = y + pad + lineHeight
+
+    Panel.draw(x, y, width, height, { alpha = config.alpha })
 
     love.graphics.setFont(font)
+    love.graphics.setColor(utils.fromHex(colors.accent))
+    love.graphics.print(panel.title, x + pad, y + pad)
+
     love.graphics.setColor(utils.fromHex(colors.white))
-    for index, line in ipairs(self.lines) do
-        love.graphics.print(line, x + pad, y + pad + (index - 1) * font:getHeight())
+    for index, line in ipairs(panel.lines) do
+        love.graphics.print(line, x + pad, top + (index - 1) * lineHeight)
     end
-    self:_drawFrames(x + pad, y + pad + textHeight + graph.gap, width)
+    if panel.graph then self:_drawFrames(x + pad, top + #panel.lines * lineHeight + graph.gap, width - pad * 2) end
+end
+
+function Debug:_drawPanels()
+    local w = love.graphics.getWidth()
+    local font = self.renderer:font(config.font)
+    local cursor = { left = config.top, right = config.top }
+
+    for _, panel in ipairs(self.panels) do
+        local width, height = self:_measure(panel, font)
+        local x = panel.side == "left" and config.margin or w - config.margin - width
+
+        self:_drawPanel(panel, font, x, cursor[panel.side], width, height)
+        cursor[panel.side] = cursor[panel.side] + height + config.gap
+    end
 end
 
 function Debug:_drawMouse(x, y)
@@ -315,7 +350,7 @@ function Debug:draw(manager)
     self:_drawCrosshair()
     self:_drawClicks()
     self:_drawDrags()
-    self:_drawPanel()
+    self:_drawPanels()
     self:_drawInput()
 
     love.graphics.setFont(previousFont)

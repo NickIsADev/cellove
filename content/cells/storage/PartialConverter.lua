@@ -7,7 +7,7 @@ local PartialConverter = setmetatable({
     description = "Like a Converter, but it can take multiple cells to convert into one.",
     properties = {
         BaseConverter.properties[1],
-        { id = "needed", title = "Needed", default = 2, min = 1, max = 99 }
+        { id = "needed", title = "Needed", default = 1, min = 1, max = 99 }
     }
 }, { __index = BaseConverter })
 PartialConverter.__index = PartialConverter
@@ -18,7 +18,13 @@ function PartialConverter:new(data)
     return cell
 end
 
-function PartialConverter:absorb(cell)
+function PartialConverter:_ready()
+    return self:held() and self.count >= self.props.needed - 1
+end
+
+function PartialConverter:absorb(cell, dx, dy, action)
+    if action == "swap" then return end
+
     if self:held() and self.count < self.props.needed - 1 then
         self.count = self.count + 1
     else

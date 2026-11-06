@@ -2,7 +2,8 @@ local BaseCell = require("content/cells/abstract/BaseCell")
 
 local BaseRedirector = setmetatable({
     categories = { "rotators", "redirectors" },
-    subtick = { 1 },
+    subtick = { 18 },
+    sweep = { x = 1, y = -1 },
     outputs = { 0, 1, 2, 3 },
     sides = { orthogonal = true },
     redirector = true
@@ -14,18 +15,16 @@ function BaseRedirector:_bearing(dx, dy)
 end
 
 function BaseRedirector:_reaches(dx, dy)
-    local class = getmetatable(self)
-    if dx ~= 0 and dy ~= 0 then return class.sides.diagonal end
+    if dx ~= 0 and dy ~= 0 then return self.sides.diagonal end
 
-    return class.sides.orthogonal and class.lookup.outputs[(self:_bearing(dx, dy) - self.rotation) % 4]
+    return self.sides.orthogonal and self.lookup.outputs[(self:_bearing(dx, dy) - self.rotation) % 4]
 end
 
 function BaseRedirector:_facing(dx, dy)
-    local class = getmetatable(self)
-    if class.random then return math.random(0, 3) end
-    if not class.around then return self.rotation end
+    if self.random then return math.random(0, 3) end
+    if not self.around then return self.rotation end
 
-    return (self:_bearing(dx, dy) + class.around) % 4
+    return (self:_bearing(dx, dy) + self.around) % 4
 end
 
 function BaseRedirector:update()

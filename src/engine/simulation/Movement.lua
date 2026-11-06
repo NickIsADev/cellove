@@ -3,8 +3,12 @@ local utils = require("src/utils")
 
 local none = {}
 
+local function slot(width, x, y)
+    return (y - 1) * width + x
+end
+
 local function key(width, x, y, dx, dy)
-    return ((y - 1) * width + x) * 5 + dx + 2 * dy
+    return slot(width, x, y) * 5 + dx + 2 * dy
 end
 
 local function extend(cell, move, own)
@@ -26,10 +30,6 @@ local function extend(cell, move, own)
     if own then cell.own = (cell.own or 0) + #move.via + 1 end
 end
 
-local function movable(cell, dx, dy)
-    return (dx == 0 or cell:pushable(dx, 0)) and (dy == 0 or cell:pushable(0, dy))
-end
-
 local Movement = {}
 Movement.__index = Movement
 
@@ -41,6 +41,7 @@ function Movement.new(data)
     self.top = 0
     self.stamp = 0
     self.dead = {}
+    self.probes = {}
     self.queue = {}
     self.moves = 0
     return self
@@ -55,6 +56,7 @@ function Movement:_take()
         move = {}
         self.pool[top] = move
     end
+    move.action = nil
     return move
 end
 
@@ -68,15 +70,29 @@ function Movement:_seal(chain, first)
     end
 end
 
-function Movement:_open(x, y, dx, dy)
-    if not self.grid:bounds(x, y) then return false end
+function Movement:_open(x, y, dx, dy, action)
     local cell = self.grid:get(x, y)
-    return not cell or cell:eats(dx, dy)
+    if cell then return cell:eats(dx, dy, action) end
+    return self.grid:bounds(x, y)
 end
 
-function Movement:_absorb(eater, cell, dx, dy)
+function Movement:_jammed(move)
+    local cell = self.grid:get(move.x, move.y)
+    return cell ~= nil and not cell:eats(move.dx, move.dy) and cell:eats(move.dx, move.dy, "pull")
+end
+
+function Movement:_reach(move)
+    local cell = self.grid:get(move.x, move.y)
+    if cell == move.cell then return true end
+
+    local open = self:_open(move.x, move.y, move.dx, move.dy, move.action)
+    if not open and cell then self:_bump(cell, move.dx, move.dy) end
+    return open
+end
+
+function Movement:_absorb(eater, cell, dx, dy, action)
     eater.simulator = self.simulator
-    eater:absorb(cell, dx, dy)
+    eater:absorb(cell, dx, dy, action)
 end
 
 function Movement:_spawn(clone, front, origin)
@@ -96,7 +112,7 @@ function Movement:_spawn(clone, front, origin)
     end
 end
 
-function Movement:_step(x, y, dx, dy, reverse)
+function Movement:_step(x, y, dx, dy, reverse, moved)
     local grid = self.grid
     local via, turn = none, 0
 
@@ -104,10 +120,11 @@ function Movement:_step(x, y, dx, dy, reverse)
         x, y = x + dx, y + dy
 
         local cell = grid:get(x, y)
-        local nx, ny, spin
-        if cell and getmetatable(cell).lookup.divert then nx, ny, spin = cell:divert(dx, dy, reverse) end
+        local nx, ny, spin, halt
+        if cell and cell.lookup.divert and not (moved and moved[cell]) then nx, ny, spin, halt = cell:divert(dx, dy, reverse) end
 
-        if not nx then return x, y, dx, dy, reverse and -turn or turn, via, cell end
+        if halt then dx, dy, nx, turn = nx, ny, nil, turn + spin end
+        if not nx then return x, y, dx, dy, reverse and -turn or turn, via, cell, halt end
 
         if via == none then via = {} end
         table.insert(via, reverse and 1 or #via + 1, { x, y })
@@ -115,19 +132,26 @@ function Movement:_step(x, y, dx, dy, reverse)
     end
 end
 
-function Movement:_route(x, y, dx, dy, reverse)
-    local nx, ny, ndx, ndy, turn, via, target = self:_step(x, y, dx, dy, reverse)
+function Movement:_route(x, y, dx, dy, reverse, moved)
+    local nx, ny, ndx, ndy, turn, via, target, halt = self:_step(x, y, dx, dy, reverse, moved)
     if not nx then return end
 
     local move = self:_take()
     move.x, move.y, move.dx, move.dy = nx, ny, ndx, ndy
-    move.ox, move.oy, move.turn, move.via, move.target = dx, dy, turn, via, target
+    move.ox, move.oy, move.turn, move.via, move.target, move.halt = dx, dy, turn, via, target, halt
     return move
 end
 
-function Movement:_line(x, y, dx, dy, force, chain)
+function Movement:_bump(cell, dx, dy)
+    if self.dry then return end
+
+    cell.simulator = self.simulator
+    cell:bump(dx, dy)
+end
+
+function Movement:_line(x, y, dx, dy, force, chain, bare)
     local grid, dead = self.grid, self.dead
-    local width, height, version = grid.width, grid.height, grid.version
+    local width, version = grid.width, grid.version
     chain = chain or {}
 
     self.stamp = self.stamp + 1
@@ -138,10 +162,13 @@ function Movement:_line(x, y, dx, dy, force, chain)
 
     local cell = grid:get(x, y)
     while true do
-        if x < 1 or x > width or y < 1 or y > height then return self:_seal(chain, first) end
+        if not (cell or grid:bounds(x, y)) then return self:_seal(chain, first) end
         if not cell or cell:eats(dx, dy) then return chain end
-        if cell.walked == stamp then return end
-        if dead[key(width, x, y, dx, dy)] == version or not cell:pushable(dx, dy) then return self:_seal(chain, first) end
+        if cell.walked == stamp then return cell == chain[1].cell and chain or nil end
+
+        local pushable = cell:pushable(dx, dy, bare and #chain == first)
+        if not pushable then self:_bump(cell, dx, dy) end
+        if not pushable or dead[key(width, x, y, dx, dy)] == version then return self:_seal(chain, first) end
 
         force = force + cell:force(dx, dy, "push")
         if force <= 0 then return end
@@ -160,42 +187,61 @@ function Movement:_line(x, y, dx, dy, force, chain)
     end
 end
 
-function Movement:_carry(cell, x, y, dx, dy)
+function Movement:_carry(cell, x, y, dx, dy, action)
     local move = self:_take()
-    move.cell, move.x, move.y, move.dx, move.dy = cell, x, y, dx, dy
+    move.cell, move.x, move.y, move.dx, move.dy, move.action = cell, x, y, dx, dy, action
     move.turn, move.via = 0, none
     return move
 end
 
+function Movement:_spoil(chain, from, last, turn)
+    if last and turn ~= 0 then last:rotate(turn) end
+
+    for i = #chain, from, -1 do
+        local entry = chain[i]
+        if entry.turn ~= 0 then entry.cell:rotate(entry.turn) end
+        chain[i] = nil
+    end
+end
+
 function Movement:_trail(chain, x, y, dx, dy, force)
-    local size, seen = #chain, {}
+    local size, seen, taken, width = #chain, {}, {}, self.grid.width
     for _, move in ipairs(chain) do
         seen[move.cell] = true
+        taken[slot(width, move.x, move.y)] = true
     end
 
     local wx, wy = -dx, -dy
     while true do
         local walk = self:_route(x, y, wx, wy, true)
         local cell = walk and walk.target
-        if not cell or seen[cell] then return true end
+        if not cell or seen[cell] or cell:eats(walk.dx, walk.dy) then return true end
 
         local ox, oy = -walk.dx, -walk.dy
         if not cell:pushable(ox, oy) then return true end
 
         force = force + cell:force(ox, oy, "pull")
         if force <= 0 then
-            for i = #chain, size + 1, -1 do
-                chain[i] = nil
-            end
+            self:_spoil(chain, size + 1, cell, walk.turn)
             return false
         end
 
         seen[cell] = true
 
+        local forward = self:_route(walk.x, walk.y, ox, oy, false, seen)
+        if not forward or taken[slot(width, forward.x, forward.y)] then return true end
+
+        if walk.halt then
+            if not self:_open(forward.x, forward.y, forward.dx, forward.dy) then return true end
+        elseif walk.via ~= none and (forward.x ~= x or forward.y ~= y) then
+            return true
+        end
+
         local entry = self:_take()
-        entry.cell, entry.x, entry.y, entry.dx, entry.dy = cell, x, y, -wx, -wy
-        entry.ox, entry.oy, entry.turn, entry.via = ox, oy, walk.turn, walk.via
+        entry.cell, entry.x, entry.y, entry.dx, entry.dy = cell, forward.x, forward.y, forward.dx, forward.dy
+        entry.ox, entry.oy, entry.turn, entry.via = ox, oy, forward.turn, forward.via
         chain[#chain + 1] = entry
+        taken[slot(width, forward.x, forward.y)] = true
 
         x, y, wx, wy = walk.x, walk.y, walk.dx, walk.dy
     end
@@ -219,7 +265,7 @@ function Movement:_shift(chain, silent)
 
     for _, move in ipairs(chain) do
         local occupant = grid:get(move.x, move.y)
-        move.eater = occupant and occupant:eats(move.dx, move.dy) and occupant or nil
+        move.eater = occupant and occupant:eats(move.dx, move.dy, move.action) and occupant or nil
     end
 
     for i, move in ipairs(chain) do
@@ -234,27 +280,30 @@ function Movement:_shift(chain, silent)
 
         if move.eater then
             table.insert(self.simulator.dying, cell)
-            self:_absorb(move.eater, cell, move.dx, move.dy)
+            self:_absorb(move.eater, cell, move.dx, move.dy, move.action)
         else
             grid:set(move.x, move.y, cell)
         end
     end
 end
 
-function Movement:_pair(chain, ax, ay, bx, by)
+function Movement:_pair(chain, ax, ay, bx, by, forced, heading)
     local grid = self.grid
-    if not (grid:bounds(ax, ay) and grid:bounds(bx, by)) then return false end
-
     local a, b = grid:get(ax, ay), grid:get(bx, by)
-    local dx, dy = utils.sign(bx - ax), utils.sign(by - ay)
-    if a and not movable(a, dx, dy) or b and not movable(b, -dx, -dy) then return false end
+    if not ((a or grid:bounds(ax, ay)) and (b or grid:bounds(bx, by))) then return false end
 
-    local aEats = a and b and a:eats(-dx, -dy)
-    local bEats = a and b and not aEats and b:eats(dx, dy)
+    local adx, ady, bdx, bdy = utils.sign(bx - ax), utils.sign(by - ay)
+    bdx, bdy = -adx, -ady
+    if heading then adx, ady, bdx, bdy = unpack(heading) end
 
-    if a and not aEats then chain[#chain + 1] = self:_carry(a, bx, by, dx, dy) end
-    if b and not bEats then chain[#chain + 1] = self:_carry(b, ax, ay, -dx, -dy) end
-    return true
+    local meeting = a and b and not forced
+    local aEats = meeting and b:swappable(-adx, -ady) and a:eats(bdx, bdy, "swap")
+    local bEats = meeting and not aEats and a:swappable(-bdx, -bdy) and b:eats(adx, ady, "swap")
+    if not forced and (a and not aEats and not a:swappable(-bdx, -bdy) or b and not bEats and not b:swappable(-adx, -ady)) then return false end
+
+    if a and not aEats then chain[#chain + 1] = self:_carry(a, bx, by, adx, ady, meeting and "swap" or nil) end
+    if b and not bEats then chain[#chain + 1] = self:_carry(b, ax, ay, bdx, bdy, meeting and "swap" or nil) end
+    return true, aEats or bEats
 end
 
 function Movement:nudge(x, y, dx, dy)
@@ -263,9 +312,11 @@ function Movement:nudge(x, y, dx, dy)
 
     self.top = 0
     local move = self:_route(x, y, dx, dy)
-    if not move or not self:_open(move.x, move.y, move.dx, move.dy) then return false end
+    if not move then return false end
 
-    move.cell = nudger
+    move.cell, move.action = nudger, "pull"
+    if not self:_reach(move) then return false end
+
     self:_shift({ move })
     return true
 end
@@ -282,8 +333,8 @@ function Movement:push(x, y, dx, dy, force)
     if not move then return false end
 
     move.cell = pusher
-    local chain = self:_line(move.x, move.y, move.dx, move.dy, force, { move })
-    if not chain then return false end
+    local chain = { move }
+    if not self:_line(move.x, move.y, move.dx, move.dy, force, chain) then return false end
 
     self:_drive(chain, "push")
     self:_shift(chain)
@@ -296,14 +347,24 @@ function Movement:pull(x, y, dx, dy, force)
 
     self.top = 0
     local move = self:_route(x, y, dx, dy)
-    if not move or not self:_open(move.x, move.y, move.dx, move.dy) then return false end
+    if not move then return false end
+
+    move.cell, move.action = puller, "pull"
+    if not self:_reach(move) then return false end
 
     force = (force or constants.force.pull) + puller:force(dx, dy, "pull")
     if force <= 0 then return false end
 
-    move.cell = puller
     local chain = { move }
-    if not self:_trail(chain, x, y, dx, dy, force) then return false end
+    if not self:_trail(chain, x, y, dx, dy, force) then
+        local eater = self.grid:get(move.x, move.y)
+        if not eater then return false end
+
+        puller:rotate(move.turn, true)
+        self:_absorb(eater, puller, move.dx, move.dy, "pull")
+        puller:rotate(-move.turn, true)
+        return false
+    end
 
     self:_drive(chain, "pull")
     self:_shift(chain)
@@ -316,15 +377,18 @@ function Movement:advance(x, y, dx, dy)
 
     local push = constants.force.push + advancer:force(dx, dy, "push")
     local pull = constants.force.pull + advancer:force(dx, dy, "pull")
-    if push <= 0 then return false end
 
     self.top = 0
     local move = self:_route(x, y, dx, dy)
     if not move then return false end
 
     move.cell = advancer
-    local chain = self:_line(move.x, move.y, move.dx, move.dy, push, { move })
-    if not chain then return false end
+    local chain = { move }
+    if not (push > 0 and self:_line(move.x, move.y, move.dx, move.dy, push, chain)) then
+        if self:_jammed(move) then return true end
+
+        return self:pull(x, y, dx, dy)
+    end
 
     self:_trail(chain, x, y, dx, dy, pull)
     self:_drive(chain, "push")
@@ -332,13 +396,19 @@ function Movement:advance(x, y, dx, dy)
     return true
 end
 
-function Movement:swap(ax, ay, bx, by)
+function Movement:swap(ax, ay, bx, by, heading)
     self.top = 0
     local chain = {}
-    if not self:_pair(chain, ax, ay, bx, by) or #chain == 0 then return false end
+    local mover = self.grid:get(ax, ay)
+    local paired, eaten = self:_pair(chain, ax, ay, bx, by, false, heading)
+    if not paired or #chain == 0 then return false end
 
     self:_shift(chain, true)
-    return true
+    if mover and not eaten then
+        mover.simulator = self.simulator
+        mover:swapped(heading and heading[1] or utils.sign(bx - ax), heading and heading[2] or utils.sign(by - ay))
+    end
+    return not eaten
 end
 
 function Movement:exchange(pairs)
@@ -346,14 +416,14 @@ function Movement:exchange(pairs)
     local chain = {}
 
     for _, pair in ipairs(pairs) do
-        if not self:_pair(chain, unpack(pair)) then return false end
+        if not self:_pair(chain, pair[1], pair[2], pair[3], pair[4], true) then return false end
     end
 
     self:_shift(chain, true)
     return true
 end
 
-function Movement:cycle(points, forced)
+function Movement:cycle(points)
     local grid = self.grid
     local chain = {}
     self.top = 0
@@ -365,8 +435,6 @@ function Movement:cycle(points, forced)
         if cell then
             local to = points[i % #points + 1]
             local dx, dy = utils.sign(to[1] - from[1]), utils.sign(to[2] - from[2])
-            if not (forced or movable(cell, dx, dy)) then return false end
-
             chain[#chain + 1] = self:_carry(cell, to[1], to[2], dx, dy)
         end
     end
@@ -379,7 +447,7 @@ function Movement:look(x, y, dx, dy, reverse)
     self.top = 0
 
     local move = self:_route(x, y, dx, dy, reverse)
-    return move and self.grid:bounds(move.x, move.y) and move
+    return move and (self.grid:bounds(move.x, move.y) or self.grid.edge) and move
 end
 
 function Movement:generate(x, y, dx, dy, options)
@@ -398,19 +466,21 @@ function Movement:generate(x, y, dx, dy, options)
     local back = self:_route(x, y, sx, sy, true)
     local source = back and grid:get(back.x, back.y)
     local front = self:_route(x, y, dx, dy)
-    if not source or not front then return false end
+    if not (source and source:generatable() and front) then return false end
 
     local chain = self:_line(front.x, front.y, front.dx, front.dy, constants.force.generate)
     if not chain then return false end
 
     if #chain > 0 then self:_shift(chain, true) end
-    if not source:generatable() then return true end
+
+    local class, props, rotation = source:generated()
+    if not class then return true end
 
     local origin = generator.path and generator.path[1] or { x, y }
     local turn = back.turn + front.turn + (options.turn or 0)
 
-    local class, props = source:generated()
-    local clone = class:new({ rotation = source.rotation + turn, props = props })
+    local clone = class:new({ rotation = rotation or source.rotation, props = props })
+    clone:rotate(turn, true)
     clone.updated = source.updated
     clone.ran = source.ran
     self:_spawn(clone, front, origin)
@@ -418,7 +488,21 @@ function Movement:generate(x, y, dx, dy, options)
     return true
 end
 
-function Movement:release(x, y, dx, dy, cell)
+function Movement:clear(x, y, dx, dy)
+    local probe = key(self.grid.width, x, y, dx, dy)
+    if self.probes[probe] then return false end
+
+    local front = self:_route(x, y, dx, dy)
+    if not front then return false end
+
+    local dry = self.dry
+    self.probes[probe], self.dry = true, true
+    local chain = self:_line(front.x, front.y, front.dx, front.dy, constants.force.generate)
+    self.probes[probe], self.dry = nil, dry
+    return chain ~= nil
+end
+
+function Movement:release(x, y, dx, dy, cell, mode)
     self.top = 0
     local front = self:_route(x, y, dx, dy)
     if not front then return false end
@@ -426,8 +510,14 @@ function Movement:release(x, y, dx, dy, cell)
     local chain = self:_line(front.x, front.y, front.dx, front.dy, constants.force.generate)
     if not chain then return false end
 
-    if #chain > 0 then self:_shift(chain, true) end
-    cell:rotate(front.turn)
+    if #chain > 0 then
+        if mode == "eject" then self:_drive(chain, "push") end
+        self:_shift(chain, true)
+    end
+
+    if mode ~= "keep" then cell:rotate(front.turn, true) end
+    if mode == "eject" then cell.updated = self.simulator.time.tick end
+
     self:_spawn(cell, front, { x, y })
     return true
 end
@@ -437,10 +527,12 @@ function Movement:repel(x, y, dx, dy)
     local front = self:_route(x, y, dx, dy)
     if not front then return false end
 
-    local chain = self:_line(front.x, front.y, front.dx, front.dy, constants.force.push + constants.force.strength)
+    local chain = self:_line(front.x, front.y, front.dx, front.dy, constants.force.push + constants.force.strength, nil, true)
     if not chain then return false end
 
-    self:_drive(chain, "push")
+    local cell = self.grid:get(front.x, front.y)
+    if cell and #chain == 0 then self:_bump(cell, front.dx, front.dy) end
+
     self:_shift(chain, true)
     return true
 end
@@ -452,7 +544,7 @@ function Movement:transform(x, y, dx, dy, cell)
     local target = front and front.target
     if not (target and target:transformable()) then return false end
 
-    cell:rotate(front.turn)
+    cell:rotate(front.turn, true)
     cell.grow = 0
     target.simulator = self.simulator
     target:kill()

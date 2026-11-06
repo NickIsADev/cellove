@@ -17,7 +17,7 @@ return {
             [2] = { -1, 0, 0, 1 },
             [3] = { 0, -1, -1, 0 }
         },
-        shift = { straight = 2, diagonal = 3 }
+        shift = { straight = 2, diagonal = 1 }
     },
 
     simulator = {
@@ -28,13 +28,15 @@ return {
             [3] = 0.5, -- diagonal
             [1] = 1    -- vertical
         },
-        scan = 3,
-        sweeps = {
-            leftup = { x = -1, y = -1 }
+        corners = {
+            [0] = 3.5,
+            [2] = 1.5,
+            [3] = 0.5,
+            [1] = 2.5
         },
+        scan = 3,
         hops = 100,
         flushes = 5,
-        subticks = 4,
         interval = 0.2
     },
 

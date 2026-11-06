@@ -5,6 +5,7 @@ local CrossDiodeDiverger = setmetatable({
     k3 = 209,
     title = "Crossdiode Diverger",
     description = "Lets cells pass straight through in two directions, one way each.",
+    faces = { 0, 3 },
     routes = { [1] = 0, [2] = 0 },
     reverse = { [0] = 0, [3] = 0 }
 }, { __index = BaseDiverger })

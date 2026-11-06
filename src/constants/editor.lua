@@ -126,6 +126,13 @@ return {
         },
         selection = {
             shortcuts = { "copy", "cut", "paste", "export", "import" },
+            label = {
+                font = 14,
+                gap = 8,
+                width = "w: %d",
+                height = "h: %d",
+                count = "cells: %d"
+            },
             buttons = {
                 {
                     kind = "icon",
@@ -179,12 +186,25 @@ return {
                     texture = "stamp_add",
                     title = "Save Stamp",
                     description = "Saves the selection as a stamp."
+                },
+                {
+                    kind = "icon",
+                    id = "image",
+                    texture = "image",
+                    title = "Save Image",
+                    description = "Saves the selection as a PNG image."
                 }
+            },
+            image = {
+                root = "screenshots",
+                name = "Selection %Y-%m-%d %H-%M-%S",
+                extension = ".png"
             },
             text = {
                 copied = "Copied selection",
                 cut = "Cut selection",
                 exported = "Copied selection code to the clipboard",
+                image = "Saved image to the screenshots folder",
                 empty = "Nothing to paste",
                 stamp = {
                     title = "Save Stamp",

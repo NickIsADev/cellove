@@ -8,16 +8,18 @@ local ConvertConstructor = setmetatable({
     k3 = 1088,
     title = "Convert Constructor",
     description = "Like a Constructor that only outputs whatever it contains.",
-    fit = stored.memory
+    fit = stored.memory,
+    fixed = true,
+    anchored = true
 }, { __index = BaseConverter })
 ConvertConstructor.__index = ConvertConstructor
 
-function ConvertConstructor:transformable()
-    return false
+function ConvertConstructor:_convert()
+    self:_release(self.rotation)
 end
 
-function ConvertConstructor:absorb(cell)
-    if self:held() then BaseConverter.absorb(self, cell) end
+function ConvertConstructor:eats()
+    return false
 end
 
 return ConvertConstructor

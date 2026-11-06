@@ -2,7 +2,7 @@ local BaseCell = require("content/cells/abstract/BaseCell")
 
 local BaseGate = setmetatable({
     categories = { "gates" },
-    subtick = { 6 },
+    subtick = { 23 },
     directional = true,
     rear = true
 }, { __index = BaseCell })
@@ -15,11 +15,15 @@ function BaseGate:new(data)
 end
 
 function BaseGate:eats(dx, dy)
-    return self:_side(dx, dy) ~= 0
+    return (dx == 0 or dy == 0) and self:_side(dx, dy) ~= 0
 end
 
-function BaseGate:pushable(dx, dy)
-    return false
+function BaseGate:swapped(dx, dy)
+    if self:eats(dx, dy) then self:absorb(self, dx, dy) end
+end
+
+function BaseGate:pushable(dx, dy, bare)
+    return bare
 end
 
 function BaseGate:absorb(cell, dx, dy)

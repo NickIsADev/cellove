@@ -15,15 +15,16 @@ function BaseDiverger:_entry(dx, dy)
 end
 
 function BaseDiverger:divert(dx, dy, reverse)
-    local class = getmetatable(self)
-    local routes = reverse and class.reverse or class.routes
+    local routes = reverse and self.reverse or self.routes
 
-    local bend = routes[self:_entry(dx, dy)]
+    local entry = self:_entry(dx, dy)
+    local bend = routes[entry]
     if type(bend) == "table" then bend = bend[math.random(#bend)] end
     if not bend then return end
 
     local nx, ny = utils.turn(dx, dy, bend)
-    return nx, ny, class.rotates and bend or 0
+    local halt = reverse and self.halts and self.halts[entry]
+    return nx, ny, self.rotates and bend or 0, halt
 end
 
 return BaseDiverger

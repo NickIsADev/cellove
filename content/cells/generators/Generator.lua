@@ -6,17 +6,15 @@ local Generator = setmetatable({
     title = "Generator",
     description = "Clones the cell behind it and pushes it out the front.",
     categories = { "generators" },
-    subtick = { 0 },
+    subtick = { 7 },
     directional = true
 }, { __index = BaseCell })
 Generator.__index = Generator
 
 function Generator:update(_, direction)
-    local class = getmetatable(self)
-
-    if class.bend then
-        self:generate(direction, { source = (self.rotation + class.bend) % 4, turn = class.bend })
-    elseif class.aligns then
+    if self.bend then
+        self:generate(direction, { source = (self.rotation + self.bend) % 4, turn = self.bend })
+    elseif self.aligns then
         self:generate(direction, { source = (self.rotation + 2) % 4, turn = direction - self.rotation })
     else
         self:generate(direction)

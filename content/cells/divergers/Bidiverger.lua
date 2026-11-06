@@ -5,6 +5,7 @@ local Bidiverger = setmetatable({
     k3 = 31,
     title = "Bidiverger",
     description = "Two Divergers in one, pointing opposite ways.",
+    faces = { 0, 1 },
     routes = {
         [0] = -1,
         [1] = 1,

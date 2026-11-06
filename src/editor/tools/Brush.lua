@@ -47,7 +47,7 @@ end
 function Brush:_stock(gx, gy)
     local editor = self.editor
     local cell = editor.simulator.grid:get(gx, gy)
-    if not (cell and cell.held and (not self.erasing or cell:held())) then return false end
+    if not (cell and cell.stockable and (not self.erasing or cell:held())) then return false end
 
     local props = utils.copy(cell.props)
     props.stored = not self.erasing and {

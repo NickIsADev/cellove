@@ -1,3 +1,6 @@
+local constants = require("src/constants")
+
+local config = constants.display
 local graphics, mouse = love.graphics, love.mouse
 local real = {
     dimensions = graphics.getDimensions,
@@ -5,10 +8,20 @@ local real = {
     scissor = graphics.setScissor
 }
 
-local Display = { scale = 1 }
+local Display = { scale = 1, user = 1 }
 
 function Display.new(data)
-    data.settings:listen("uiScale", function(percent) Display.scale = percent / 100 end)
+    data.settings:listen("uiScale", function(percent)
+        Display.user = percent / 100
+        Display.refresh()
+    end)
+end
+
+function Display.refresh()
+    local w, h = real.dimensions()
+    local fit = math.min(w / config.base.width, h / config.base.height)
+
+    Display.scale = Display.user * math.max(1, math.floor(fit / config.step) * config.step)
 end
 
 function Display.size()

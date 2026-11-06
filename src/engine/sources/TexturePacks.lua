@@ -76,6 +76,11 @@ function TexturePacks:_read(entry)
     return pack
 end
 
+function TexturePacks:reload()
+    self:_discover()
+    self.settings:notify(config.setting)
+end
+
 function TexturePacks:has(id)
     return self.roots[id] ~= nil
 end

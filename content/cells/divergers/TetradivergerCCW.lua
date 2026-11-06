@@ -5,6 +5,7 @@ local TetradivergerCCW = setmetatable({
     k3 = 430,
     title = "Tetradiverger (CCW)",
     description = "Turns every cell that enters it counter-clockwise.",
+    faces = {},
     routes = {
         [0] = -1,
         [1] = -1,

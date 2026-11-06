@@ -8,8 +8,22 @@ local files = constants.contraptions
 local ghost = constants.editor.ghost
 local rotating = constants.editor.marker.rotating
 local colors = constants.ui.colors
+local shadow = constants.ui.shadow
+local label = config.label
 
 local shortcuts = config.shortcuts
+
+local function caption(text, x, y)
+    local font = love.graphics.getFont()
+    local w, h = love.graphics.getDimensions()
+
+    x = utils.clamp(x, font:getWidth(text) / 2, w - font:getWidth(text) / 2)
+    y = utils.clamp(y, font:getHeight() / 2, h - font:getHeight() / 2)
+
+    utils.drawShadowed(function(ox, oy)
+        love.graphics.print(text, math.floor(x - font:getWidth(text) / 2) + ox, math.floor(y - font:getHeight() / 2) + oy)
+    end, shadow.offset, shadow.alpha)
+end
 
 local function rotated(clip, amount)
     local width, height = clip.width, clip.height
@@ -64,6 +78,7 @@ function Selector.new(editor)
         export = self._export,
         import = self._import,
         save = self._saveStamp,
+        image = self._saveImage,
         stamps = self._openStamps
     }
     return self
@@ -185,6 +200,39 @@ function Selector:_all()
     }
 end
 
+function Selector:_count()
+    local grid, area, cache = self.editor.simulator.grid, self.area, self.counted
+
+    if not (cache and cache.area == area and cache.version == grid.version) then
+        cache = { area = area, version = grid.version, total = 0 }
+        for y = area.y1, area.y2 do
+            for x = area.x1, area.x2 do
+                if grid:get(x, y) then cache.total = cache.total + 1 end
+            end
+        end
+        self.counted = cache
+    end
+    return cache.total
+end
+
+function Selector:_drawLabels()
+    local renderer = self.editor.renderer
+    local area, camera = self.area, renderer.camera
+    local font = renderer:font(label.font)
+    local left, top = camera:gridToScreen(area.x1, area.y1)
+    local right, bottom = camera:gridToScreen(area.x2 + 1, area.y2 + 1)
+    local height = string.format(label.height, area.y2 - area.y1 + 1)
+    local previousFont = love.graphics.getFont()
+
+    love.graphics.setFont(font)
+    caption(string.format(label.width, area.x2 - area.x1 + 1), (left + right) / 2, top - label.gap - font:getHeight() / 2)
+    caption(height, left - label.gap - font:getWidth(height) / 2, (top + bottom) / 2)
+    caption(string.format(label.count, self:_count()), (left + right) / 2, bottom + label.gap + font:getHeight() / 2)
+
+    love.graphics.setFont(previousFont)
+    love.graphics.setColor(utils.fromHex(colors.white))
+end
+
 function Selector:_turn(amount)
     self.clip = rotated(self.clip, amount)
 end
@@ -228,6 +276,15 @@ function Selector:_saveStamp()
     })
 end
 
+function Selector:_saveImage()
+    local editor, image = self.editor, config.image
+    local data = editor.renderer:capture(editor.simulator, editor.markers.items, self.area)
+
+    love.filesystem.createDirectory(image.root)
+    data:encode("png", image.root .. "/" .. os.date(image.name) .. image.extension)
+    editor.toast:show(config.text.image)
+end
+
 function Selector:_openStamps()
     self.editor.stampList:open()
 end
@@ -245,6 +302,7 @@ function Selector:refresh()
     self.byId.cut.enabled = self.area ~= nil
     self.byId.export.enabled = self.area ~= nil
     self.byId.save.enabled = self.area ~= nil
+    self.byId.image.enabled = self.area ~= nil
     self.byId.paste.enabled = self.clip ~= nil
 end
 
@@ -328,6 +386,7 @@ function Selector:draw(gx, gy)
     elseif self.area then
         local area = self.area
         renderer:drawBox(area.x1, area.y1, area.x2, area.y2, colors.white)
+        self:_drawLabels()
     end
 end
 

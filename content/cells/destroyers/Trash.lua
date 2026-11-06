@@ -5,7 +5,8 @@ local Trash = setmetatable({
     k3 = 12,
     title = "Trash",
     description = "Deletes any cell that moves into it.",
-    categories = { "destroyers" }
+    categories = { "destroyers" },
+    fixed = true
 }, { __index = BaseCell })
 Trash.__index = Trash
 

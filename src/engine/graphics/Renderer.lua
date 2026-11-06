@@ -58,6 +58,7 @@ function Renderer.new(data)
     self.rest = { n = 0 }
     self.tail = { n = 0 }
     self.cache = {}
+    self.hidden = {}
     self.profile = { collect = 0, layer = 0 }
     self.labels = setmetatable({}, weak)
     self.shadowShader = love.graphics.newShader(shadow.shader)
@@ -65,7 +66,6 @@ function Renderer.new(data)
     self.camera = Camera.new({ hotkeys = data.hotkeys })
 
     data.settings:listen("packs", function() self:loadTextures() end)
-    data.settings:listen("uiScale", function() self.fonts = {} end)
     data.settings:listen("cellShadows", function(enabled) self.shadows = enabled end)
     data.settings:listen("explosions", function(enabled) self.particles.enabled = enabled end)
     data.settings:listen("animatedBackground", function(enabled) self.scrolling = enabled end)
@@ -137,12 +137,12 @@ function Renderer:_queue(list, cell, x, y, progress, dying)
             local a, b = path[i + 1], path[i + 2]
             x = utils.lerp(a[1], b[1], t - i)
             y = utils.lerp(a[2], b[2], t - i)
-            if dying then size = 1 - math.max(0, t - (#path - 2)) end
+            if dying then size = utils.lerp(cell.grow or 1, cell.shrink or 0, math.max(0, t - (#path - 2))) end
         else
             local a, b = path[1], path[#path]
             x = utils.lerp(a[1], b[1], progress)
             y = utils.lerp(a[2], b[2], progress)
-            if dying then size = 1 - progress end
+            if dying then size = utils.lerp(cell.grow or 1, cell.shrink or 0, progress) end
         end
     end
 
@@ -157,13 +157,13 @@ end
 
 function Renderer:_collect(simulator, progress)
     local queue, rest, tail = self.queue, self.rest, self.tail
-    local grid, camera = simulator.grid, self.camera
+    local grid, camera, hidden = simulator.grid, self.camera, self.hidden
     local cells, width = grid.cells, grid.width
     queue.n, rest.n, tail.n = 0, 0, 0
 
     local margin = simulator.maxSubticks
-    local halfWidth = love.graphics.getWidth() / 2 / camera.zoom
-    local halfHeight = love.graphics.getHeight() / 2 / camera.zoom
+    local viewWidth, viewHeight = camera.size()
+    local halfWidth, halfHeight = viewWidth / 2 / camera.zoom, viewHeight / 2 / camera.zoom
     local minX = math.max(1, math.floor((camera.x - halfWidth) / tile) + 1 - margin)
     local maxX = math.min(grid.width, math.floor((camera.x + halfWidth) / tile) + 1 + margin)
     local minY = math.max(1, math.floor((camera.y - halfHeight) / tile) + 1 - margin)
@@ -178,7 +178,7 @@ function Renderer:_collect(simulator, progress)
         local row = (y - 1) * width
         for x = minX, maxX do
             local cell = cells[row + x]
-            if cell then self:_queue(cell.born and queue or rest, cell, x, y, progress, false) end
+            if cell and not hidden[cell] then self:_queue(cell.born and queue or rest, cell, x, y, progress, false) end
         end
     end
 
@@ -367,7 +367,38 @@ function Renderer:_drawFar(simulator, progress)
     love.graphics.pop()
 end
 
+function Renderer:_drawWorld(simulator, progress, markers)
+    local grid, back = simulator.grid, self.back
+    local distant, minimal = self.camera.zoom < self.far, self.camera.zoom < flat
+
+    if distant or not self.animated then progress = 1 end
+
+    love.graphics.setColor(utils.fromHex(colors.dark))
+    love.graphics.rectangle("fill", 0, 0, grid.width * tile, grid.height * tile)
+
+    if minimal then
+        love.graphics.setColor(back.tint)
+        love.graphics.rectangle("fill", 0, 0, grid.width * tile, grid.height * tile)
+    else
+        self:_fitBackground(grid)
+        love.graphics.setColor(utils.fromHex(colors.white))
+        love.graphics.draw(back.texture, self.backgroundQuad, 0, 0, 0, tile / back.width, tile / back.height)
+    end
+
+    self:_drawPlaceables(markers)
+    if minimal then
+        self:_drawFlat(grid)
+    elseif distant then
+        self:_drawFar(simulator, progress)
+    else
+        self:_drawLayer(simulator, progress)
+    end
+    if not simulator:started() then self:_drawOverlays(markers, grid) end
+end
+
 function Renderer:font(size)
+    if self.fontScale ~= Display.scale then self.fonts, self.fontScale = {}, Display.scale end
+
     local font = self.fonts[size]
     if not font then
         font = love.graphics.newFont(self:_path("font", "regular.ttf"), size, "normal", Display.dpi())
@@ -537,41 +568,44 @@ function Renderer:preload(classes, first, last)
 end
 
 function Renderer:draw(simulator, progress, markers)
-    local grid, back = simulator.grid, self.back
-    local distant, minimal = self.camera.zoom < self.far, self.camera.zoom < flat
-
-    if distant or not self.animated then progress = 1 end
-
     love.graphics.clear(utils.fromHex(colors.dark))
     love.graphics.push()
     love.graphics.origin()
     love.graphics.scale(Display.scale)
     self.camera:apply()
 
-    love.graphics.setColor(utils.fromHex(colors.dark))
-    love.graphics.rectangle("fill", 0, 0, grid.width * tile, grid.height * tile)
-
-    if minimal then
-        love.graphics.setColor(back.tint)
-        love.graphics.rectangle("fill", 0, 0, grid.width * tile, grid.height * tile)
-    else
-        self:_fitBackground(grid)
-        love.graphics.setColor(utils.fromHex(colors.white))
-        love.graphics.draw(back.texture, self.backgroundQuad, 0, 0, 0, tile / back.width, tile / back.height)
-    end
-
-    self:_drawPlaceables(markers)
-    if minimal then
-        self:_drawFlat(grid)
-    elseif distant then
-        self:_drawFar(simulator, progress)
-    else
-        self:_drawLayer(simulator, progress)
-    end
-    if not simulator:started() then self:_drawOverlays(markers, grid) end
+    self:_drawWorld(simulator, progress, markers)
     self.particles:draw()
 
     love.graphics.pop()
+end
+
+function Renderer:capture(simulator, markers, area)
+    local width, height = (area.x2 - area.x1 + 1) * tile, (area.y2 - area.y1 + 1) * tile
+    local scale = math.min(1, love.graphics.getSystemLimits().texturesize / math.max(width, height))
+    local canvas = love.graphics.newCanvas(math.floor(width * scale), math.floor(height * scale), { dpiscale = 1 })
+    local live, previous = self.camera, love.graphics.getCanvas()
+    local camera = Camera.new({ size = function() return width, height end })
+
+    camera.x, camera.y, camera.zoom = (area.x1 - 1) * tile + width / 2, (area.y1 - 1) * tile + height / 2, 1
+    self.camera = camera
+
+    love.graphics.setCanvas(canvas)
+    love.graphics.push()
+    love.graphics.origin()
+    love.graphics.scale(scale)
+
+    love.graphics.push()
+    camera:apply()
+    self:_drawWorld(simulator, 1, markers)
+    love.graphics.pop()
+    self:drawMarkers(markers)
+
+    love.graphics.pop()
+    love.graphics.setCanvas(previous)
+    self.camera = live
+
+    return canvas:newImageData()
 end
 
 return Renderer

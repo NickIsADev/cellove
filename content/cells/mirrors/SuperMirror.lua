@@ -6,6 +6,7 @@ local SuperMirror = setmetatable({
     title = "Super Mirror",
     description = "Swaps an entire row of cells.",
     swaps = { { 0, 2 } },
+    subtick = { 3 },
     reach = math.huge
 }, { __index = BaseMirror })
 SuperMirror.__index = SuperMirror

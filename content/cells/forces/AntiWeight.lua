@@ -6,6 +6,7 @@ local AntiWeight = setmetatable({
     k3 = 104,
     title = "Anti-Weight",
     description = "Adds 1 unit of force to applied forces.",
+    faces = {},
     categories = { "forces" }
 }, { __index = BaseCell })
 AntiWeight.__index = AntiWeight

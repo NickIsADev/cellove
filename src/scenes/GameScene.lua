@@ -18,6 +18,7 @@ function GameScene.new(data)
     self.settings = data.settings
     self.hotkeys = data.hotkeys
     self.contraptions = data.contraptions
+    self.screenshots = data.screenshots
     self.toast = Toast.new(data.renderer)
     self.markers = Markers.new()
 
@@ -75,6 +76,11 @@ end
 function GameScene:_export()
     love.system.setClipboardText(self.contraptions:export(self:_snapshot()))
     self.toast:show(string.format(text.copied, self.name or constants.contraptions.defaultName))
+end
+
+function GameScene:_screenshot()
+    self.screenshots:take(self.simulator, self.markers.items, self.editor:selection())
+    self.toast:show(constants.screenshots.text.saved)
 end
 
 function GameScene:_puzzle()
@@ -188,6 +194,8 @@ function GameScene:keypressed(key)
         self.simulator:reset()
     elseif hotkeys:pressed("save", key) then
         self:_save()
+    elseif hotkeys:pressed("screenshot", key) then
+        self:_screenshot()
     end
 end
 

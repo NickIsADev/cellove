@@ -16,6 +16,7 @@ return {
         callbacks = callbacks,
         fade = { time = 0.2, hold = 0.25 },
         maxDelta = 0.1,
+        reloadPacks = "Reloading texture packs...",
         loading = {
             text = "Loading...",
             size = 24,
