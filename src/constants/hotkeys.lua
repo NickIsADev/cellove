@@ -166,6 +166,27 @@ return {
                 title = "Move Right",
                 description = "Moves the camera right.",
                 key = "d"
+            },
+            {
+                id = "screenshot",
+                group = "General",
+                title = "Take Screenshot",
+                description = "Saves a screenshot of the selection, or the entire grid.",
+                key = "f2"
+            },
+            {
+                id = "reloadPacks",
+                group = "General",
+                title = "Reload Texture Packs",
+                description = "Reloads all texture packs.",
+                key = "f5"
+            },
+            {
+                id = "restart",
+                group = "General",
+                title = "Restart Game",
+                description = "Restarts the game. Unsaved contraptions are autosaved.",
+                key = "ctrl shift f5"
             }
         }
     }

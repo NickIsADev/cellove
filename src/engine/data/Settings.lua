@@ -72,9 +72,12 @@ function Settings:set(key, value)
 
     self.values[key] = value
     self:_save()
+    self:notify(key)
+end
 
+function Settings:notify(key)
     for _, callback in ipairs(self.listeners[key] or {}) do
-        callback(value)
+        callback(self.values[key])
     end
 end
 

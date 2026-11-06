@@ -291,6 +291,10 @@ function Editor:select(class)
     if class then self:setTool("brush") end
 end
 
+function Editor:selection()
+    return self.tools.selector.area
+end
+
 function Editor:setTool(id)
     if self.tool then self.tool:leave() end
 

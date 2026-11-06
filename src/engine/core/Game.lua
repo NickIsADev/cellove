@@ -61,6 +61,7 @@ local function boot()
     local Puzzles = require("src/engine/data/Puzzles")
     local Registry = require("src/engine/registry/Registry")
     local Progress = require("src/engine/data/Progress")
+    local Screenshots = require("src/engine/data/Screenshots")
     local Updates = require("src/engine/data/Updates")
     local Hotkeys = require("src/engine/data/Hotkeys")
     local Audio = require("src/engine/audio/Audio")
@@ -81,6 +82,7 @@ local function boot()
         contraptions = require("src/scenes/ContraptionsScene"),
         puzzles = require("src/scenes/PuzzlesScene"),
         puzzle = require("src/scenes/PuzzleScene"),
+        screenshots = require("src/scenes/ScreenshotsScene"),
         game = require("src/scenes/GameScene")
     }
     for name, Scene in pairs(mods.scenes) do
@@ -111,6 +113,8 @@ local function boot()
     step("scenes")
     manager = SceneManager.new({
         renderer = renderer,
+        hotkeys = hotkeys,
+        texturePacks = texturePacks,
         debug = Debug.new({ settings = settings, renderer = renderer })
     })
     local context = {
@@ -123,6 +127,7 @@ local function boot()
         stamps = stamps,
         puzzles = puzzles,
         progress = Progress.new(),
+        screenshots = Screenshots.new({ renderer = renderer }),
         updates = Updates.new({ settings = settings }),
         registry = registry,
         mods = mods

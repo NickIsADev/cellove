@@ -10,6 +10,7 @@ Camera.__index = Camera
 function Camera.new(data)
     local self = setmetatable({}, Camera)
     self.hotkeys = data.hotkeys
+    self.size = data.size or love.graphics.getDimensions
     self.x = 0
     self.y = 0
     self.vx = 0
@@ -20,20 +21,30 @@ function Camera.new(data)
 end
 
 function Camera:apply()
-    love.graphics.translate(love.graphics.getWidth() / 2, love.graphics.getHeight() / 2)
+    local width, height = self.size()
+
+    love.graphics.translate(width / 2, height / 2)
     love.graphics.scale(self.zoom)
     love.graphics.translate(-self.x, -self.y)
 end
 
 function Camera:screenToTile(sx, sy)
-    local wx = (sx - love.graphics.getWidth() / 2) / self.zoom + self.x
-    local wy = (sy - love.graphics.getHeight() / 2) / self.zoom + self.y
+    local width, height = self.size()
+    local wx = (sx - width / 2) / self.zoom + self.x
+    local wy = (sy - height / 2) / self.zoom + self.y
     return wx / tile + 0.5, wy / tile + 0.5
 end
 
 function Camera:screenToGrid(sx, sy)
     local x, y = self:screenToTile(sx, sy)
     return math.floor(x + 0.5), math.floor(y + 0.5)
+end
+
+function Camera:gridToScreen(gx, gy)
+    local width, height = self.size()
+    local x, y = (gx - 1) * tile - self.x, (gy - 1) * tile - self.y
+
+    return width / 2 + x * self.zoom, height / 2 + y * self.zoom
 end
 
 function Camera:focus(width, height)

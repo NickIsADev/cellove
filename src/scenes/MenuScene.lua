@@ -10,6 +10,7 @@ local utils = require("src/utils")
 local config = constants.menu
 local credits = config.credits
 local discord = config.discord
+local gallery = constants.screenshots.button
 local separator = constants.ui.separator
 local version = config.version
 local info = constants.version
@@ -89,6 +90,17 @@ function MenuScene.new(data)
         title = discord.title,
         description = discord.description
     })
+    self.galleryButton = IconButton.new({
+        renderer = data.renderer,
+        id = "gallery",
+        folder = "ui",
+        texture = "image",
+        size = gallery.size,
+        alpha = gallery.alpha,
+        growth = 0,
+        title = gallery.title,
+        description = gallery.description
+    })
     self.credits = false
     return self
 end
@@ -104,6 +116,7 @@ function MenuScene:_layout()
     self.quitButton:place(w - config.quit.margin - config.quit.size, config.quit.margin)
     self.creditsButton:place(credits.button.margin, h - credits.button.margin - credits.button.size)
     self.discordButton:place(credits.button.margin + credits.button.size + discord.gap, h - credits.button.margin - discord.size)
+    self.galleryButton:place(credits.button.margin + credits.button.size + discord.size + discord.gap * 2, h - credits.button.margin - gallery.size)
 end
 
 function MenuScene:_drawTitle()
@@ -310,6 +323,7 @@ function MenuScene:update(dt)
     self.quitButton:update(dt)
     self.creditsButton:update(dt)
     self.discordButton:update(dt)
+    self.galleryButton:update(dt)
 end
 
 function MenuScene:mousepressed(x, y, button)
@@ -325,6 +339,7 @@ function MenuScene:mousepressed(x, y, button)
         return
     end
     if self.discordButton:hit(x, y) then return love.system.openURL(discord.url) end
+    if self.galleryButton:hit(x, y) then return self.manager:switch("screenshots") end
     if self.quitButton:hit(x, y) then return love.event.quit() end
 
     for _, icon in ipairs(self.buttons) do
@@ -352,6 +367,7 @@ function MenuScene:draw()
     self.quitButton:draw()
     self.creditsButton:draw()
     self.discordButton:draw()
+    self.galleryButton:draw()
     self:_drawVersion()
     self.toast:draw(constants.toast.top)
     if self.credits then self:_drawCredits() end
@@ -360,6 +376,7 @@ function MenuScene:draw()
         self.quitButton:drawTooltip(self.tooltip)
         self.creditsButton:drawTooltip(self.tooltip)
         self.discordButton:drawTooltip(self.tooltip)
+        self.galleryButton:drawTooltip(self.tooltip)
     end
 
     love.graphics.setFont(previousFont)
