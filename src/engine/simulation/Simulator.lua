@@ -71,7 +71,7 @@ function Simulator:_sync()
     self.dying = {}
 
     for _, cell in ipairs(self.grid.touched) do
-        cell.path, cell.own, cell.turn, cell.born, cell.grow = nil, nil, 0, nil, nil
+        cell.path, cell.own, cell.turn, cell.born, cell.grow, cell.shrink, cell.arriving = nil, nil, 0, nil, nil, nil, nil
     end
     self.grid.touched = {}
 end

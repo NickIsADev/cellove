@@ -35,6 +35,7 @@ local toolbar = {
         "cellove:advancer",
         "cellove:nudger",
         "cellove:generator",
+        "cellove:pipe",
         "cellove:diverger",
         "cellove:displacer",
         "cellove:mirror",

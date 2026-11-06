@@ -25,7 +25,7 @@ Set these in the table you pass to `setmetatable`.
 | `description` | `string` | `""` | description in the library |
 | `categories` | `table` | | required, list of [category IDs](Creating-Cells#categories) |
 | `properties` | `table` | `{}` | [property definitions](Creating-Cells#properties) |
-| `subtick` | `table` | `{}` | subticks `update` runs in. lower runs first and cells sharing a number run together. only the order matters, so any number works, like `20.5` to run between movers (`20`) and nudgers (`21`). see [built-in subticks](Creating-Cells#subticks). empty means never |
+| `subtick` | `table` | `{}` | subticks `update` runs in. lower runs first and cells sharing a number run together. only the order matters, so any number works, like `21.5` to run between movers (`21`) and nudgers (`22`). see [built-in subticks](Creating-Cells#subticks). empty means never |
 | `directional` | `boolean` | | calls `update` once per entry in `outputs` |
 | `outputs` | `table` | `{ 0 }` | output directions relative to rotation: `0` forward, `1` right, `2` back, `3` left |
 | `drive` | `table` | | actions that move the cell forward, like `{ push = true, pull = true }`. a cell moved that way skips its update that tick |

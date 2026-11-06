@@ -41,6 +41,7 @@ function Movement.new(data)
     self.top = 0
     self.stamp = 0
     self.dead = {}
+    self.probes = {}
     self.queue = {}
     self.moves = 0
     return self
@@ -163,7 +164,7 @@ function Movement:_line(x, y, dx, dy, force, chain, bare)
     while true do
         if not (cell or grid:bounds(x, y)) then return self:_seal(chain, first) end
         if not cell or cell:eats(dx, dy) then return chain end
-        if cell.walked == stamp then return end
+        if cell.walked == stamp then return cell == chain[1].cell and chain or nil end
 
         local pushable = cell:pushable(dx, dy, bare and #chain == first)
         if not pushable then self:_bump(cell, dx, dy) end
@@ -488,12 +489,16 @@ function Movement:generate(x, y, dx, dy, options)
 end
 
 function Movement:clear(x, y, dx, dy)
+    local probe = key(self.grid.width, x, y, dx, dy)
+    if self.probes[probe] then return false end
+
     local front = self:_route(x, y, dx, dy)
     if not front then return false end
 
-    self.dry = true
+    local dry = self.dry
+    self.probes[probe], self.dry = true, true
     local chain = self:_line(front.x, front.y, front.dx, front.dy, constants.force.generate)
-    self.dry = false
+    self.probes[probe], self.dry = nil, dry
     return chain ~= nil
 end
 

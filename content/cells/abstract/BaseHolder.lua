@@ -6,6 +6,7 @@ local stored = constants.renderer.stored
 
 local BaseHolder = setmetatable({
     categories = { "storage" },
+    stockable = true,
     properties = {
         { id = "stored", title = "Stored", default = {} }
     },
@@ -70,13 +71,15 @@ function BaseHolder:rotate(amount, forced)
 
     local content = self.props and self.props.stored
     if content and content.class then
-        self:_hold({ class = content.class, rotation = (content.rotation + amount) % 4, props = content.props })
+        local held = utils.copy(content)
+        held.rotation = (content.rotation + amount) % 4
+        self:_hold(held)
     end
 end
 
 function BaseHolder:draw(renderer, x, y, angle, scale, offset)
     BaseCell.draw(self, renderer, x, y, angle, scale, offset)
-    if self:held() then
+    if self:held() and not self.arriving then
         renderer:drawStored(self.props.stored, x, y, angle - self.rotation, scale * self.fit, offset)
     end
 end

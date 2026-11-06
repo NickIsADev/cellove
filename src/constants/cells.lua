@@ -33,6 +33,11 @@ return {
                 icon = "generator"
             },
             {
+                id = "pipes",
+                title = "Pipes",
+                icon = "pipe"
+            },
+            {
                 id = "divergers",
                 title = "Divergers",
                 icon = "diverger"

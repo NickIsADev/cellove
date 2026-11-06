@@ -19,6 +19,10 @@ function calc.turn(dx, dy, amount)
     return dx, dy
 end
 
+function calc.direction(dx, dy)
+    return dy ~= 0 and 2 - dy or 1 - dx
+end
+
 function calc.inside(x, y, left, top, width, height)
     return x >= left and x <= left + width and y >= top and y <= top + height
 end

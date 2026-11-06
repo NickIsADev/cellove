@@ -7,7 +7,7 @@ end
 
 local BaseMirror = setmetatable({
     categories = { "forces", "mirrors" },
-    subtick = { 3 },
+    subtick = { 4 },
     outputs = { 0, 1, 2, 3 },
     directional = true,
     sweep = {

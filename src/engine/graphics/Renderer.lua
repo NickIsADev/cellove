@@ -137,12 +137,12 @@ function Renderer:_queue(list, cell, x, y, progress, dying)
             local a, b = path[i + 1], path[i + 2]
             x = utils.lerp(a[1], b[1], t - i)
             y = utils.lerp(a[2], b[2], t - i)
-            if dying then size = 1 - math.max(0, t - (#path - 2)) end
+            if dying then size = utils.lerp(cell.grow or 1, cell.shrink or 0, math.max(0, t - (#path - 2))) end
         else
             local a, b = path[1], path[#path]
             x = utils.lerp(a[1], b[1], progress)
             y = utils.lerp(a[2], b[2], progress)
-            if dying then size = 1 - progress end
+            if dying then size = utils.lerp(cell.grow or 1, cell.shrink or 0, progress) end
         end
     end
 

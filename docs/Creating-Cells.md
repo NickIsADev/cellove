@@ -82,20 +82,21 @@ end
 
 ## Subticks
 
-A tick runs its subticks in ascending order, and a cell's `update` runs in the subticks listed in its `subtick`. Only the order matters, so use any number: `20.5` runs after movers and before nudgers without renumbering anything. These are the ones the built-in cells use.
+A tick runs its subticks in ascending order, and a cell's `update` runs in the subticks listed in its `subtick`. Only the order matters, so use any number: `21.5` runs after movers and before nudgers without renumbering anything. These are the ones the built-in cells use.
 
 | subtick | cells |
 | --- | --- |
-| `0` | true gears |
-| `1` | midas |
-| `2`, `3`, `4` | super mirrors, mirrors, curved mirrors |
-| `5`, `6`, `7`, `8` | memory generators, generators, memory replicators, makers |
-| `9`, `10` | rotators, the spin of rotator movers |
-| `11` | flip gears |
-| `12`, `13`, `14`, `15` | gears, counter-clockwise gears, half gears, random gears |
-| `16`, `17` | super redirectors, redirectors |
-| `18`, `19`, `20`, `21` | repulsors, pullers and advancers, movers, nudgers |
-| `22`, `23` | gates, storages |
+| `0` | pipes |
+| `1` | true gears |
+| `2` | midas |
+| `3`, `4`, `5` | super mirrors, mirrors, curved mirrors |
+| `6`, `7`, `8`, `9` | memory generators, generators, memory replicators, makers |
+| `10`, `11` | rotators, the spin of rotator movers |
+| `12` | flip gears |
+| `13`, `14`, `15`, `16` | gears, counter-clockwise gears, half gears, random gears |
+| `17`, `18` | super redirectors, redirectors |
+| `19`, `20`, `21`, `22` | repulsors, pullers and advancers, movers, nudgers |
+| `23`, `24` | gates, storages |
 
 ## Common patterns
 
