@@ -6,6 +6,7 @@ local BasePipe = setmetatable({
     categories = { "pipes" },
     subtick = { 0 },
     directional = true,
+    pipe = true,
     outputs = { 0, 1, 2, 3 },
     faces = { 0 },
     fixed = true,
@@ -18,6 +19,14 @@ BasePipe.__index = BasePipe
 
 function BasePipe:_heading()
     return (self.rotation + (self.props.stored.exit or 0)) % 4
+end
+
+function BasePipe:_yield(direction)
+    local front = self:look(direction)
+    local target = front and front.target
+    if not (target and target.pipe and target:held()) then return end
+
+    self.simulator:run(target, target.subtick[1], target:_heading())
 end
 
 function BasePipe:_make(direction)
@@ -46,9 +55,10 @@ function BasePipe:absorb(cell, dx, dy)
 end
 
 function BasePipe:update(_, direction)
-    if self:held() and direction == self:_heading() and self:_release(direction, "eject") then
-        self:_hold({})
-    end
+    if not (self:held() and direction == self:_heading()) then return end
+
+    self:_yield(direction)
+    if self:_release(direction, "eject") then self:_hold({}) end
 end
 
 return BasePipe

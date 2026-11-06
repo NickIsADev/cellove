@@ -39,34 +39,6 @@ function Simulator:_rewind()
     }
 end
 
-function Simulator:_run(cell, subtick, direction)
-    local class = getmetatable(cell)
-    local lookup = class.lookup
-    if not lookup.subtick[subtick] then return end
-
-    local multi = false
-    if class.directional then
-        if not lookup.outputs[(direction - cell.rotation) % 4] then return end
-        multi = #class.outputs > 1
-    elseif direction ~= constants.simulator.scan then return end
-
-    local stamp = self.time.subtick
-    if cell.updated == self.time.tick then return end
-
-    if multi then
-        cell.dirs = cell.dirs or {}
-        if cell.dirs[direction] == stamp then return end
-        cell.dirs[direction] = stamp
-    else
-        if cell.ran == stamp then return end
-        cell.ran = stamp
-    end
-
-    cell.simulator = self
-    cell:update(subtick, direction)
-    self.movement:flush()
-end
-
 function Simulator:_sync()
     self.dying = {}
 
@@ -93,7 +65,7 @@ function Simulator:_sweep(subtick, direction, sweep)
                 if columns then x, y = outer, inner end
 
                 local cell = cells[(y - 1) * width + x]
-                if cell then self:_run(cell, subtick, direction) end
+                if cell then self:run(cell, subtick, direction) end
             end
         end
     end
@@ -122,7 +94,7 @@ function Simulator:_scan(subtick, direction)
         if (lines[outer] or 0) > 0 then
             for inner = innerFrom, innerTo, innerStep do
                 local cell = cells[horizontal and (inner - 1) * width + outer or (outer - 1) * width + inner]
-                if cell then self:_run(cell, subtick, direction) end
+                if cell then self:run(cell, subtick, direction) end
             end
         end
     end
@@ -166,6 +138,34 @@ function Simulator:_pass()
     time.pass = time.pass + 1
     self:_scan(self.order[(time.subtick - 1) % self.maxSubticks + 1], passes[time.pass])
     if time.pass == #passes then time.pass = 0 end
+end
+
+function Simulator:run(cell, subtick, direction)
+    local class = getmetatable(cell)
+    local lookup = class.lookup
+    if not lookup.subtick[subtick] then return end
+
+    local multi = false
+    if class.directional then
+        if not lookup.outputs[(direction - cell.rotation) % 4] then return end
+        multi = #class.outputs > 1
+    elseif direction ~= constants.simulator.scan then return end
+
+    local stamp = self.time.subtick
+    if cell.updated == self.time.tick then return end
+
+    if multi then
+        cell.dirs = cell.dirs or {}
+        if cell.dirs[direction] == stamp then return end
+        cell.dirs[direction] = stamp
+    else
+        if cell.ran == stamp then return end
+        cell.ran = stamp
+    end
+
+    cell.simulator = self
+    cell:update(subtick, direction)
+    self.movement:flush()
 end
 
 function Simulator:started()
