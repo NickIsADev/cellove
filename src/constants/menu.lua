@@ -263,7 +263,7 @@ return {
             list = {
                 "push! push! push!",
                 "debloated!",
-                "please submit your cell suggestions",
+                "CMMM+MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM",
                 "quack!",
                 "yes, it's written in Lua.",
                 "a full rewrite of CelLua!",
@@ -280,7 +280,8 @@ return {
                 "yippee kyyay!",
                 "fast!",
                 "batteries ARE included :)",
-                "moddable!"
+                "moddable!",
+                "behold the funcularity"
             }
         },
         credits = {
