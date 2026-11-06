@@ -199,7 +199,7 @@ end
 
 What a generator's copy of the cell becomes. Only called when [`generatable`](#basecellgeneratable) is true. Default is the cell's own class and props.
 
-**Returns** the class of the copy, and optionally the props it starts with.
+**Returns** the class of the copy, and optionally the props it starts with and its rotation. Return nothing to generate nothing. The rotation defaults to the cell's own.
 
 ```lua
 -- copies turn into an Ungeneratable
