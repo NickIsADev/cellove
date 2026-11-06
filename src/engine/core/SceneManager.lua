@@ -7,6 +7,13 @@ local utils = require("src/utils")
 local config = constants.scene
 local colors = constants.ui.colors
 
+local binds = {
+    reloadPacks = function(self)
+        self:run(function() self.texturePacks:reload() end, config.reloadPacks)
+    end,
+    restart = function() love.event.quit("restart") end
+}
+
 local SceneManager = {}
 SceneManager.__index = SceneManager
 SceneManager.callbacks = config.callbacks.all
@@ -14,6 +21,8 @@ SceneManager.callbacks = config.callbacks.all
 function SceneManager.new(data)
     local self = setmetatable({}, SceneManager)
     self.renderer = data.renderer
+    self.hotkeys = data.hotkeys
+    self.texturePacks = data.texturePacks
     self.debug = data.debug
     self.scenes = {}
     self.fade = 0
@@ -64,6 +73,17 @@ for _, name in ipairs(config.callbacks.forwarded) do
     end
 end
 
+local keypressed = SceneManager.keypressed
+
+function SceneManager:keypressed(key, scancode, repeated)
+    if not (repeated or self.current.listening) then
+        for id, action in pairs(binds) do
+            if self.hotkeys:pressed(id, key) then return action(self) end
+        end
+    end
+    return keypressed(self, key, scancode, repeated)
+end
+
 function SceneManager:register(name, scene)
     assert(not self.scenes[name], "duplicate scene " .. name)
     self.scenes[name] = scene
@@ -90,6 +110,7 @@ end
 
 function SceneManager:update(dt)
     self.debug:update(dt)
+    Display.refresh()
     dt = math.min(dt, config.maxDelta)
     self.clock = self.clock + dt
     Audio.update()

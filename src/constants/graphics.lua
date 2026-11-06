@@ -1,4 +1,9 @@
 return {
+    display = {
+        base = { width = 1280, height = 720 },
+        step = 0.5
+    },
+
     window = {
         icon = { folder = "ui", file = "icon.png", size = 256 }
     },
