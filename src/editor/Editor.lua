@@ -135,6 +135,7 @@ function Editor:_undo()
         stroke[i]()
     end
     self.simulator:save()
+    Events.emit("editor:undo", self)
 end
 
 function Editor:_toolAt(key)
@@ -316,6 +317,7 @@ end
 function Editor:select(class)
     self.selected = class
     if class then self:setTool("brush") end
+    Events.emit("editor:select", self, class)
 end
 
 function Editor:selection()
@@ -329,6 +331,7 @@ function Editor:setTool(id)
     self.toolId = id
     self.panel:set(self.tool)
     self.toolbar:setTool(id)
+    Events.emit("editor:tool", self, id)
 end
 
 function Editor:setCell(x, y, state)
@@ -337,6 +340,7 @@ function Editor:setCell(x, y, state)
 
     self:_restore(x, y, state)
     self:_record(function() self:_restore(x, y, before) end)
+    Events.emit("editor:cell", self, x, y, state, before)
     return true
 end
 

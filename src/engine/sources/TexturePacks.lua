@@ -1,4 +1,5 @@
 local BaseSource = require("src/engine/sources/abstract/BaseSource")
+local Events = require("src/engine/modding/Events")
 local constants = require("src/constants")
 local utils = require("src/utils")
 
@@ -79,6 +80,7 @@ end
 function TexturePacks:reload()
     self:_discover()
     self.settings:notify(config.setting)
+    Events.emit("packs:reloaded")
 end
 
 function TexturePacks:has(id)

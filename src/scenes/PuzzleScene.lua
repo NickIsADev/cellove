@@ -53,6 +53,7 @@ function PuzzleScene:_reset()
     self.puzzle:load(self.info.data)
     self.landings = {}
     self.timer, self.cleared = nil, false
+    Events.emit("puzzle:start", self.info)
 end
 
 function PuzzleScene:_screenshot()

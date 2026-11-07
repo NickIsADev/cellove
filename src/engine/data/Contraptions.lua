@@ -97,7 +97,10 @@ end
 
 function Contraptions:save(name, data)
     love.filesystem.createDirectory(self.root)
-    return love.filesystem.write(self:_path(name), self:export(data))
+
+    local saved = love.filesystem.write(self:_path(name), self:export(data))
+    if saved then Events.emit("contraption:saved", name, data) end
+    return saved
 end
 
 function Contraptions:rename(name, newName)
@@ -106,7 +109,9 @@ function Contraptions:rename(name, newName)
 end
 
 function Contraptions:delete(name)
-    return love.filesystem.remove(self:_path(name))
+    local deleted = love.filesystem.remove(self:_path(name))
+    if deleted then Events.emit("contraption:deleted", name) end
+    return deleted
 end
 
 function Contraptions:fromFile(file)

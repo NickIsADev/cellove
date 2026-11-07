@@ -196,11 +196,17 @@ function Simulator:update(dt)
 end
 
 function Simulator:play()
+    if not self.paused then return end
+
     self.paused = false
+    Events.emit("simulator:play", self)
 end
 
 function Simulator:pause()
+    if self.paused then return end
+
     self.paused = true
+    Events.emit("simulator:pause", self)
 end
 
 function Simulator:toggle()
@@ -208,14 +214,14 @@ function Simulator:toggle()
 end
 
 function Simulator:step()
-    self.paused = true
+    self:pause()
     self.timer = 0
     self:_sync()
     self:_tick()
 end
 
 function Simulator:substep()
-    self.paused = true
+    self:pause()
     self.timer = 0
     self:_sync()
 
@@ -252,11 +258,13 @@ function Simulator:load(data)
     self.grid:resize(data.width, data.height, data.border)
     self.grid:populate(data.cells)
     self.grid:save()
+    Events.emit("simulator:load", self, data)
 end
 
 function Simulator:reset()
     self:_rewind()
     self.grid:reset()
+    Events.emit("simulator:reset", self)
 end
 
 return Simulator
