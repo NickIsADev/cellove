@@ -434,6 +434,17 @@ return {
         dim = 0.6,
         sidebar = 200,
         placeholder = "Search cells...",
+        search = {
+            negate = "!",
+            phrases = { description = true, category = true, exact = true },
+            symbols = {
+                ["#"] = "id",
+                ["@"] = "description",
+                ["/"] = "category",
+                [":"] = "subtick",
+                ["="] = "exact"
+            }
+        },
         empty = "No cells found...",
         all = { title = "All", icon = "cellove" },
         category = {

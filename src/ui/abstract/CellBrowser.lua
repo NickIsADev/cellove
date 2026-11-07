@@ -9,6 +9,7 @@ local constants = require("src/constants")
 local utils = require("src/utils")
 
 local config = constants.library
+local syntax = config.search
 local colors = constants.ui.colors
 
 local titles = {}
@@ -50,6 +51,63 @@ local function rank(text, word)
     if text:sub(1, #word) == word then return 1 end
     if text:find(" " .. word, 1, true) then return 2 end
     if text:find(word, 1, true) then return 3 end
+end
+
+local filters = {}
+
+function filters.text(class, word)
+    local title, name = rank(class.title:lower(), word), rank(class.name:lower(), word)
+    if title or name then return math.min(title or 3, name or 3) end
+end
+
+function filters.id(class, value)
+    local id = tonumber(value)
+    return id and rawget(class, "k3") == id and 0
+end
+
+function filters.description(class, word)
+    return rank(class.description:lower(), word)
+end
+
+function filters.category(class, word)
+    for _, category in ipairs(class.categories) do
+        local found = rank(category, word) or rank(titles[category]:lower(), word)
+        if found then return found end
+    end
+end
+
+function filters.subtick(class, value)
+    return utils.has(class.subtick, tonumber(value)) and 0
+end
+
+function filters.exact(class, word)
+    return (class.title:lower() == word or class.name:lower() == word) and 0
+end
+
+local function parse(query)
+    local terms = {}
+
+    for word in query:gmatch("%S+") do
+        local negated = word:sub(1, 1) == syntax.negate
+        local body = negated and word:sub(2) or word
+        local kind = syntax.symbols[body:sub(1, 1)]
+        local last = terms[#terms]
+
+        if not (kind or negated) and last and syntax.phrases[last.kind] then
+            last.value = utils.trim(last.value .. " " .. word)
+        else
+            terms[#terms + 1] = { negated = negated, kind = kind or "text", value = kind and body:sub(2) or body }
+        end
+    end
+    return terms
+end
+
+local function match(class, term)
+    if term.value == "" then return 0 end
+
+    local score = filters[term.kind](class, term.value)
+    if term.negated then return not score and 0 end
+    return score
 end
 
 local CellBrowser = {}
@@ -161,20 +219,21 @@ function CellBrowser:_load(classes)
     self:_refresh()
 end
 
-function CellBrowser:_score(class)
+function CellBrowser:_score(class, terms)
     local total = 0
-    for word in self.search.text:lower():gmatch("%S+") do
-        local title, name = rank(class.title:lower(), word), rank(class.name:lower(), word)
-        if not (title or name) then return end
-        total = total + math.min(title or 3, name or 3)
+    for _, term in ipairs(terms) do
+        local score = match(class, term)
+        if not score then return end
+        total = total + score
     end
     return total
 end
 
 function CellBrowser:_refresh()
     local items, scores = {}, {}
+    local terms = parse(self.search.text:lower())
     for _, class in ipairs(self.all) do
-        local score = self:_score(class)
+        local score = self:_score(class, terms)
         if score and (self.category == "all" or utils.has(class.categories, self.category)) then
             items[#items + 1] = class
             scores[class] = score
