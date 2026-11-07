@@ -71,6 +71,7 @@ return {
             [708] = "label"
         },
         label = "?",
+        held = { property = "stored", id = 1, rotation = 2 },
         placeable = "placeable",
         compression = "zlib",
         tokens = { layer = "\\", placeable = "]", property = "[", quote = "<", wide = "(", long = ")" }
