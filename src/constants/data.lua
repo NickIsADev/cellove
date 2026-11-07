@@ -37,6 +37,8 @@ return {
         alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%()*+-;=?@^_{|}~,./:",
         kinds = markers.kinds,
         colorFlag = 64,
+        turnFlag = 128,
+        rotated = { arrow = true, diagonal_arrow = true },
         custom = { code = 63, kinds = {} },
         maxName = 40,
         forbidden = "[\\/:*?\"<>|%c]",

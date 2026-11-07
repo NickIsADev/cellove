@@ -6,7 +6,7 @@ local utils = require("src/utils")
 local config = constants.editor.selection
 local files = constants.contraptions
 local ghost = constants.editor.ghost
-local rotating = constants.editor.marker.rotating
+local fixed = constants.markers.fixed
 local colors = constants.ui.colors
 local shadow = constants.ui.shadow
 local label = config.label
@@ -59,7 +59,7 @@ local function rotated(clip, amount)
             color = marker.color
         }
         if marker.kind == "box" then turned.width, turned.height = math.abs(x1 - x2) + 1, math.abs(y1 - y2) + 1 end
-        if rotating[marker.kind] then turned.rotation = (marker.rotation + amount) % 4 end
+        if not fixed[marker.kind] then turned.rotation = ((marker.rotation or 0) + amount) % 4 end
         result.markers[#result.markers + 1] = turned
     end
     return result

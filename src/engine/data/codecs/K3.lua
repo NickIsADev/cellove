@@ -2,7 +2,6 @@ local constants = require("src/constants")
 
 local config = constants.k3
 local limits = constants.grid.limits
-local rotating = constants.editor.marker.rotating
 local base, digits = #config.alphabet, {}
 for index = 1, base do
     digits[config.alphabet:sub(index, index)] = index - 1
@@ -114,7 +113,7 @@ function K3:decode(text)
             if class and y <= height then
                 cells[#cells + 1] = { class = class, rotation = rotation, x = x, y = y }
             elseif kind and y <= height then
-                local marker = { kind = kind, x = x, y = y, rotation = rotating[kind] and rotation or nil }
+                local marker = { kind = kind, x = x, y = y, rotation = rotation }
                 markers[#markers + 1] = marker
                 if kind == "label" then marker.text, last = config.label, marker end
             end

@@ -4,7 +4,6 @@ local utils = require("src/utils")
 
 local config = constants.contraptions
 local limits = constants.grid.limits
-local rotating = constants.editor.marker.rotating
 local base = constants.registry.base.namespace
 local kinds, codes = config.kinds, {}
 for code, kind in ipairs(kinds) do
@@ -92,22 +91,24 @@ local function serialize(data)
 
         local at = 0
         for _, marker in ipairs(markers) do
-            local code = codes[marker.kind] or config.custom.code
-            parts[#parts + 1] = utils.packVarint(code + (marker.color and config.colorFlag or 0))
+            local code, rotation = codes[marker.kind], marker.rotation or 0
+            local always = not code or config.rotated[marker.kind]
+            local flags = marker.color and config.colorFlag or 0
+            if rotation > 0 and not always then flags = flags + config.turnFlag end
+
+            parts[#parts + 1] = utils.packVarint((code or config.custom.code) + flags)
             parts[#parts + 1] = utils.packVarint(index(marker) - at)
             at = index(marker)
 
-            if not codes[marker.kind] then
+            if not code then
                 parts[#parts + 1] = utils.packString(marker.kind)
-                parts[#parts + 1] = utils.packVarint(marker.rotation or 0)
-            elseif rotating[marker.kind] then
-                parts[#parts + 1] = utils.packVarint(marker.rotation)
             elseif marker.kind == "label" then
                 parts[#parts + 1] = utils.packString(marker.text)
             elseif marker.kind == "box" then
                 parts[#parts + 1] = utils.packVarint(marker.width)
                 parts[#parts + 1] = utils.packVarint(marker.height)
             end
+            if always or rotation > 0 then parts[#parts + 1] = utils.packVarint(rotation) end
             if marker.color then parts[#parts + 1] = utils.packVarint(marker.color) end
         end
     end
@@ -151,6 +152,7 @@ local function parseMarkers(payload, position, width, total)
 
         at = at + gap
         local slot = code % config.colorFlag
+        local turned = bit.band(code, config.turnFlag) ~= 0
         local marker = {
             x = at % width + 1,
             y = math.floor(at / width) + 1
@@ -159,17 +161,11 @@ local function parseMarkers(payload, position, width, total)
         if slot == config.custom.code then
             marker.kind, position = utils.unpackString(payload, position)
             if not marker.kind then return end
-
-            marker.rotation, position = utils.unpackVarint(payload, position)
-            if not marker.rotation or marker.rotation > 3 then return end
-            if not rotating[marker.kind] then marker.rotation = nil end
+            turned = true
         else
             marker.kind = kinds[slot + 1]
 
-            if rotating[marker.kind] then
-                marker.rotation, position = utils.unpackVarint(payload, position)
-                if not marker.rotation or marker.rotation > 3 then return end
-            elseif marker.kind == "label" then
+            if marker.kind == "label" then
                 marker.text, position = utils.unpackString(payload, position)
                 if not marker.text then return end
             elseif marker.kind == "box" then
@@ -179,9 +175,14 @@ local function parseMarkers(payload, position, width, total)
                 if not marker.height then return end
                 if marker.width < 1 or marker.height < 1 or marker.x + marker.width - 1 > width or marker.y + marker.height - 1 > total / width then return end
             elseif not marker.kind then return end
+            turned = turned or config.rotated[marker.kind]
         end
 
-        if code >= config.colorFlag then
+        if turned then
+            marker.rotation, position = utils.unpackVarint(payload, position)
+            if not marker.rotation or marker.rotation > 3 then return end
+        end
+        if bit.band(code, config.colorFlag) ~= 0 then
             marker.color, position = utils.unpackVarint(payload, position)
             if not marker.color or marker.color > 0xFFFFFF then return end
         end

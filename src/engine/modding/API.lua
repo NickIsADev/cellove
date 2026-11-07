@@ -38,7 +38,6 @@ end
 ---@field id string unique within the mod, gets the mod prefix
 ---@field title string name shown on the button
 ---@field description? string tooltip, generated from the title by default
----@field rotates? boolean whether the marker can be rotated
 
 ---@class ModTool
 ---@field id string unique within the mod, gets the mod prefix
@@ -269,8 +268,7 @@ function API.new(mods, mod)
     ---@example
     ---api.markers.add({
     ---    id = "flag",
-    ---    title = "Flag",
-    ---    rotates = true
+    ---    title = "Flag"
     ---})
     function api.markers.add(spec)
         local kind = key(spec.id)
@@ -284,7 +282,6 @@ function API.new(mods, mod)
             title = spec.title,
             description = spec.description or "Places the " .. spec.title:lower() .. " marker."
         })
-        editor.marker.rotating[kind] = spec.rotates
         constants.contraptions.custom.kinds[kind] = true
     end
 

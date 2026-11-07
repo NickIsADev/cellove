@@ -498,6 +498,7 @@ function Renderer:drawMarkers(markers, alpha, ox, oy)
     for _, item in ipairs(markers) do
         local x, y = (item.x + ox - 0.5) * tile, (item.y + oy - 0.5) * tile
         local color = item.color or colors.white
+        local angle = (item.rotation or 0) * math.pi / 2
 
         if item.kind == "box" then
             love.graphics.setColor(utils.fromHex(color, mark.box.alpha * alpha))
@@ -507,18 +508,18 @@ function Renderer:drawMarkers(markers, alpha, ox, oy)
             love.graphics.setLineWidth(1)
         elseif item.kind == "label" then
             local label = self:_label(item, color, alpha)
-            local left, top = x - font:getWidth(label.plain) / 2, y - font:getHeight() / 2
+            local px, py = font:getWidth(label.plain) / 2, font:getHeight() / 2
 
             love.graphics.setColor(utils.fromHex(0x000000, mark.shadow.alpha * alpha))
-            love.graphics.print(label.plain, left + mark.shadow.offset, top + mark.shadow.offset)
+            love.graphics.print(label.plain, x + mark.shadow.offset, y + mark.shadow.offset, angle, 1, 1, px, py)
             love.graphics.setColor(utils.fromHex(colors.white))
-            love.graphics.print(label.colored, left, top)
+            love.graphics.print(label.colored, x, y, angle, 1, 1, px, py)
         elseif item.kind ~= "placeable" then
             local texture = self.textures.markers[names[item.kind]]
             local size = self.sizes[texture]
 
             love.graphics.setColor(utils.fromHex(colors.white, alpha))
-            love.graphics.draw(texture, x, y, (item.rotation or 0) * math.pi / 2, size.scale, size.scale, size.x, size.y)
+            love.graphics.draw(texture, x, y, angle, size.scale, size.scale, size.x, size.y)
         end
     end
 

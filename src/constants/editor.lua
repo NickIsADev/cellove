@@ -219,7 +219,6 @@ return {
         marker = {
             default = "arrow",
             color = 0xFFFFFF,
-            rotating = markers.rotating,
             buttons = markers.buttons,
             prompt = {
                 title = "Text Label",
