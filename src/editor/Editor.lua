@@ -114,7 +114,11 @@ function Editor:_capture(x, y)
 end
 
 function Editor:_restore(x, y, state)
-    self.simulator.grid:set(x, y, state and state.class:new({ rotation = state.rotation, props = state.props }))
+    local sim = self.simulator
+    local old = sim.grid:get(x, y)
+
+    if old then sim:discard(old) end
+    sim.grid:set(x, y, state and state.class:new({ rotation = state.rotation, props = state.props }))
 end
 
 function Editor:_record(undo)
@@ -179,6 +183,7 @@ function Editor:_clearGrid()
     if #saved == 0 and #items == 0 then return self.toast:show(text.empty, true) end
 
     grid:clear()
+    self.simulator.dying = {}
     markers:load({})
     self:_record(function()
         self.simulator.grid:populate(saved)

@@ -3,6 +3,7 @@ local Movement = require("src/engine/simulation/Movement")
 local Events = require("src/engine/modding/Events")
 local Audio = require("src/engine/audio/Audio")
 local constants = require("src/constants")
+local utils = require("src/utils")
 
 local function range(size, direction, rear)
     if (rear and direction or -direction) > 0 then return 1, size, 1 end
@@ -217,6 +218,11 @@ function Simulator:substep()
     self.paused = true
     self:_sync()
     self:_pass()
+end
+
+function Simulator:discard(cell)
+    local index = utils.indexOf(self.dying, cell.arriving)
+    if index then table.remove(self.dying, index) end
 end
 
 function Simulator:click(x, y, button)

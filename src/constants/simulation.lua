@@ -55,7 +55,8 @@ return {
             step = 1.25,
             min = 0.02,
             max = 10,
-            ease = 15
+            ease = 15,
+            settle = 0.001
         }
     }
 }
