@@ -74,7 +74,7 @@ jobs:
           cells=$([[ -z "$prev" ]] || git diff --name-only --diff-filter=A "$prev" "$GITHUB_REF_NAME" -- 'content/cells/*.lua' ':(exclude)content/cells/abstract/*')
 
           if [[ -n "$cells" ]]; then
-            printf '## %s New Cells\n\n' "$(icon cells/cellove)" >> notes.md
+            printf '## %s New Cells (%d)\n\n' "$(icon cells/cellove)" "$(grep -c . <<< "$cells")" >> notes.md
 
             while IFS= read -r file; do
               field() { sed -n "s/^[[:space:]]*$1 = \"\(.*\)\",\{0,1\}\$/\1/p" "$file" | head -1 | sed 's/\\"/"/g'; }
