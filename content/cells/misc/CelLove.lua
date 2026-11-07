@@ -9,17 +9,20 @@ local CelLove = setmetatable({
 }, { __index = BaseCell })
 CelLove.__index = CelLove
 
+function CelLove:new(data)
+    local cell = BaseCell.new(self, data)
+    local x, y = cell:_aim()
+    cell.dx, cell.dy = x + y, y - x
+
+    return cell
+end
+
 function CelLove:_free(dx, dy)
     local grid, x, y = self.simulator.grid, self.x + dx, self.y + dy
     return grid:bounds(x, y) and not grid:get(x, y)
 end
 
 function CelLove:update()
-    if not self.dx then
-        local x, y = self:_aim()
-        self.dx, self.dy = x + y, y - x
-    end
-
     local dx, dy = self.dx, self.dy
 
     if not self:_free(dx, 0) then self.dx = -dx end
