@@ -293,6 +293,13 @@ function MenuScene:_notify()
             confirm = notice.outdated.confirm,
             onConfirm = function() love.system.openURL(string.format(constants.updates.releases, latest)) end
         })
+    elseif not self.noticed.unsupported and self.updates.unsupported then
+        self.noticed.unsupported = true
+        self.prompt:open({
+            title = notice.unsupported.title,
+            message = notice.unsupported.message,
+            confirm = notice.unsupported.confirm
+        })
     end
 end
 

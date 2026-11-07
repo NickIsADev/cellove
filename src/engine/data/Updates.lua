@@ -4,16 +4,31 @@ local utils = require("src/utils")
 local config = constants.updates
 local current = constants.version.number
 
+local function bundled()
+    return love.filesystem.isFused() or love.filesystem.getSource():find(config.bundle, 1, true) ~= nil
+end
+
 local Updates = {}
 Updates.__index = Updates
 
 function Updates.new(data)
     local self = setmetatable({}, Updates)
-    self.channel = love.thread.newChannel()
+    local checking = data.settings:get("checkUpdates")
 
-    if data.settings:get("checkUpdates") then
+    self.channel = love.thread.newChannel()
+    self.unsupported = checking and not bundled()
+
+    if checking and not self.unsupported then
         local url = config.url[utils.prerelease(current) and "prerelease" or "stable"]
-        love.thread.newThread(config.thread):start(self.channel, url, config.agent, config.pattern)
+
+        love.thread.newThread(config.thread):start(
+            self.channel,
+            url,
+            config.agent,
+            config.pattern,
+            love.filesystem.getSourceBaseDirectory(),
+            config.libraries
+        )
     end
     return self
 end
