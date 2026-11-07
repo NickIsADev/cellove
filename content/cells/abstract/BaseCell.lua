@@ -69,6 +69,9 @@ end
 function BaseCell:swapped(dx, dy)
 end
 
+function BaseCell:pushed(dx, dy)
+end
+
 function BaseCell:click(button)
 end
 

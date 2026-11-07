@@ -6,7 +6,7 @@ local Vacuum = setmetatable({
     k3 = 1007,
     title = "Vacuum",
     description = "An Impulsor with a range of 3 cells.",
-    subtick = { 19 }
+    subtick = { 20 }
 }, { __index = Impulsor })
 Vacuum.__index = Vacuum
 

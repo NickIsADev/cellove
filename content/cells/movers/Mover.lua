@@ -7,7 +7,7 @@ local Mover = setmetatable({
     title = "Mover",
     description = "Moves forward every tick, pushing whatever is in front of it.",
     categories = { "movers" },
-    subtick = { 28 },
+    subtick = { 29 },
     rear = true,
     drive = { push = true, pull = true },
     directional = true

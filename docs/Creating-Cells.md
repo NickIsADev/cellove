@@ -82,7 +82,7 @@ end
 
 ## Subticks
 
-A tick runs its subticks in ascending order, and a cell's `update` runs in the subticks listed in its `subtick`. Only the order matters, so use any number: `28.5` runs after movers and before nudgers without renumbering anything. These are the ones the built-in cells use.
+A tick runs its subticks in ascending order, and a cell's `update` runs in the subticks listed in its `subtick`. Only the order matters, so use any number: `29.5` runs after movers and before nudgers without renumbering anything. These are the ones the built-in cells use.
 
 | subtick | cells |
 | --- | --- |
@@ -95,11 +95,12 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | `12` | flip gears |
 | `13`, `14`, `15`, `16` | gears, counter-clockwise gears, half gears, random gears |
 | `17`, `18` | super redirectors, redirectors |
-| `19`, `20`, `21` | vacuums, super impulsors, impulsors |
-| `22`, `23`, `24` | fans, super repulsors, repulsors |
-| `25`, `26` | magnets, split by axis |
-| `27`, `28`, `29` | pullers and advancers, movers, nudgers |
-| `30`, `31` | gates, storages |
+| `19` | inertia |
+| `20`, `21`, `22` | vacuums, super impulsors, impulsors |
+| `23`, `24`, `25` | fans, super repulsors, repulsors |
+| `26`, `27` | magnets, split by axis |
+| `28`, `29`, `30` | pullers and advancers, movers, nudgers |
+| `31`, `32` | gates, storages |
 
 ## Common patterns
 

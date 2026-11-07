@@ -7,7 +7,7 @@ local Puller = setmetatable({
     title = "Puller",
     description = "Moves forward into empty space, pulling everything behind it. Cannot push.",
     categories = { "pullers" },
-    subtick = { 27 },
+    subtick = { 28 },
     drive = { push = true, pull = true },
     directional = true
 }, { __index = BaseCell })

@@ -25,7 +25,7 @@ Set these in the table you pass to `setmetatable`.
 | `description` | `string` | `""` | description in the library |
 | `categories` | `table` | | required, list of [category IDs](Creating-Cells#categories) |
 | `properties` | `table` | `{}` | [property definitions](Creating-Cells#properties) |
-| `subtick` | `table` | `{}` | subticks `update` runs in. lower runs first and cells sharing a number run together. only the order matters, so any number works, like `28.5` to run between movers (`28`) and nudgers (`29`). see [built-in subticks](Creating-Cells#subticks). empty means never |
+| `subtick` | `table` | `{}` | subticks `update` runs in. lower runs first and cells sharing a number run together. only the order matters, so any number works, like `29.5` to run between movers (`29`) and nudgers (`30`). see [built-in subticks](Creating-Cells#subticks). empty means never |
 | `directional` | `boolean` | | calls `update` once per entry in `outputs` |
 | `outputs` | `table` | `{ 0 }` | output directions relative to rotation: `0` forward, `1` right, `2` back, `3` left |
 | `drive` | `table` | | actions that move the cell forward, like `{ push = true, pull = true }`. a cell moved that way skips its update that tick |
@@ -76,6 +76,7 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | [`absorb`](#basecellabsorbcell-dx-dy-action) | nothing | called after this cell eats a cell |
 | [`bump`](#basecellbumpdx-dy) | nothing | called when a repulsor pushes this cell and it eats the push |
 | [`swapped`](#basecellswappeddx-dy) | nothing | called after a swap carried this cell to the other cell's place |
+| [`pushed`](#basecellpusheddx-dy) | nothing | called after a push moved this cell |
 | [`generatable`](#basecellgeneratable) | `true` | whether generators can copy the cell |
 | [`generated`](#basecellgenerated) | the same class and props | what a generator's copy of the cell becomes |
 | [`force`](#basecellforcedx-dy-action) | `0` | force added to a push or pull |
@@ -180,6 +181,22 @@ Called after a mirror swap carried this cell onto the other cell's place, with t
 ```lua
 function BaseGate:swapped(dx, dy)
     if self:eats(dx, dy) then self:absorb(self, dx, dy) end
+end
+```
+
+### `BaseCell:pushed(dx, dy)`
+
+Called after a push moved this cell, with the direction it was pushed in. Every cell in a pushed line counts, including the ones a repulsor or generator pushes, but not the pusher itself and not cells that were pulled or swapped. Inertia uses it to store its momentum.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `dx` | `number` | horizontal direction of the push |
+| `dy` | `number` | vertical direction of the push |
+
+```lua
+-- remembers the direction it was last pushed in
+function Glider:pushed(dx, dy)
+    self.heading = { dx, dy }
 end
 ```
 

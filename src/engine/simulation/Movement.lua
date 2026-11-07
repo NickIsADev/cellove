@@ -56,7 +56,7 @@ function Movement:_take()
         move = {}
         self.pool[top] = move
     end
-    move.action = nil
+    move.action, move.pushed = nil, nil
     return move
 end
 
@@ -179,7 +179,7 @@ function Movement:_line(x, y, dx, dy, force, chain, bare)
         cell.walked = stamp
 
         local move = self:_take()
-        move.cell, move.x, move.y, move.dx, move.dy = cell, nx, ny, ndx, ndy
+        move.cell, move.x, move.y, move.dx, move.dy, move.pushed = cell, nx, ny, ndx, ndy, true
         move.ox, move.oy, move.turn, move.via = dx, dy, turn, via
         chain[#chain + 1] = move
 
@@ -287,7 +287,7 @@ function Movement:_drive(chain, action)
 end
 
 function Movement:_shift(chain, silent)
-    local grid = self.grid
+    local grid, subtick = self.grid, self.simulator.time.subtick
     self.moves = self.moves + #chain
 
     for _, move in ipairs(chain) do
@@ -305,9 +305,12 @@ function Movement:_shift(chain, silent)
             cell.path = { { cell.x, cell.y } }
             grid:touch(cell)
         end
-        extend(cell, move, not silent and i == 1)
+        local own = not silent and i == 1
+        extend(cell, move, own and cell.leg ~= subtick)
+        if own then cell.leg = subtick end
 
         if move.turn ~= 0 then cell:rotate(move.turn) end
+        if move.pushed then cell:pushed(move.ox, move.oy) end
 
         if move.eater then
             table.insert(self.simulator.dying, cell)
