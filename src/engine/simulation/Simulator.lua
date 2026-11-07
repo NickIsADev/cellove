@@ -217,7 +217,11 @@ end
 function Simulator:substep()
     self.paused = true
     self:_sync()
-    self:_pass()
+
+    for _ = 1, self.maxSubticks * #constants.simulator.passes do
+        self:_pass()
+        if self:_changed() then return end
+    end
 end
 
 function Simulator:discard(cell)

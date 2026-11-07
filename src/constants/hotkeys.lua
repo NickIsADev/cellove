@@ -45,7 +45,7 @@ return {
                 id = "substep",
                 group = "Simulation",
                 title = "Substep",
-                description = "Advances the simulation by one subtick.",
+                description = "Advances the simulation to the next subtick that triggers a cell.",
                 key = "shift f"
             },
             {
