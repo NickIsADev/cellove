@@ -216,6 +216,7 @@ end
 
 function Simulator:substep()
     self.paused = true
+    self.timer = 0
     self:_sync()
 
     for _ = 1, self.maxSubticks * #constants.simulator.passes do
