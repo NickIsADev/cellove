@@ -26,6 +26,13 @@ function World:_drawPath(cell)
     love.graphics.line(points)
 end
 
+function World:_drawTouched(grid)
+    love.graphics.setColor(utils.fromHex(overlay.touched, overlay.alpha.touched))
+    for _, cell in ipairs(grid.touched) do
+        love.graphics.rectangle("fill", (cell.x - 1) * tile, (cell.y - 1) * tile, tile, tile)
+    end
+end
+
 function World:_drawDetails(simulator, x1, y1, x2, y2)
     local zoom = self.renderer.camera.zoom
 
@@ -82,6 +89,8 @@ function World:draw(simulator)
             love.graphics.line((x1 - 1) * tile, (y - 1) * tile, x2 * tile, (y - 1) * tile)
         end
     end
+
+    self:_drawTouched(grid)
 
     love.graphics.setColor(utils.fromHex(colors.accent, overlay.alpha.bounds))
     love.graphics.rectangle("line", 0, 0, grid.width * tile, grid.height * tile)

@@ -65,13 +65,15 @@ return {
                 grid = 0.08,
                 bounds = 0.9,
                 hover = 0.2,
-                label = 0.5
+                label = 0.5,
+                touched = 0.25
             },
             arrow = 0.35,
             tip = 3,
             cross = 12,
             width = 2,
-            path = 0xFF9A3D
+            path = 0xFF9A3D,
+            touched = 0xFFD84D
         },
         keys = {
             {
@@ -112,7 +114,8 @@ return {
                 performance = "performance",
                 game = "game",
                 system = "system",
-                audio = "audio"
+                audio = "audio",
+                events = "events"
             },
             fps = "fps: %d  frame: %.1f ms  worst: %.1f ms",
             memory = "lua memory: %.2f MB",
@@ -124,6 +127,7 @@ return {
             music = "music: %s (%d/%d)  %.0fs / %.0fs",
             sound = "sources: %d  music: %d%%  sfx: %d%%  speed: %d%%",
             none = "none",
+            event = "%s  x%d  %d listening",
             system = {
                 game = "game: v%s (build %s)",
                 love = "love: %d.%d.%d (%s)",
