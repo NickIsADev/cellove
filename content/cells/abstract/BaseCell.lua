@@ -134,7 +134,8 @@ function BaseCell:rotateNeighbors(amount, predicate)
     local grid = self.simulator.grid
 
     for _, facing in pairs(constants.directions) do
-        local cell = grid:get(self.x + facing[1], self.y + facing[2])
+        local x, y = self.x + facing[1], self.y + facing[2]
+        local cell = grid:bounds(x, y) and grid:get(x, y)
         if cell and (not predicate or predicate(cell)) then cell:rotate(amount) end
     end
 end

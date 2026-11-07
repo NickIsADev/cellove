@@ -61,6 +61,7 @@ function Editor.new(data)
         onOpen = function() self.simulator:pause() end,
         actions = {
             resize = function() self:_askResize() end,
+            border = function() self:_askBorder() end,
             clear = function() self:_askClear() end,
             export = data.menu.export,
             puzzle = data.menu.puzzle,
@@ -257,6 +258,26 @@ function Editor:_resizeGrid(width, height)
     self.toast:show(string.format(text.done, width, height))
 end
 
+function Editor:_askBorder()
+    self.prompt.cellPicker:open({
+        classes = self.registry:list(),
+        current = self.simulator.grid.border,
+        onPick = function(class) self:_setBorder(class) end
+    })
+end
+
+function Editor:_setBorder(border)
+    local grid, text = self.simulator.grid, config.grid.text.border
+    local old = grid.border
+
+    if border == old then return self.toast:show(text.same, true) end
+
+    grid:setBorder(border)
+    self:_record(function() self.simulator.grid:setBorder(old) end)
+    self:commit()
+    self.toast:show(string.format(text.done, border.title))
+end
+
 function Editor:_setInitial()
     self.simulator.grid:save()
     self.simulator:reset()
@@ -265,7 +286,8 @@ function Editor:_setInitial()
 end
 
 function Editor:_pick(gx, gy)
-    local cell = self.simulator.grid:get(gx, gy)
+    local grid = self.simulator.grid
+    local cell = grid:bounds(gx, gy) and grid:get(gx, gy)
     if not cell then return end
 
     self:select(getmetatable(cell))
@@ -365,7 +387,7 @@ function Editor:commit()
 end
 
 function Editor:typing()
-    return self.library.active or self.stampList.active or self.prompt.active or self.picker.active or self.toolMenu.active or self.pauseMenu.active or self.properties:typing()
+    return self.library.active or self.stampList.active or self.prompt.active or self.prompt.cellPicker.active or self.picker.active or self.toolMenu.active or self.pauseMenu.active or self.properties:typing()
 end
 
 function Editor:reset()
@@ -439,7 +461,7 @@ function Editor:textinput(text)
 end
 
 function Editor:wheelmoved(x, y)
-    if self.library:wheelmoved(x, y) or self.stampList:wheelmoved(x, y) or self.prompt.active or self.picker.active or self.toolMenu.active or self.pauseMenu.active then return true end
+    if self.prompt:wheelmoved(x, y) or self.library:wheelmoved(x, y) or self.stampList:wheelmoved(x, y) or self.prompt.active or self.picker.active or self.toolMenu.active or self.pauseMenu.active then return true end
     return love.keyboard.isDown("lctrl", "rctrl") and self.tool:wheel(y)
 end
 

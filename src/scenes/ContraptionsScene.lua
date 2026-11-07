@@ -24,6 +24,7 @@ function ContraptionsScene.new(data)
     self.manager = data.manager
     self.renderer = data.renderer
     self.contraptions = data.contraptions
+    self.registry = data.registry
     self.background = ScrollingBackground.new(data.renderer)
     self.back = BackButton.new(data.renderer)
     self.title = Title.new(data.renderer, config.title)
@@ -164,10 +165,17 @@ function ContraptionsScene:_create()
                 min = limits.min,
                 max = limits.max,
                 value = size.height
+            },
+            {
+                key = "border",
+                kind = "cell",
+                label = text.border,
+                options = self.registry:list(),
+                value = self.registry.border
             }
         },
         onConfirm = function(name, values)
-            name = self:_store(name, self.contraptions:blank(values.width, values.height))
+            name = self:_store(name, self.contraptions:blank(values.width, values.height, values.border))
             if name then self.manager:switch("game", { name = name }) end
         end
     })
@@ -372,8 +380,8 @@ function ContraptionsScene:mousereleased(x, y, button)
     self.list:mousereleased()
 end
 
-function ContraptionsScene:wheelmoved(_, y)
-    if self.prompt.active then return end
+function ContraptionsScene:wheelmoved(x, y)
+    if self.prompt:wheelmoved(x, y) or self.prompt.active then return end
     self.list:wheelmoved(y)
 end
 

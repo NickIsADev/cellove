@@ -31,6 +31,7 @@ function Registry.new(data)
     end)
 
     self:_twin()
+    self.border = self.cells[config.base.namespace .. ":" .. constants.grid.border]
     return self
 end
 

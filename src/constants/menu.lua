@@ -454,6 +454,7 @@ return {
             count = { one = "%d contraption", other = "%d contraptions" },
             width = "Width",
             height = "Height",
+            border = "Border",
             new = {
                 title = "New Contraption",
                 message = "Name your contraption.",

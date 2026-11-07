@@ -114,6 +114,15 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 screen)
             size = 24,
             on = { texture = "checkmark", tint = "accent" },
             off = { texture = "x", tint = "white" }
+        },
+        cellSelect = {
+            height = 40,
+            font = 16,
+            label = 72,
+            icon = 28,
+            pad = 8,
+            fill = 0.08,
+            outline = 0.2
         }
     },
 

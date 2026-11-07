@@ -42,6 +42,7 @@ return {
 
     grid = {
         default = { width = 25, height = 25 },
+        border = "wall",
         limits = { min = 1, max = 500 },
         tile = 40
     },

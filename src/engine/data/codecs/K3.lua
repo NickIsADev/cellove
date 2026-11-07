@@ -4,12 +4,15 @@ local constants = require("src/constants")
 local config = constants.k3
 local limits = constants.grid.limits
 local tokens = config.tokens
-local base, digits, codes = #config.alphabet, {}, {}
+local base, digits, codes, slots = #config.alphabet, {}, {}, {}
 for index = 1, base do
     digits[config.alphabet:sub(index, index)] = index - 1
 end
 for id, kind in pairs(config.markers) do
     codes[kind] = id
+end
+for slot, id in ipairs(config.borders) do
+    slots[id] = slot - 1
 end
 
 local function number(text)
@@ -91,6 +94,8 @@ function K3.new(data)
 end
 
 function K3:supports(data)
+    if data.border and not slots[self.ids[data.border]] then return false end
+
     for _, cell in ipairs(data.cells) do
         if not self.ids[cell.class] or Properties.custom(cell) then return false end
     end
@@ -160,7 +165,7 @@ function K3:decode(text)
     return {
         width = width,
         height = height,
-        border = self.classes[config.borders[number(border)] or config.borders[0]],
+        border = self.classes[config.borders[number(border) + 1]],
         cells = cells,
         markers = markers
     }
@@ -181,7 +186,7 @@ function K3:encode(data)
     local parts = {}
     for at = 1, data.width * data.height do
         for _, marker in ipairs(marks[at] or {}) do
-            if marker.kind == "placeable" then parts[#parts + 1] = tokens.placeable .. pack(0) end
+            if marker.kind == "placeable" then parts[#parts + 1] = tokens.placeable .. quote(config.placeable) end
         end
 
         parts[#parts + 1] = cells[at] or pack(0)
@@ -196,7 +201,8 @@ function K3:encode(data)
 
     local packed = love.data.compress("string", config.compression, table.concat(parts))
     local body = love.data.encode("string", "base64", packed)
-    return table.concat({ config.prefix, numeral(data.width), numeral(data.height), numeral(0), body }, ";")
+    local border = slots[self.ids[data.border]] or 0
+    return table.concat({ config.prefix, numeral(data.width), numeral(data.height), numeral(border), body, "" }, ";")
 end
 
 return K3

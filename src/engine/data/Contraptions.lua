@@ -14,6 +14,7 @@ function Contraptions.new(data)
     local self = setmetatable({}, Contraptions)
     self.root = data.root or config.root
     self.settings = data.settings
+    self.registry = data.registry
     self.cl = CL.new({ registry = data.registry })
     self.codecs = { self.cl }
     for _, Codec in ipairs(Contraptions.codecs) do
@@ -40,11 +41,12 @@ function Contraptions:_unpack(text)
     return nil, "prefix"
 end
 
-function Contraptions:blank(width, height)
+function Contraptions:blank(width, height, border)
     local size = constants.grid.default
     return {
         width = width or size.width,
         height = height or size.height,
+        border = border or self.registry.border,
         cells = {},
         markers = {}
     }
@@ -78,6 +80,7 @@ function Contraptions:import(text)
     local data, key = self:_unpack(text)
     if not data then return nil, config.errors[key] end
 
+    data.border = data.border or self.registry.border
     Events.emit("contraption:imported", data)
     return data
 end

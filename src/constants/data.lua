@@ -55,7 +55,7 @@ return {
 
     k3 = {
         prefix = "K3",
-        borders = { [0] = 1, 41, 12 },
+        borders = { 1, 41, 12, 205, 51, 141, 150, 151, 152, 126, 176, 428, 929, 930, 1186, 931, 932, 1156, 1171, 933, 934, 1174, 938, 939, 940, 941 },
         alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!$%&+-.=?^{}/#_*':,@~|",
         markers = {
             [117] = "x",
@@ -71,6 +71,7 @@ return {
             [708] = "label"
         },
         label = "?",
+        placeable = "placeable",
         compression = "zlib",
         tokens = { layer = "\\", placeable = "]", property = "[", quote = "<", wide = "(", long = ")" }
     },

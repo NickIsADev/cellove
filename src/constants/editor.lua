@@ -22,6 +22,10 @@ return {
                     height = "Height",
                     done = "Resized the grid to %dx%d",
                     same = "The grid is already that size"
+                },
+                border = {
+                    done = "Changed the border to %s",
+                    same = "The grid already has that border"
                 }
             }
         },
@@ -312,6 +316,12 @@ return {
                     folder = "cells",
                     texture = "tetradisplacer_cw",
                     title = "Resize Grid"
+                },
+                {
+                    id = "border",
+                    folder = "cells",
+                    texture = "ghost",
+                    title = "Change Border"
                 },
                 {
                     id = "clear",

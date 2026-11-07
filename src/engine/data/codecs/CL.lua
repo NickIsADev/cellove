@@ -23,7 +23,7 @@ local function expand(id)
     return id:find(":") and id or base .. ":" .. id
 end
 
-local function serialize(data)
+local function serialize(data, default)
     local cells = {}
     for _, entry in ipairs(data.cells) do
         cells[#cells + 1] = entry
@@ -128,6 +128,11 @@ local function serialize(data)
             end
         end
     end
+
+    if data.border and data.border ~= default then
+        parts[#parts + 1] = utils.packVarint(data.width * data.height + 2)
+        parts[#parts + 1] = utils.packString(shorten(data.border.id))
+    end
     return table.concat(parts)
 end
 
@@ -217,6 +222,14 @@ local function parseProps(payload, position, byIndex, partial, registry)
     return position
 end
 
+local function parseBorder(payload, position, registry)
+    local id
+    id, position = utils.unpackString(payload, position)
+    if not id then return end
+
+    return registry.cells[expand(id)], position
+end
+
 local function parse(payload, registry)
     local width, position = utils.unpackVarint(payload, 1)
     if not width then return end
@@ -242,7 +255,7 @@ local function parse(payload, registry)
         if not palette[i] and not utils.has(missing, namespace) then missing[#missing + 1] = namespace end
     end
 
-    local cells, markers, byIndex, index, total = {}, {}, {}, 0, width * height
+    local cells, markers, border, byIndex, index, total = {}, {}, nil, {}, 0, width * height
     while position <= #payload do
         local gap, tag, run = nil, nil, 1
 
@@ -254,6 +267,9 @@ local function parse(payload, registry)
             if not markers then return end
         elseif gap == total + 1 then
             position = parseProps(payload, position, byIndex, #missing > 0, registry)
+            if not position then return end
+        elseif gap == total + 2 then
+            border, position = parseBorder(payload, position, registry)
             if not position then return end
         else
             tag, position = utils.unpackVarint(payload, position)
@@ -289,6 +305,7 @@ local function parse(payload, registry)
     return {
         width = width,
         height = height,
+        border = border,
         cells = cells,
         markers = markers,
         missing = missing
@@ -311,7 +328,7 @@ function CL:matches(text)
 end
 
 function CL:encode(data)
-    local raw = serialize(data)
+    local raw = serialize(data, self.registry.border)
     local packed = love.data.compress("string", config.compression, raw, config.level)
 
     if #packed < #raw then return config.prefix.deflate .. utils.encode85(packed, config.alphabet) end

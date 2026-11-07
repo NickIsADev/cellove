@@ -1,8 +1,10 @@
 local Widget = require("src/ui/abstract/Widget")
 local IconButton = require("src/ui/widgets/IconButton")
 local Stepper = require("src/ui/widgets/Stepper")
+local CellSelect = require("src/ui/widgets/CellSelect")
 local TextField = require("src/ui/widgets/TextField")
 local Toggle = require("src/ui/widgets/Toggle")
+local CellPicker = require("src/ui/overlays/CellPicker")
 local Panel = require("src/ui/Panel")
 local constants = require("src/constants")
 local utils = require("src/utils")
@@ -13,6 +15,7 @@ local colors = constants.ui.colors
 local kinds = {
     stepper = Stepper,
     toggle = Toggle,
+    cell = CellSelect,
     field = TextField
 }
 
@@ -39,6 +42,7 @@ function Prompt.new(renderer)
     self.box = {}
     self.inputs = {}
     self.message = ""
+    self.cellPicker = CellPicker.new(renderer)
 
     self.confirmButton = makeButton(renderer, "checkmark", colors.accent, config.text.confirm)
     self.cancelButton = makeButton(renderer, "x", colors.danger, config.text.cancel)
@@ -151,6 +155,8 @@ function Prompt:open(options)
             min = field.min,
             max = field.max,
             limit = field.limit,
+            options = field.options,
+            picker = self.cellPicker,
             value = field.value,
             focused = false
         })
@@ -167,6 +173,7 @@ function Prompt:close()
 end
 
 function Prompt:update(dt)
+    self.cellPicker:update(dt)
     if not self.active then return end
 
     Widget.blocked = false
@@ -180,6 +187,7 @@ function Prompt:update(dt)
 end
 
 function Prompt:mousepressed(x, y, button)
+    if self.cellPicker:mousepressed(x, y, button) then return true end
     if not self.active then return false end
 
     self:_layout()
@@ -200,18 +208,21 @@ function Prompt:mousepressed(x, y, button)
 end
 
 function Prompt:mousemoved(x, y)
+    self.cellPicker:mousemoved(x, y)
     for _, input in ipairs(self.inputs) do
         if input.mousemoved then input:mousemoved(x, y) end
     end
 end
 
 function Prompt:mousereleased(x, y, button)
+    self.cellPicker:mousereleased()
     for _, input in ipairs(self.inputs) do
         if input.mousereleased then input:mousereleased(x, y, button) end
     end
 end
 
 function Prompt:keypressed(key)
+    if self.cellPicker:keypressed(key) then return true end
     if not self.active then return false end
 
     local focus = self:_focus()
@@ -226,12 +237,18 @@ function Prompt:keypressed(key)
 end
 
 function Prompt:textinput(text)
+    if self.cellPicker.active then return self.cellPicker:textinput(text) end
+
     local focus = self:_focus()
     if self.active and focus then focus:textinput(text) end
 end
 
+function Prompt:wheelmoved(x, y)
+    return self.cellPicker:wheelmoved(x, y)
+end
+
 function Prompt:draw()
-    if not self.active then return end
+    if not self.active then return self.cellPicker:draw() end
 
     self:_layout()
     local box = self.box
@@ -256,6 +273,7 @@ function Prompt:draw()
     for _, input in ipairs(self.inputs) do input:draw() end
     self.cancelButton:draw()
     self.confirmButton:draw()
+    self.cellPicker:draw()
 
     love.graphics.setFont(previousFont)
     love.graphics.setColor(utils.fromHex(colors.white))
