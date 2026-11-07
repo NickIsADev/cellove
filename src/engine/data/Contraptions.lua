@@ -13,10 +13,13 @@ Contraptions.codecs = { K3 }
 function Contraptions.new(data)
     local self = setmetatable({}, Contraptions)
     self.root = data.root or config.root
+    self.settings = data.settings
     self.cl = CL.new({ registry = data.registry })
     self.codecs = { self.cl }
     for _, Codec in ipairs(Contraptions.codecs) do
-        self.codecs[#self.codecs + 1] = Codec.new({ registry = data.registry })
+        local codec = Codec.new({ registry = data.registry })
+        if Codec == K3 then self.k3 = codec end
+        self.codecs[#self.codecs + 1] = codec
     end
     love.filesystem.createDirectory(self.root)
     return self
@@ -64,7 +67,8 @@ function Contraptions:unique(name)
 end
 
 function Contraptions:export(data)
-    return self.cl:encode(data)
+    local codec = self.settings:get("exportK3") and self.k3:supports(data) and self.k3 or self.cl
+    return codec:encode(data)
 end
 
 function Contraptions:import(text)

@@ -103,6 +103,12 @@ options.pages = {
             format = function(value) return value == 1 and "1 tick/s" or value .. " ticks/s" end
         },
         {
+            key = "exportK3",
+            title = "Export as K3",
+            description = "Exports contraptions using K3 first, unless a cell, property, or marker is used in the contraption that it does not support.",
+            kind = "toggle"
+        },
+        {
             key = "checkUpdates",
             title = "Check for Updates",
             description = "Checks GitHub for a newer release upon launch.",

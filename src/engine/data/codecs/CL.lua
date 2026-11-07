@@ -23,12 +23,6 @@ local function expand(id)
     return id:find(":") and id or base .. ":" .. id
 end
 
-local function custom(entry)
-    for _, property in ipairs(entry.class.properties) do
-        if Properties.value(entry.props, property) ~= property.default then return true end
-    end
-end
-
 local function serialize(data)
     local cells = {}
     for _, entry in ipairs(data.cells) do
@@ -115,7 +109,7 @@ local function serialize(data)
 
     local tuned = {}
     for _, entry in ipairs(cells) do
-        if custom(entry) then tuned[#tuned + 1] = entry end
+        if Properties.custom(entry) then tuned[#tuned + 1] = entry end
     end
 
     if #tuned > 0 then

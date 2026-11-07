@@ -19,6 +19,7 @@ return {
             musicSpeed = 100,
             sfxVolume = 70,
             checkUpdates = true,
+            exportK3 = false,
             debug = false,
             packs = "",
             mods = "",
@@ -69,7 +70,9 @@ return {
             [683] = "dislike",
             [708] = "label"
         },
-        label = "?"
+        label = "?",
+        compression = "zlib",
+        tokens = { layer = "\\", placeable = "]", property = "[", quote = "<", wide = "(", long = ")" }
     },
 
     stamps = {

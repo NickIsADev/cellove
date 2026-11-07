@@ -1,10 +1,15 @@
+local Properties = require("src/engine/registry/Properties")
 local constants = require("src/constants")
 
 local config = constants.k3
 local limits = constants.grid.limits
-local base, digits = #config.alphabet, {}
+local tokens = config.tokens
+local base, digits, codes = #config.alphabet, {}, {}
 for index = 1, base do
     digits[config.alphabet:sub(index, index)] = index - 1
+end
+for id, kind in pairs(config.markers) do
+    codes[kind] = id
 end
 
 local function number(text)
@@ -15,6 +20,27 @@ local function number(text)
         value = value * base + digits[char]
     end
     return negative and -value or value
+end
+
+local function numeral(value)
+    local text = ""
+    repeat
+        local digit = value % base
+        text = config.alphabet:sub(digit + 1, digit + 1) .. text
+        value = math.floor(value / base)
+    until value == 0
+    return text
+end
+
+local function pack(code)
+    local text = numeral(code)
+    if code < base then return text end
+    if code < base ^ 2 then return tokens.wide .. numeral(0):rep(2 - #text) .. text end
+    return tokens.long .. numeral(#text) .. text
+end
+
+local function quote(text)
+    return tokens.quote .. text:gsub("[\\<]", "\\%0") .. tokens.quote
 end
 
 local function token(text, pos)
@@ -56,12 +82,23 @@ K3.__index = K3
 
 function K3.new(data)
     local self = setmetatable({}, K3)
-    self.classes = {}
+    self.classes, self.ids = {}, {}
     for _, class in ipairs(data.registry:list()) do
         local id = rawget(class, "k3")
-        if id then self.classes[id] = class end
+        if id then self.classes[id], self.ids[class] = class, id end
     end
     return self
+end
+
+function K3:supports(data)
+    for _, cell in ipairs(data.cells) do
+        if not self.ids[cell.class] or Properties.custom(cell) then return false end
+    end
+
+    for _, marker in ipairs(data.markers or {}) do
+        if not (codes[marker.kind] or marker.kind == "placeable") or marker.color then return false end
+    end
+    return true
 end
 
 function K3:matches(text)
@@ -127,6 +164,39 @@ function K3:decode(text)
         cells = cells,
         markers = markers
     }
+end
+
+function K3:encode(data)
+    local cells, marks = {}, {}
+    for _, cell in ipairs(data.cells) do
+        cells[(cell.y - 1) * data.width + cell.x] = pack(self.ids[cell.class] * 4 + cell.rotation)
+    end
+
+    for _, marker in ipairs(data.markers or {}) do
+        local at = (marker.y - 1) * data.width + marker.x
+        marks[at] = marks[at] or {}
+        table.insert(marks[at], marker)
+    end
+
+    local parts = {}
+    for at = 1, data.width * data.height do
+        for _, marker in ipairs(marks[at] or {}) do
+            if marker.kind == "placeable" then parts[#parts + 1] = tokens.placeable .. pack(0) end
+        end
+
+        parts[#parts + 1] = cells[at] or pack(0)
+        for _, marker in ipairs(marks[at] or {}) do
+            local code = codes[marker.kind]
+            if code then
+                parts[#parts + 1] = tokens.layer .. numeral(1) .. pack(code * 4 + (marker.rotation or 0))
+                if marker.kind == "label" then parts[#parts + 1] = tokens.property .. pack(1) .. quote(marker.text or "") end
+            end
+        end
+    end
+
+    local packed = love.data.compress("string", config.compression, table.concat(parts))
+    local body = love.data.encode("string", "base64", packed)
+    return table.concat({ config.prefix, numeral(data.width), numeral(data.height), numeral(0), body }, ";")
 end
 
 return K3

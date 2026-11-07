@@ -39,7 +39,7 @@ function Registry:_twin()
         local twin = rawget(class, "twin")
             or class.id:match("_ccw$") and class.name:gsub("_ccw$", "_cw")
             or class.id:match("_cw$") and class.name:gsub("_cw$", "_ccw")
-        rawset(class, "flipped", twin and self.cells[(class.id:gsub("[^:]+$", twin))] or false)
+        class.flipped = twin and self.cells[(class.id:gsub("[^:]+$", twin))] or false
     end
 end
 
@@ -60,7 +60,7 @@ function Registry:_register(class, namespace, source)
         resolved[#resolved + 1] = category
     end
     class.categories = resolved
-    rawset(class, "category", resolved[1])
+    class.category = resolved[1]
 
     if class.setup then class:setup() end
 
