@@ -584,7 +584,8 @@ end
 
 function Renderer:capture(simulator, markers, area)
     local width, height = (area.x2 - area.x1 + 1) * tile, (area.y2 - area.y1 + 1) * tile
-    local scale = math.min(1, love.graphics.getSystemLimits().texturesize / math.max(width, height))
+    local limit = love.graphics.getSystemLimits().texturesize
+    local scale = math.min(constants.screenshots.scale, limit / math.max(width, height))
     local canvas = love.graphics.newCanvas(math.floor(width * scale), math.floor(height * scale), { dpiscale = 1 })
     local live, previous = self.camera, love.graphics.getCanvas()
     local camera = Camera.new({ size = function() return width, height end })
