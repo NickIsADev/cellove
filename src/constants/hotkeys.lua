@@ -23,7 +23,27 @@ return {
             }
         },
         heading = 32,
-        listening = "Press a key...",
+        capture = {
+            margin = 16,
+            pad = 24,
+            gap = 16,
+            dim = 0.6,
+            locked = { escape = true },
+            font = { title = 28, name = 16, key = 12 },
+            text = {
+                title = "Press a key",
+                name = "binding %s",
+                hint = "Esc to cancel"
+            },
+            key = { size = 28, gap = 4 },
+            keyboard = {
+                { { "Esc", "escape", 1 }, "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", { "Bksp", "backspace", 2 } },
+                { { "Tab", "tab", 1.5 }, "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]", { "\\", "\\", 1.5 } },
+                { { "Caps", "capslock", 1.75 }, "a", "s", "d", "f", "g", "h", "j", "k", "l", ";", "'", { "Enter", "return", 2.25 } },
+                { { "Shift", "lshift", 2.25 }, "z", "x", "c", "v", "b", "n", "m", ",", ".", "/", { "Shift", "rshift", 2.75 } },
+                { { "Ctrl", "lctrl", 1.5 }, { "Alt", "lalt", 1.5 }, { "Space", "space", 9 }, { "Alt", "ralt", 1.5 }, { "Ctrl", "rctrl", 1.5 } }
+            }
+        },
         conflict = "Also used by: %s",
         tools = "Tools",
         list = {
