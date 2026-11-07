@@ -276,7 +276,7 @@ function Editor:_setBorder(border)
     grid:setBorder(border)
     self:_record(function() self.simulator.grid:setBorder(old) end)
     self:commit()
-    self.toast:show(string.format(text.done, border.title))
+    self.toast:show(string.format((#border.subtick > 0 or border.held) and text.inert or text.done, border.title))
 end
 
 function Editor:_setInitial()

@@ -25,6 +25,7 @@ return {
                 },
                 border = {
                     done = "Changed the border to %s",
+                    inert = "Changed the border to %s, but it will not tick like a normal cell",
                     same = "The grid already has that border"
                 }
             }
