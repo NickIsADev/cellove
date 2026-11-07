@@ -78,6 +78,16 @@ return {
                 icon = "bias"
             },
             {
+                id = "repulsors",
+                title = "Repulsors",
+                icon = "repulsor"
+            },
+            {
+                id = "impulsors",
+                title = "Impulsors",
+                icon = "impulsor"
+            },
+            {
                 id = "walls",
                 title = "Walls",
                 icon = "wall"

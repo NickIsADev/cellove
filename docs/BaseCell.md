@@ -25,7 +25,7 @@ Set these in the table you pass to `setmetatable`.
 | `description` | `string` | `""` | description in the library |
 | `categories` | `table` | | required, list of [category IDs](Creating-Cells#categories) |
 | `properties` | `table` | `{}` | [property definitions](Creating-Cells#properties) |
-| `subtick` | `table` | `{}` | subticks `update` runs in. lower runs first and cells sharing a number run together. only the order matters, so any number works, like `21.5` to run between movers (`21`) and nudgers (`22`). see [built-in subticks](Creating-Cells#subticks). empty means never |
+| `subtick` | `table` | `{}` | subticks `update` runs in. lower runs first and cells sharing a number run together. only the order matters, so any number works, like `28.5` to run between movers (`28`) and nudgers (`29`). see [built-in subticks](Creating-Cells#subticks). empty means never |
 | `directional` | `boolean` | | calls `update` once per entry in `outputs` |
 | `outputs` | `table` | `{ 0 }` | output directions relative to rotation: `0` forward, `1` right, `2` back, `3` left |
 | `drive` | `table` | | actions that move the cell forward, like `{ push = true, pull = true }`. a cell moved that way skips its update that tick |
@@ -277,7 +277,7 @@ Call these from your own methods, usually from `update`. Where `dx` and `dy` are
 | [`nudge`](#basecellnudgedx-dy) | moves the cell one tile without pushing |
 | [`swap`](#basecellswapax-ay-bx-by) | swaps the cells at two offsets from this one |
 | [`generate`](#basecellgeneratedirection-options) | copies the cell behind this one into the tile in front |
-| [`repel`](#basecellrepeldirection) | pushes the cell in front of this one away without moving this cell |
+| [`repel`](#basecellrepeldirection-force-row) | pushes the cell in front of this one away without moving this cell |
 | [`rotate`](#basecellrotateamount-forced) | rotates the cell |
 | [`rotateNeighbors`](#basecellrotateneighborsamount-predicate) | rotates the four adjacent cells |
 | [`neighbors`](#basecellneighborsdistance-callback) | loops over nearby tiles, no diagonals |
@@ -391,21 +391,21 @@ function Copier:update(_, direction)
 end
 ```
 
-### `BaseCell:repel(direction)`
+### `BaseCell:repel(direction, force, row)`
 
 Pushes the cell next to this one away, along with whatever is in its way. This cell does not move.
 
 | parameter | type | description |
 | --- | --- | --- |
 | `direction` | `number` | direction to push towards (0-3) |
+| `force` | `number` | force of the push, defaults to `constants.force.strength` |
+| `row` | `boolean` | keep pushing past gaps, so the whole row moves |
 
-**Returns** `boolean`, true if the push succeeded.
+**Returns** the move it pushed from, or `false` if the push failed.
 
 ```lua
-function Repulsor:update()
-    for direction = 0, 3 do
-        self:repel(direction)
-    end
+function Repulsor:update(_, direction)
+    self:repel(direction, nil, self.row)
 end
 ```
 

@@ -150,9 +150,9 @@ function BaseCell:generate(direction, options)
     return self.simulator.movement:generate(self.x, self.y, facing[1], facing[2], options)
 end
 
-function BaseCell:repel(direction)
+function BaseCell:repel(direction, force, row)
     local facing = constants.directions[direction]
-    return self.simulator.movement:repel(self.x, self.y, facing[1], facing[2])
+    return self.simulator.movement:repel(self.x, self.y, facing[1], facing[2], force, row)
 end
 
 function BaseCell:look(direction, reverse)

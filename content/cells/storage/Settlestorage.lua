@@ -6,7 +6,7 @@ local Settlestorage = setmetatable({
     title = "Settlestorage",
     description = "Stores the first cell that moves into it. Turns into it after a tick where it doesn't move.",
     faces = {},
-    subtick = { 24 },
+    subtick = { 31 },
     sweep = { x = 1, y = -1 },
     moves = false
 }, { __index = BaseHolder })

@@ -204,7 +204,34 @@ function Movement:_spoil(chain, from, last, turn)
     end
 end
 
-function Movement:_trail(chain, x, y, dx, dy, force)
+function Movement:_rows(front, force)
+    local grid, rows = self.grid, {}
+    local x, y, dx, dy = front.x, front.y, front.dx, front.dy
+    local bare = true
+
+    for _ = 1, constants.grid.limits.max do
+        if not grid:bounds(x, y) then break end
+
+        local chain = self:_line(x, y, dx, dy, force, nil, bare)
+        if not chain then break end
+
+        for _, move in ipairs(chain) do
+            rows[#rows + 1] = move
+        end
+
+        local last = chain[#chain]
+        if last then x, y, dx, dy = last.x, last.y, last.dx, last.dy end
+        if grid:get(x, y) then break end
+
+        local gap = self:_route(x, y, dx, dy)
+        if not gap then break end
+
+        x, y, dx, dy, bare = gap.x, gap.y, gap.dx, gap.dy, false
+    end
+    return rows
+end
+
+function Movement:_trail(chain, x, y, dx, dy, force, row)
     local size, seen, taken, width = #chain, {}, {}, self.grid.width
     for _, move in ipairs(chain) do
         seen[move.cell] = true
@@ -214,6 +241,10 @@ function Movement:_trail(chain, x, y, dx, dy, force)
     local wx, wy = -dx, -dy
     while true do
         local walk = self:_route(x, y, wx, wy, true)
+        while row and walk and not walk.target and self.grid:bounds(walk.x, walk.y) do
+            walk = self:_route(walk.x, walk.y, walk.dx, walk.dy, true)
+        end
+
         local cell = walk and walk.target
         if not cell or seen[cell] or cell:eats(walk.dx, walk.dy) then return true end
 
@@ -341,7 +372,7 @@ function Movement:push(x, y, dx, dy, force)
     return true
 end
 
-function Movement:pull(x, y, dx, dy, force)
+function Movement:_pull(x, y, dx, dy, force, passive, row)
     local puller = self.grid:get(x, y)
     if not puller then return false end
 
@@ -356,7 +387,7 @@ function Movement:pull(x, y, dx, dy, force)
     if force <= 0 then return false end
 
     local chain = { move }
-    if not self:_trail(chain, x, y, dx, dy, force) then
+    if not self:_trail(chain, x, y, dx, dy, force, row) then
         local eater = self.grid:get(move.x, move.y)
         if not eater then return false end
 
@@ -366,9 +397,26 @@ function Movement:pull(x, y, dx, dy, force)
         return false
     end
 
-    self:_drive(chain, "pull")
-    self:_shift(chain)
+    if not passive then self:_drive(chain, "pull") end
+    self:_shift(chain, passive)
     return true
+end
+
+function Movement:pull(x, y, dx, dy, force)
+    return self:_pull(x, y, dx, dy, force)
+end
+
+function Movement:attract(x, y, dx, dy, force, row)
+    local grid = self.grid
+    local cell = grid:get(x, y)
+
+    while row and not cell and grid:bounds(x, y) do
+        x, y = x - dx, y - dy
+        cell = grid:get(x, y)
+    end
+    if not (cell and cell:pushable(dx, dy)) then return false end
+
+    return self:_pull(x, y, dx, dy, force, true, row)
 end
 
 function Movement:advance(x, y, dx, dy)
@@ -522,19 +570,21 @@ function Movement:release(x, y, dx, dy, cell, mode)
     return true
 end
 
-function Movement:repel(x, y, dx, dy)
+function Movement:repel(x, y, dx, dy, force, row)
     self.top = 0
     local front = self:_route(x, y, dx, dy)
     if not front then return false end
 
-    local chain = self:_line(front.x, front.y, front.dx, front.dy, constants.force.push + constants.force.strength, nil, true)
+    force = constants.force.push + (force or constants.force.strength)
+
+    local chain = row and self:_rows(front, force) or self:_line(front.x, front.y, front.dx, front.dy, force, nil, true)
     if not chain then return false end
 
     local cell = self.grid:get(front.x, front.y)
     if cell and #chain == 0 then self:_bump(cell, front.dx, front.dy) end
 
     self:_shift(chain, true)
-    return true
+    return front
 end
 
 function Movement:transform(x, y, dx, dy, cell)
