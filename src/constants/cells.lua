@@ -38,6 +38,11 @@ return {
                 icon = "pipe"
             },
             {
+                id = "tubes",
+                title = "Tubes",
+                icon = "tube"
+            },
+            {
                 id = "divergers",
                 title = "Divergers",
                 icon = "diverger"
