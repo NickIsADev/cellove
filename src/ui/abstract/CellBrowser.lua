@@ -112,7 +112,7 @@ end
 
 local function listed(class, entry)
     if entry.id == "all" then return true end
-    return utils.has(entry.own and class.categories or class.lineage, entry.id)
+    return utils.has(entry.direct and class.categories or class.lineage, entry.id)
 end
 
 local CellBrowser = {}
@@ -230,7 +230,7 @@ function CellBrowser:_load(classes)
             icon = root.icon,
             folder = root.folder,
             parent = root.id,
-            own = true,
+            direct = true,
             count = 0
         }
         for _, class in ipairs(self.all) do
