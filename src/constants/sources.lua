@@ -45,7 +45,7 @@ return {
         main = "main.lua",
         cells = "cells",
         puzzles = "puzzles",
-        fields = { "name", "description", "author", "version" },
+        fields = { "name", "description", "author", "version", "minVersion" },
         archive = "^(.+)%.[zZ][iI][pP]$",
         ignored = "__MACOSX",
         layouts = {
@@ -81,6 +81,7 @@ return {
             dots = "Folder names can't contain dots",
             pack = "Missing texture pack: %s",
             dependency = "Requires mod: %s",
+            outdated = "Requires CelLove %s or newer",
             listener = "Event %s failed: %s",
             conflict = "Conflicts with %s: %s",
             location = "%s (%s:%s)",

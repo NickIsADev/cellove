@@ -22,6 +22,7 @@ return {
     description = "Adds things",
     author = "you",
     version = "1.0.0",
+    minVersion = "0.1.0",
     texturepack = "mymod",
     icon = "icon.png",
     dependencies = { "othermod" }
@@ -35,6 +36,7 @@ return {
 | `description` | `string` | shown in the mod selection menu |
 | `author` | `string` | shown in the mod selection menu |
 | `version` | `string` | shown in the mod selection menu |
+| `minVersion` | `string` | oldest CelLove version the mod supports, like `0.1.0`. the mod fails on older versions |
 | `texturepack` | `string` | pack in `texturepacks/` linked to the mod |
 | `icon` | `string` | image path inside the mod folder |
 | `dependencies` | `table` | mod IDs that load first. the mod fails if one is missing or failed |
