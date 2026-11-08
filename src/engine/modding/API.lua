@@ -33,6 +33,7 @@ end
 ---@field id string unique within the mod, gets the mod prefix
 ---@field title string name shown in the cell library
 ---@field icon string texture shown for the category
+---@field parent? string full ID of the category it is listed under
 
 ---@class ModMarker
 ---@field id string unique within the mod, gets the mod prefix
@@ -261,7 +262,8 @@ function API.new(mods, mod)
         table.insert(constants.registry.categories, {
             id = key(spec.id),
             title = spec.title,
-            icon = spec.icon
+            icon = spec.icon,
+            parent = spec.parent
         })
     end
 

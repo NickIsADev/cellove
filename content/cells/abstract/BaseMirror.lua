@@ -6,7 +6,7 @@ local function straight(pair)
 end
 
 local BaseMirror = setmetatable({
-    categories = { "forces", "mirrors" },
+    categories = { "mirrors" },
     subtick = { 4 },
     outputs = { 0, 1, 2, 3 },
     directional = true,

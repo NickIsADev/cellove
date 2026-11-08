@@ -19,7 +19,7 @@ end
 
 local function categoryLine(class)
     local names = {}
-    for _, category in ipairs(class.categories) do
+    for _, category in ipairs(class.lineage) do
         names[#names + 1] = titles[category]
     end
     return table.concat(names, " / ")
@@ -70,7 +70,7 @@ function filters.description(class, word)
 end
 
 function filters.category(class, word)
-    for _, category in ipairs(class.categories) do
+    for _, category in ipairs(class.lineage) do
         local found = rank(category, word) or rank(titles[category]:lower(), word)
         if found then return found end
     end
@@ -110,6 +110,11 @@ local function match(class, term)
     return score
 end
 
+local function listed(class, entry)
+    if entry.id == "all" then return true end
+    return utils.has(entry.own and class.categories or class.lineage, entry.id)
+end
+
 local CellBrowser = {}
 CellBrowser.__index = CellBrowser
 
@@ -122,7 +127,6 @@ function CellBrowser:setup(data)
     self.menuT = 0
     self.box = {}
     self.sort = config.sorts[1].id
-    self.category = "all"
     self.all = {}
 
     self.search = TextField.new({ renderer = data.renderer, placeholder = config.placeholder })
@@ -187,35 +191,73 @@ function CellBrowser:_load(classes)
     local counts = {}
     self.all = classes
     for _, class in ipairs(self.all) do
-        for _, category in ipairs(class.categories) do
+        for _, category in ipairs(class.lineage) do
             counts[category] = (counts[category] or 0) + 1
         end
     end
 
-    local items = {
-        {
+    self.entries = {
+        all = {
             id = "all",
             title = config.all.title,
             icon = config.all.icon,
             count = #self.all
         }
     }
+    self.roots = {}
     for _, category in ipairs(constants.registry.categories) do
         if counts[category.id] then
-            items[#items + 1] = {
+            self.entries[category.id] = {
                 id = category.id,
                 title = category.title,
                 icon = category.icon,
                 folder = category.folder,
-                count = counts[category.id]
+                parent = category.parent,
+                count = counts[category.id],
+                children = {}
             }
         end
     end
-    self.categories:setItems(items, 1)
+    for _, category in ipairs(constants.registry.categories) do
+        local entry = self.entries[category.id]
+        local list = entry and (entry.parent and self.entries[entry.parent].children or self.roots)
+        if list then list[#list + 1] = entry end
+    end
+    for _, root in ipairs(self.roots) do
+        local own = {
+            id = root.id,
+            title = root.title,
+            icon = root.icon,
+            folder = root.folder,
+            parent = root.id,
+            own = true,
+            count = 0
+        }
+        for _, class in ipairs(self.all) do
+            if listed(class, own) then own.count = own.count + 1 end
+        end
+        if #root.children > 0 and own.count > 0 then root.own = own end
+    end
 
     for index, sort in ipairs(config.sorts) do
         if sort.id == self.sort then self.sorts:setItems(config.sorts, index) end
     end
+    self:_setCategory(self.entries.all)
+end
+
+function CellBrowser:_setCategory(entry)
+    local rows = { self.entries.all }
+
+    for _, root in ipairs(self.roots) do
+        rows[#rows + 1] = root
+        if root.id == entry.id or root.id == entry.parent then
+            rows[#rows + 1] = root.own
+            for _, child in ipairs(root.children) do rows[#rows + 1] = child end
+        end
+    end
+
+    self.entry = entry
+    self.categories:setItems(rows, utils.indexOf(rows, entry))
     self:_refresh()
 end
 
@@ -234,7 +276,7 @@ function CellBrowser:_refresh()
     local terms = parse(self.search.text:lower())
     for _, class in ipairs(self.all) do
         local score = self:_score(class, terms)
-        if score and (self.category == "all" or utils.has(class.categories, self.category)) then
+        if score and listed(class, self.entry) then
             items[#items + 1] = class
             scores[class] = score
         end
@@ -268,11 +310,7 @@ end
 function CellBrowser:_shiftCategory(step)
     local list = self.categories
     local index = utils.clamp((list.selected or 1) + step, 1, #list.items)
-    if index == list.selected then return end
-
-    list:select(index)
-    self.category = list.items[index].id
-    self:_refresh()
+    if index ~= list.selected then self:_setCategory(list.items[index]) end
 end
 
 function CellBrowser:_pick(class)
@@ -289,10 +327,11 @@ function CellBrowser:_drawCategory(category, x, y, width, height, hover, selecte
     local alpha = selected and 1 or 0.7 + 0.3 * hover
     local count = tostring(category.count)
     local countWidth = countFont:getWidth(count)
-    local textX = x + style.inset + style.icon + style.gap
+    local left = x + style.inset + (category.parent and style.indent or 0)
+    local textX = left + style.icon + style.gap
 
     love.graphics.setColor(utils.fromHex(colors.white, alpha))
-    love.graphics.draw(icon, x + style.inset, y + (height - style.icon) / 2, 0, scale, scale)
+    love.graphics.draw(icon, left, y + (height - style.icon) / 2, 0, scale, scale)
 
     love.graphics.setFont(font)
     utils.printFitted(category.title, textX, y + (height - font:getHeight()) / 2,
@@ -360,9 +399,7 @@ function CellBrowser:_click(x, y)
     local category = self.categories:rowAt(x, y)
     if category then
         Audio.play("click")
-        self.categories:select(category)
-        self.category = self.categories.items[category].id
-        return self:_refresh()
+        return self:_setCategory(self.categories.items[category])
     end
 
     local index = self.cells:rowAt(x, y)
@@ -376,7 +413,6 @@ function CellBrowser:open(classes)
     self.active = true
     self.menu = false
     self.menuT = 0
-    self.category = "all"
     self.search:set("")
     self.keyRepeat = love.keyboard.hasKeyRepeat()
     love.keyboard.setKeyRepeat(true)

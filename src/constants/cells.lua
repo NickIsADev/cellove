@@ -25,7 +25,8 @@ return {
             {
                 id = "pullers",
                 title = "Pullers",
-                icon = "puller"
+                icon = "puller",
+                parent = "movers"
             },
             {
                 id = "generators",
@@ -33,14 +34,22 @@ return {
                 icon = "generator"
             },
             {
+                id = "makers",
+                title = "Makers",
+                icon = "maker",
+                parent = "generators"
+            },
+            {
                 id = "pipes",
                 title = "Pipes",
-                icon = "pipe"
+                icon = "pipe",
+                parent = "divergers"
             },
             {
                 id = "tubes",
                 title = "Tubes",
-                icon = "tube"
+                icon = "tube",
+                parent = "divergers"
             },
             {
                 id = "divergers",
@@ -50,27 +59,32 @@ return {
             {
                 id = "displacers",
                 title = "Displacers",
-                icon = "displacer"
+                icon = "displacer",
+                parent = "divergers"
             },
             {
                 id = "mirrors",
                 title = "Mirrors",
-                icon = "mirror"
+                icon = "mirror",
+                parent = "forces"
             },
             {
                 id = "cyclers",
                 title = "Cyclers",
-                icon = "cycler_cw"
+                icon = "cycler_cw",
+                parent = "forces"
             },
             {
                 id = "redirectors",
                 title = "Redirectors",
-                icon = "redirector"
+                icon = "redirector",
+                parent = "rotators"
             },
             {
                 id = "gears",
                 title = "Gears",
-                icon = "gear_cw"
+                icon = "gear_cw",
+                parent = "rotators"
             },
             {
                 id = "rotators",
@@ -80,7 +94,8 @@ return {
             {
                 id = "gates",
                 title = "Gates",
-                icon = "andgate"
+                icon = "andgate",
+                parent = "generators"
             },
             {
                 id = "forces",
@@ -90,12 +105,14 @@ return {
             {
                 id = "repulsors",
                 title = "Repulsors",
-                icon = "repulsor"
+                icon = "repulsor",
+                parent = "forces"
             },
             {
                 id = "impulsors",
                 title = "Impulsors",
-                icon = "impulsor"
+                icon = "impulsor",
+                parent = "forces"
             },
             {
                 id = "walls",

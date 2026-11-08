@@ -6,7 +6,17 @@ local utils = require("src/utils")
 local config = constants.registry
 local categories = {}
 for _, category in ipairs(config.categories) do
-    categories[category.id] = true
+    categories[category.id] = category
+end
+
+local function expand(id, source, list, seen)
+    local category = categories[id]
+    assert(category, source .. " has an invalid category: " .. tostring(id))
+    if seen[id] then return end
+
+    seen[id] = true
+    if category.parent then expand(category.parent, source, list, seen) end
+    list[#list + 1] = id
 end
 
 local function sweepOf(class, subtick)
@@ -54,13 +64,14 @@ function Registry:_register(class, namespace, source)
         assert(Properties.valid(property), source .. " has an invalid definition for property " .. property.id)
     end
 
-    local resolved = {}
+    local resolved, lineage, seen = {}, {}, {}
     for _, id in ipairs(class.categories) do
         local category = categories[id] and id or namespace .. ":" .. id
-        assert(categories[category], source .. " has an invalid category: " .. tostring(id))
+        expand(category, source, lineage, seen)
         resolved[#resolved + 1] = category
     end
     class.categories = resolved
+    class.lineage = lineage
     class.category = resolved[1]
 
     if class.setup then class:setup() end

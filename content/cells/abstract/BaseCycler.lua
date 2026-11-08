@@ -2,7 +2,7 @@ local BaseCell = require("content/cells/abstract/BaseCell")
 local constants = require("src/constants")
 
 local BaseCycler = setmetatable({
-    categories = { "forces", "cyclers" },
+    categories = { "cyclers" },
     subtick = { 6 },
     directional = true,
     sweep = {

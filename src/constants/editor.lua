@@ -452,6 +452,7 @@ return {
             height = 44,
             font = 16,
             inset = 10,
+            indent = 16,
             icon = 28,
             gap = 10,
             count = { font = 12, alpha = 0.4 }

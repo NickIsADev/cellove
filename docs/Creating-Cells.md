@@ -53,6 +53,19 @@ This registers `mymod:eraser`. It updates in subtick `9` and removes whatever is
 > [!IMPORTANT]
 > A category that does not exist is an error, and the mod fails to load.
 
+### Subcategories
+
+A category can be listed under another one with `parent`, which takes the parent's full ID. Cells in a subcategory also show up in its parent, so a cell only needs to name the most specific category. Name the parent as well to also list the cell in the parent's own row.
+
+```lua
+api.categories.add({
+    id = "drills",
+    title = "Drills",
+    icon = "mymod/drill",
+    parent = "movers"
+})
+```
+
 ## Properties
 
 Properties show up in the property panel and are saved with contraptions. The type of `default` sets the kind.

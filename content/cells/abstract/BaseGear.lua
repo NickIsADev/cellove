@@ -4,7 +4,7 @@ local constants = require("src/constants")
 local late = { ccw = 16, ["180"] = 17, rng = 18 }
 
 local BaseGear = setmetatable({
-    categories = { "rotators", "gears" },
+    categories = { "gears" },
     subtick = { 15 },
     sweep = { x = 1, y = -1 },
     faces = {},
