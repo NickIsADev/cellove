@@ -115,6 +115,8 @@ return {
                 game = "game",
                 system = "system",
                 audio = "audio",
+                mods = "mods",
+                packs = "texture packs",
                 events = "events"
             },
             fps = "fps: %d  frame: %.1f ms  worst: %.1f ms",
@@ -127,6 +129,8 @@ return {
             music = "music: %s (%d/%d)  %.0fs / %.0fs",
             sound = "sources: %d  music: %d%%  sfx: %d%%  speed: %d%%",
             none = "none",
+            mod = "%s  version: %s",
+            modError = "%s  error: %s",
             event = "%s  x%d  %d listening",
             system = {
                 game = "game: v%s (build %s)",

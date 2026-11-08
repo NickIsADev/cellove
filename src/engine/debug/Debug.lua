@@ -35,6 +35,15 @@ local function eventLines()
     return lines
 end
 
+local function modLines(mods)
+    local lines = {}
+
+    for index, mod in ipairs(mods.loaded) do
+        lines[index] = string.format(mod.error and text.modError or text.mod, mod.name, mod.error or mod.version or text.none)
+    end
+    return #lines > 0 and lines or { text.none }
+end
+
 local function write(message, color, x, y)
     love.graphics.setColor(utils.fromHex(color))
     love.graphics.print(message, x, y)
@@ -83,6 +92,8 @@ function Debug.new(data)
     local self = setmetatable({}, Debug)
     self.renderer = data.renderer
     self.settings = data.settings
+    self.mods = data.mods
+    self.texturePacks = data.texturePacks
     self.world = World.new({ renderer = data.renderer })
     self.system = systemInfo()
     self.enabled = false
@@ -171,6 +182,8 @@ function Debug:_collect(manager)
                 string.format(text.sound, audio.sources, settings:get("musicVolume"), settings:get("sfxVolume"), settings:get("musicSpeed"))
             }
         },
+        { side = "right", title = text.titles.mods, lines = modLines(self.mods) },
+        { side = "right", title = text.titles.packs, lines = self.texturePacks:stack() },
         {
             side = "left",
             title = text.titles.events,

@@ -115,7 +115,7 @@ local function boot()
         renderer = renderer,
         hotkeys = hotkeys,
         texturePacks = texturePacks,
-        debug = Debug.new({ settings = settings, renderer = renderer })
+        debug = Debug.new({ settings = settings, renderer = renderer, mods = mods, texturePacks = texturePacks })
     })
     local context = {
         manager = manager,
