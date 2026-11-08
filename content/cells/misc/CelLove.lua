@@ -5,7 +5,7 @@ local CelLove = setmetatable({
     title = "CelLove",
     description = "Moves diagonally and bounces off anything in its way.",
     categories = { "misc" },
-    subtick = { 33 }
+    subtick = { 35 }
 }, { __index = BaseCell })
 CelLove.__index = CelLove
 

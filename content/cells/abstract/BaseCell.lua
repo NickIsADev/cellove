@@ -110,7 +110,7 @@ end
 
 function BaseCell:grab(dx, dy)
     dx, dy = self:_aim(dx, dy)
-    return self.simulator.movement:grab(self.x, self.y, dx, dy)
+    return self.simulator.movement:grab(self.x, self.y, dx, dy, self.skew)
 end
 
 function BaseCell:advance(dx, dy)

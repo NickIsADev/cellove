@@ -447,21 +447,25 @@ function Movement:advance(x, y, dx, dy)
     return true
 end
 
-function Movement:_flanks(chain, x, y, dx, dy, force)
+function Movement:_flanks(chain, x, y, dx, dy, force, skew)
     local seen = {}
     for _, move in ipairs(chain) do
         seen[move.cell] = true
     end
 
+    skew = skew or 0
+    local scale = skew * skew + 1
+
     for _, side in ipairs({ 1, -1 }) do
-        local cx, cy, sx, sy = x, y, -side * dy, side * dx
+        local cx, cy, sx, sy = x, y, skew * dx - side * dy, skew * dy + side * dx
 
         for _ = 1, constants.grid.limits.max do
             local walk = self:_route(cx, cy, sx, sy)
             local cell = walk and walk.target
             if not cell or seen[cell] then break end
 
-            local fx, fy = side * walk.dy, -side * walk.dx
+            local fx = (skew * walk.dx + side * walk.dy) / scale
+            local fy = (skew * walk.dy - side * walk.dx) / scale
             local move = self:_route(walk.x, walk.y, fx, fy)
             if not (move and cell:pushable(fx, fy) and self:_open(move.x, move.y, move.dx, move.dy)) then break end
 
@@ -477,7 +481,7 @@ function Movement:_flanks(chain, x, y, dx, dy, force)
     return true
 end
 
-function Movement:grab(x, y, dx, dy)
+function Movement:grab(x, y, dx, dy, skew)
     local grabber = self.grid:get(x, y)
     if not grabber then return false end
 
@@ -490,17 +494,17 @@ function Movement:grab(x, y, dx, dy)
 
     local force = constants.force.grab + grabber:force(dx, dy, "grab")
     local chain = { move }
-    if force <= 0 or not self:_flanks(chain, x, y, dx, dy, force) then return false end
+    if force <= 0 or not self:_flanks(chain, x, y, dx, dy, force, skew) then return false end
 
     self:_drive(chain, "grab")
     self:_shift(chain)
     return true
 end
 
-function Movement:flank(x, y, dx, dy)
+function Movement:flank(x, y, dx, dy, skew)
     self.top = 0
     local chain = {}
-    if not self:_flanks(chain, x, y, dx, dy, constants.force.strength) then return false end
+    if not self:_flanks(chain, x, y, dx, dy, constants.force.strength, skew) then return false end
 
     self:_drive(chain, "grab")
     self:_shift(chain, true)
