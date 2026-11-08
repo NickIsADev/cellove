@@ -2,7 +2,7 @@ local BaseCell = require("content/cells/abstract/BaseCell")
 
 local BaseRedirector = setmetatable({
     categories = { "rotators", "redirectors" },
-    subtick = { 18 },
+    subtick = { 20 },
     sweep = { x = 1, y = -1 },
     outputs = { 0, 1, 2, 3 },
     sides = { orthogonal = true },

@@ -100,7 +100,9 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | `23`, `24`, `25` | fans, super repulsors, repulsors |
 | `26`, `27` | magnets, split by axis |
 | `28`, `29`, `30` | pullers and advancers, movers, nudgers |
-| `31`, `32` | gates, storages |
+| `31` | gates |
+| `32`, `33` | life, split into spreading and dying |
+| `34` | storages |
 
 ## Common patterns
 

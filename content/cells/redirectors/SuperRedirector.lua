@@ -6,7 +6,7 @@ local SuperRedirector = setmetatable({
     title = "Super Redirector",
     description = "Turns every cell connected to it to face the same direction as it every tick. Ignores other redirectors.",
     faces = { 0 },
-    subtick = { 17 }
+    subtick = { 19 }
 }, { __index = BaseRedirector })
 SuperRedirector.__index = SuperRedirector
 

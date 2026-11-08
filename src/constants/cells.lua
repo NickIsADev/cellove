@@ -53,6 +53,11 @@ return {
                 icon = "mirror"
             },
             {
+                id = "cyclers",
+                title = "Cyclers",
+                icon = "cycler_cw"
+            },
+            {
                 id = "redirectors",
                 title = "Redirectors",
                 icon = "redirector"
@@ -106,6 +111,11 @@ return {
                 id = "storage",
                 title = "Storage",
                 icon = "storage"
+            },
+            {
+                id = "infectious",
+                title = "Infectious",
+                icon = "life"
             },
             {
                 id = "misc",

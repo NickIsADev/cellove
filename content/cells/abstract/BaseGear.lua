@@ -1,11 +1,11 @@
 local BaseCell = require("content/cells/abstract/BaseCell")
 local constants = require("src/constants")
 
-local late = { ccw = 14, ["180"] = 15, rng = 16 }
+local late = { ccw = 16, ["180"] = 17, rng = 18 }
 
 local BaseGear = setmetatable({
     categories = { "rotators", "gears" },
-    subtick = { 13 },
+    subtick = { 15 },
     sweep = { x = 1, y = -1 },
     faces = {},
     sides = { orthogonal = true, diagonal = true },

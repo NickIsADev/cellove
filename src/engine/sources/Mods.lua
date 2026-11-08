@@ -27,7 +27,7 @@ end
 local function problem(entry, data)
     local id = data.id
 
-    if entry.id:find("%.") then return text.dots end
+    if entry.root:find("%.") then return text.dots end
     if type(id) ~= "string" or not id:match(constants.registry.pattern) or id == base then return text.id end
 end
 
@@ -96,7 +96,8 @@ function Mods:_start(mod, found)
 
     local missing = self:_needs(mod, found)
     self.loaded[#self.loaded + 1] = mod
-    mod.error = missing and string.format(text.dependency, missing)
+    mod.error = utils.outdated(constants.version.number, mod.minVersion or "") and string.format(text.outdated, mod.minVersion)
+        or missing and string.format(text.dependency, missing)
     if mod.error then return end
 
     local ok, err = xpcall(function()
