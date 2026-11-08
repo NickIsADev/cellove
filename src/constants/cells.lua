@@ -108,6 +108,11 @@ return {
                 icon = "storage"
             },
             {
+                id = "infectious",
+                title = "Infectious",
+                icon = "life"
+            },
+            {
                 id = "misc",
                 title = "Miscellaneous",
                 icon = "base",

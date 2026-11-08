@@ -590,6 +590,18 @@ function Movement:repel(x, y, dx, dy, force, row)
     return front
 end
 
+function Movement:place(x, y, cell)
+    local target = self.grid:get(x, y)
+    if target then
+        target.simulator = self.simulator
+        target:kill()
+    end
+
+    cell.grow = 0
+    self.grid:set(x, y, cell)
+    self.grid:touch(cell)
+end
+
 function Movement:transform(x, y, dx, dy, cell)
     self.top = 0
 
@@ -598,12 +610,7 @@ function Movement:transform(x, y, dx, dy, cell)
     if not (target and target:transformable()) then return false end
 
     cell:rotate(front.turn, true)
-    cell.grow = 0
-    target.simulator = self.simulator
-    target:kill()
-
-    self.grid:set(front.x, front.y, cell)
-    self.grid:touch(cell)
+    self:place(front.x, front.y, cell)
     return true
 end
 
