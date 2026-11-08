@@ -28,16 +28,11 @@ end
 function BaseSource:_locate(directory)
     if self:_isRoot(directory) then return directory end
 
-    local inner
     for _, item in ipairs(love.filesystem.getDirectoryItems(directory)) do
         local path = directory .. "/" .. item
-        if item ~= self.config.ignored and love.filesystem.getInfo(path, "directory") then
-            if inner then return directory end
-            inner = path
-        end
+        if item ~= self.config.ignored and self:_isRoot(path) then return path end
     end
-
-    return inner and self:_isRoot(inner) and inner or directory
+    return directory
 end
 
 function BaseSource:_mount(id, archive)

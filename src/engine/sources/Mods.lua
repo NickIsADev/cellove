@@ -27,7 +27,7 @@ end
 local function problem(entry, data)
     local id = data.id
 
-    if entry.id:find("%.") then return text.dots end
+    if entry.root:find("%.") then return text.dots end
     if type(id) ~= "string" or not id:match(constants.registry.pattern) or id == base then return text.id end
 end
 
