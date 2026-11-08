@@ -53,6 +53,11 @@ return {
                 icon = "mirror"
             },
             {
+                id = "cyclers",
+                title = "Cyclers",
+                icon = "cycler_cw"
+            },
+            {
                 id = "redirectors",
                 title = "Redirectors",
                 icon = "redirector"

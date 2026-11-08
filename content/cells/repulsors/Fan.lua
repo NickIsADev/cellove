@@ -6,7 +6,7 @@ local Fan = setmetatable({
     k3 = 417,
     title = "Fan",
     description = "A Repulsor with a range of 2 cells.",
-    subtick = { 23 }
+    subtick = { 25 }
 }, { __index = Repulsor })
 Fan.__index = Fan
 
