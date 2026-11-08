@@ -47,6 +47,15 @@ local function quote(text)
     return tokens.quote .. text:gsub("[\\<]", "\\%0") .. tokens.quote
 end
 
+local function write(value)
+    return type(value) == "string" and quote(value) or pack(value)
+end
+
+local function entry(id, rotation)
+    if type(id) == "string" then return write(id) .. rotation end
+    return pack(id * 4 + rotation)
+end
+
 local function token(text, pos)
     local char = text:sub(pos, pos)
 
@@ -116,7 +125,7 @@ function K3:_stored(cell)
     local content = cell.props and cell.props[held.property]
     if not (content and content.class) then return "" end
 
-    return tokens.property .. pack(held.id) .. pack(self.ids[content.class])
+    return tokens.property .. pack(held.id) .. write(self.ids[content.class])
         .. tokens.property .. pack(held.rotation) .. pack(content.rotation)
 end
 
@@ -214,7 +223,7 @@ end
 function K3:encode(data)
     local cells, marks = {}, {}
     for _, cell in ipairs(data.cells) do
-        cells[(cell.y - 1) * data.width + cell.x] = pack(self.ids[cell.class] * 4 + cell.rotation) .. self:_stored(cell)
+        cells[(cell.y - 1) * data.width + cell.x] = entry(self.ids[cell.class], cell.rotation) .. self:_stored(cell)
     end
 
     for _, marker in ipairs(data.markers or {}) do
