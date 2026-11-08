@@ -114,7 +114,16 @@ function Grid:resize(width, height, border)
     self:clear()
     self.width = width
     self.height = height
-    self.edge = border and border:new()
+    self:setBorder(border)
+end
+
+function Grid:setBorder(border)
+    self.version = self.version + 1
+    self.border = border
+    self.edge = border:new()
+    self.edge.fixed, self.edge.anchored = true, true
+    if self.edge.held then self.edge.eats = function() return false end end
+    if self.saved then self.saved.border = border end
 end
 
 function Grid:reshape(width, height)
@@ -156,6 +165,7 @@ function Grid:snapshot()
     return {
         width = self.width,
         height = self.height,
+        border = self.border,
         cells = cells
     }
 end

@@ -6,7 +6,7 @@ local utils = require("src/utils")
 local config = constants.editor.marker
 local ghost = constants.editor.ghost
 local colors = constants.ui.colors
-local rotating = config.rotating
+local fixed = constants.markers.fixed
 
 local Marker = setmetatable({}, { __index = BaseTool })
 Marker.__index = Marker
@@ -33,6 +33,7 @@ function Marker:_label(gx, gy)
                 kind = "label",
                 x = gx,
                 y = gy,
+                rotation = editor.targetRotation % 4,
                 text = text,
                 color = self.color
             })
@@ -55,6 +56,23 @@ function Marker:_stretch(gx, gy)
     }
 end
 
+function Marker:_paint(gx, gy)
+    local editor = self.editor
+
+    if self.kind == "placeable" then
+        editor:setPlaceable(gx, gy, not self.erasing)
+    elseif self.erasing then
+        editor:setMarker(gx, gy)
+    else
+        editor:setMarker(gx, gy, {
+            kind = self.kind,
+            x = gx,
+            y = gy,
+            rotation = editor.targetRotation % 4
+        })
+    end
+end
+
 function Marker:reset()
     self.kind, self.color = config.default, config.color
     self:leave()
@@ -73,8 +91,11 @@ function Marker:click(id)
 end
 
 function Marker:refresh()
+    local turn = self.editor.visualRotation * math.pi / 2
+
     for id, button in pairs(self.byId) do
         button.tint = id == self.kind and colors.accent or colors.white
+        button.rotation = fixed[id] and 0 or turn
     end
     self.byId.color.color = self.color
 end
@@ -95,31 +116,20 @@ function Marker:press(gx, gy, button)
         return true
     end
 
-    if self.kind == "placeable" then
-        self.paint = button == 1
-        editor:setPlaceable(gx, gy, self.paint)
-        return true
-    end
+    self.erasing = button == 2
+    if self.kind == "label" and not self.erasing then return self:_label(gx, gy) end
 
-    if button == 2 then
-        editor:setMarker(gx, gy, nil)
-    elseif self.kind == "label" then
-        self:_label(gx, gy)
-    else
-        local rotation = rotating[self.kind] and editor.targetRotation % 4
-        editor:setMarker(gx, gy, {
-            kind = self.kind,
-            x = gx,
-            y = gy,
-            rotation = rotation or nil
-        })
-    end
+    self.x, self.y = gx, gy
+    self:_paint(gx, gy)
+    return true
 end
 
 function Marker:move(gx, gy)
-    if self.kind == "placeable" then return self.editor:setPlaceable(gx, gy, self.paint) end
-
-    self:_stretch(gx, gy)
+    if self.box then
+        self:_stretch(gx, gy)
+    else
+        self:_drag(gx, gy)
+    end
 end
 
 function Marker:release()
@@ -136,13 +146,12 @@ function Marker:draw(gx, gy)
     if self.kind == "label" or Markers.areas[self.kind] then
         editor.renderer:drawBox(gx, gy, gx, gy, colors.white)
     else
-        local rotation = rotating[self.kind] and editor.visualRotation
         editor.renderer:drawMarkers({
             {
                 kind = self.kind,
                 x = gx,
                 y = gy,
-                rotation = rotation or nil
+                rotation = editor.visualRotation
             }
         }, ghost)
     end

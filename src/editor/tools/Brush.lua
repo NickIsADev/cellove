@@ -107,14 +107,7 @@ function Brush:press(gx, gy, button)
 end
 
 function Brush:move(gx, gy)
-    local dx, dy = gx - self.x, gy - self.y
-    local steps = math.max(math.abs(dx), math.abs(dy))
-
-    for i = 1, steps do
-        local t = i / steps
-        self:_paint(math.floor(self.x + dx * t + 0.5), math.floor(self.y + dy * t + 0.5))
-    end
-    self.x, self.y = gx, gy
+    self:_drag(gx, gy)
 end
 
 function Brush:draw(gx, gy)

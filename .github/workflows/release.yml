@@ -10,6 +10,8 @@ permissions:
 
 env:
   LOVE_VERSION: "11.5"
+  ANDROID_REF: "11.5a"
+  LUA_HTTPS_REF: e1b77046dd3cf1a9f61ddeb63cb39d47c844c089
 
 jobs:
   info:
@@ -74,7 +76,7 @@ jobs:
           cells=$([[ -z "$prev" ]] || git diff --name-only --diff-filter=A "$prev" "$GITHUB_REF_NAME" -- 'content/cells/*.lua' ':(exclude)content/cells/abstract/*')
 
           if [[ -n "$cells" ]]; then
-            printf '## %s New Cells\n\n' "$(icon cells/cellove)" >> notes.md
+            printf '## %s New Cells (%d)\n\n' "$(icon cells/cellove)" "$(grep -c . <<< "$cells")" >> notes.md
 
             while IFS= read -r file; do
               field() { sed -n "s/^[[:space:]]*$1 = \"\(.*\)\",\{0,1\}\$/\1/p" "$file" | head -1 | sed 's/\\"/"/g'; }
@@ -128,13 +130,108 @@ jobs:
           path: ./*.love
           retention-days: 1
 
+  https-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - { arch: x86, cmake: Win32 }
+          - { arch: x64, cmake: x64 }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: love2d/lua-https
+          ref: ${{ env.LUA_HTTPS_REF }}
+          path: lua-https
+
+      - uses: actions/checkout@v4
+        with:
+          repository: LuaJIT/LuaJIT
+          ref: v2.1
+          path: LuaJIT
+
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+
+      - name: Build LuaJIT
+        working-directory: LuaJIT/src
+        shell: cmd
+        run: msvcbuild.bat amalg
+
+      - name: Build lua-https
+        shell: cmd
+        run: |
+          cmake -Blua-https\build -Slua-https -A ${{ matrix.cmake }} -DCMAKE_INSTALL_PREFIX=%CD%\install -DLUA_INCLUDE_DIR=%CD%\LuaJIT\src -DLUA_LIBRARIES=%CD%\LuaJIT\src\lua51.lib
+          cmake --build lua-https\build --config Release --target install
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: https-windows-${{ matrix.arch }}
+          path: install/https.dll
+          retention-days: 1
+
+  https-linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: love2d/lua-https
+          ref: ${{ env.LUA_HTTPS_REF }}
+
+      - name: Build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake g++ libluajit-5.1-dev libcurl4-openssl-dev libssl-dev
+          cmake -Bbuild -S. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PWD/install
+          cmake --build build --target install -j$(nproc)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: https-linux
+          path: install/https.so
+          retention-days: 1
+
+  https-macos:
+    runs-on: macos-latest
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "10.13"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: love2d/lua-https
+          ref: ${{ env.LUA_HTTPS_REF }}
+          path: lua-https
+
+      - uses: actions/checkout@v4
+        with:
+          repository: LuaJIT/LuaJIT
+          ref: v2.1
+          path: LuaJIT
+
+      - name: Build
+        run: |
+          cmake -Blua-https/build -Slua-https -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_INSTALL_PREFIX=$PWD/install -DLUA_INCLUDE_DIR=$PWD/LuaJIT/src -DLUA_LIBRARIES=$PWD/LuaJIT/src/lua
+          cmake --build lua-https/build --target install
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: https-macos
+          path: install/https.so
+          retention-days: 1
+
   windows:
-    needs: [info, love]
+    needs: [info, love, https-windows]
     runs-on: windows-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: build-love
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: https-windows-*
+          path: https
 
       - uses: love-actions/love-actions-windows@v2
         with:
@@ -143,6 +240,17 @@ jobs:
           product-name: ${{ needs.info.outputs.name }}-Windows
           output-folder: ./build
 
+      - name: Add lua-https
+        shell: bash
+        run: |
+          for arch in x86 x64; do
+            zip="./build/${{ needs.info.outputs.name }}-Windows_$arch.zip"
+            7z x "$zip" -o"unpacked-$arch"
+            cp "https/https-windows-$arch/https.dll" "unpacked-$arch/"
+            rm "$zip"
+            7z a -tzip "$zip" ./unpacked-$arch/*
+          done
+
       - uses: actions/upload-artifact@v4
         with:
           name: build-windows
@@ -150,7 +258,7 @@ jobs:
           retention-days: 1
 
   linux:
-    needs: [info, love]
+    needs: [info, love, https-linux]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -159,8 +267,14 @@ jobs:
         with:
           name: build-love
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: https-linux
+          path: lib
+
       - uses: love-actions/love-actions-linux@v2
         with:
+          lib-path: ./lib
           app-name: CelLove
           bundle-id: io.github.nickisadev.cellove
           description: A sandbox game based on Cell Machine by Sam Hogan.
@@ -178,12 +292,17 @@ jobs:
           retention-days: 1
 
   macos:
-    needs: [info, love]
+    needs: [info, love, https-macos]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: build-love
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: https-macos
+          path: https
 
       - name: Build app
         env:
@@ -192,7 +311,7 @@ jobs:
         run: |
           curl -fsSL -o love.zip "https://github.com/love2d/love/releases/download/${LOVE_VERSION}/love-${LOVE_VERSION}-macos.zip"
           unzip -q love.zip
-          cp "./$NAME.love" love.app/Contents/Resources/
+          cp "./$NAME.love" https/https.so love.app/Contents/Resources/
           mv love.app CelLove.app
 
           python3 - <<'PY'
@@ -242,8 +361,23 @@ jobs:
               ".github/android/res/drawable-${density%:*}/icon.png"
           done
 
+      - name: Add lua-https
+        run: |
+          git clone -q --depth 1 --branch "$ANDROID_REF" https://github.com/love2d/love-android android-base
+          git clone -q https://github.com/love2d/lua-https lua-https
+          git -C lua-https checkout -q "$LUA_HTTPS_REF"
+
+          module=android-base/love/src/jni/lua-modules/lua-https
+          mkdir -p "$module"
+          cp -r lua-https/src lua-https/example lua-https/Android.mk lua-https/CMakeLists.txt lua-https/java.txt lua-https/license.txt "$module"
+
+          git -C android-base add -A -f
+          git -C android-base diff --cached --binary > love.patch
+
       - uses: love-actions/love-actions-android@v2
         with:
+          love-ref: ${{ env.ANDROID_REF }}
+          love-patch: ./love.patch
           app-name: CelLove
           bundle-id: io.github.nickisadev.cellove
           resource-path: ./.github/android/res

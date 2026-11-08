@@ -73,6 +73,9 @@ end
 function BaseCell:swapped(dx, dy)
 end
 
+function BaseCell:pushed(dx, dy)
+end
+
 function BaseCell:click(button)
 end
 
@@ -136,7 +139,8 @@ function BaseCell:rotateNeighbors(amount, predicate)
     local grid = self.simulator.grid
 
     for _, facing in pairs(constants.directions) do
-        local cell = grid:get(self.x + facing[1], self.y + facing[2])
+        local x, y = self.x + facing[1], self.y + facing[2]
+        local cell = grid:bounds(x, y) and grid:get(x, y)
         if cell and (not predicate or predicate(cell)) then cell:rotate(amount) end
     end
 end
@@ -155,9 +159,9 @@ function BaseCell:generate(direction, options)
     return self.simulator.movement:generate(self.x, self.y, facing[1], facing[2], options)
 end
 
-function BaseCell:repel(direction)
+function BaseCell:repel(direction, force, row)
     local facing = constants.directions[direction]
-    return self.simulator.movement:repel(self.x, self.y, facing[1], facing[2])
+    return self.simulator.movement:repel(self.x, self.y, facing[1], facing[2], force, row)
 end
 
 function BaseCell:look(direction, reverse)

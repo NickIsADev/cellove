@@ -1,4 +1,8 @@
-local channel, url, agent, pattern = ...
+local channel, url, agent, pattern, base, libraries = ...
+
+for _, library in ipairs(libraries) do
+    package.cpath = string.format("%s/%s;%s", base, library, package.cpath)
+end
 
 local loaded, https = pcall(require, "https")
 if not loaded then return end

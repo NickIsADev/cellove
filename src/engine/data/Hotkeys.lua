@@ -72,6 +72,12 @@ function Hotkeys:conflicts(id)
     return titles
 end
 
+function Hotkeys:taken(chord, id)
+    for _, other in ipairs(self.list) do
+        if other.id ~= id and self:get(other.id) == chord then return true end
+    end
+end
+
 function Hotkeys:bind(id, chord)
     self.settings:set(config.prefix .. id, chord)
 end

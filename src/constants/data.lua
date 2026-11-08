@@ -19,6 +19,7 @@ return {
             musicSpeed = 100,
             sfxVolume = 70,
             checkUpdates = true,
+            exportK3 = false,
             debug = false,
             packs = "",
             mods = "",
@@ -37,6 +38,8 @@ return {
         alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%()*+-;=?@^_{|}~,./:",
         kinds = markers.kinds,
         colorFlag = 64,
+        turnFlag = 128,
+        rotated = { arrow = true, diagonal_arrow = true },
         custom = { code = 63, kinds = {} },
         maxName = 40,
         forbidden = "[\\/:*?\"<>|%c]",
@@ -52,7 +55,7 @@ return {
 
     k3 = {
         prefix = "K3",
-        borders = { [0] = 1, 41, 12 },
+        borders = { 1, 41, 12, 205, 51, 141, 150, 151, 152, 126, 176, 428, 929, 930, 1186, 931, 932, 1156, 1171, 933, 934, 1174, 938, 939, 940, 941 },
         alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!$%&+-.=?^{}/#_*':,@~|",
         markers = {
             [117] = "x",
@@ -67,7 +70,11 @@ return {
             [683] = "dislike",
             [708] = "label"
         },
-        label = "?"
+        label = "?",
+        held = { property = "stored", id = 1, rotation = 2 },
+        placeable = "placeable",
+        compression = "zlib",
+        tokens = { layer = "\\", placeable = "]", property = "[", quote = "<", wide = "(", long = ")" }
     },
 
     stamps = {

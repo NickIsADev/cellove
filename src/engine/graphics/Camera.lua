@@ -20,6 +20,11 @@ function Camera.new(data)
     return self
 end
 
+function Camera:_world(sx, sy)
+    local width, height = self.size()
+    return (sx - width / 2) / self.zoom + self.x, (sy - height / 2) / self.zoom + self.y
+end
+
 function Camera:apply()
     local width, height = self.size()
 
@@ -29,9 +34,7 @@ function Camera:apply()
 end
 
 function Camera:screenToTile(sx, sy)
-    local width, height = self.size()
-    local wx = (sx - width / 2) / self.zoom + self.x
-    local wy = (sy - height / 2) / self.zoom + self.y
+    local wx, wy = self:_world(sx, sy)
     return wx / tile + 0.5, wy / tile + 0.5
 end
 
@@ -62,6 +65,8 @@ function Camera:update(dt, locked)
         if self.hotkeys:down("moveRight") then ix = ix + 1 end
     end
 
+    if ix ~= 0 or iy ~= 0 then self.pin = nil end
+
     local speed = view.speed / self.zoom
     local ease = math.min(1, view.ease * dt)
 
@@ -70,7 +75,19 @@ function Camera:update(dt, locked)
     self.x = self.x + self.vx * dt
     self.y = self.y + self.vy * dt
 
-    self.zoom = utils.lerp(self.zoom, self.targetZoom, math.min(1, view.zoom.ease * dt))
+    local zoom = view.zoom
+    self.zoom = utils.lerp(self.zoom, self.targetZoom, math.min(1, zoom.ease * dt))
+
+    local settled = math.abs(self.zoom - self.targetZoom) < self.targetZoom * zoom.settle
+    if settled then self.zoom = self.targetZoom end
+
+    local pin = self.pin
+    if not pin then return end
+
+    local width, height = self.size()
+    self.x = pin.wx - (pin.sx - width / 2) / self.zoom
+    self.y = pin.wy - (pin.sy - height / 2) / self.zoom
+    if settled then self.pin = nil end
 end
 
 function Camera:grab(x, y)
@@ -82,7 +99,7 @@ function Camera:drag(x, y)
     if not (grip and love.mouse.isDown(3)) then return end
     if not grip.moved and math.abs(x - grip.x) + math.abs(y - grip.y) < view.threshold then return end
 
-    grip.moved = true
+    grip.moved, self.pin = true, nil
     self.x = self.x - (x - grip.x) / self.zoom
     self.y = self.y - (y - grip.y) / self.zoom
     grip.x, grip.y = x, y
@@ -96,6 +113,8 @@ end
 
 function Camera:wheelmoved(_, y)
     local zoom = view.zoom
+    local sx, sy = love.mouse.getPosition()
+    local wx, wy = self:_world(sx, sy)
 
     if y > 0 then
         self.targetZoom = self.targetZoom * zoom.step
@@ -103,6 +122,7 @@ function Camera:wheelmoved(_, y)
         self.targetZoom = self.targetZoom / zoom.step
     end
     self.targetZoom = utils.clamp(self.targetZoom, zoom.min, zoom.max)
+    self.pin = { sx = sx, sy = sy, wx = wx, wy = wy }
 end
 
 return Camera

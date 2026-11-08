@@ -1,11 +1,19 @@
+local Properties = require("src/engine/registry/Properties")
 local constants = require("src/constants")
 
 local config = constants.k3
 local limits = constants.grid.limits
-local rotating = constants.editor.marker.rotating
-local base, digits = #config.alphabet, {}
+local tokens = config.tokens
+local held = config.held
+local base, digits, codes, slots = #config.alphabet, {}, {}, {}
 for index = 1, base do
     digits[config.alphabet:sub(index, index)] = index - 1
+end
+for id, kind in pairs(config.markers) do
+    codes[kind] = id
+end
+for slot, id in ipairs(config.borders) do
+    slots[id] = slot - 1
 end
 
 local function number(text)
@@ -16,6 +24,27 @@ local function number(text)
         value = value * base + digits[char]
     end
     return negative and -value or value
+end
+
+local function numeral(value)
+    local text = ""
+    repeat
+        local digit = value % base
+        text = config.alphabet:sub(digit + 1, digit + 1) .. text
+        value = math.floor(value / base)
+    until value == 0
+    return text
+end
+
+local function pack(code)
+    local text = numeral(code)
+    if code < base then return text end
+    if code < base ^ 2 then return tokens.wide .. numeral(0):rep(2 - #text) .. text end
+    return tokens.long .. numeral(#text) .. text
+end
+
+local function quote(text)
+    return tokens.quote .. text:gsub("[\\<]", "\\%0") .. tokens.quote
 end
 
 local function token(text, pos)
@@ -52,17 +81,68 @@ local function read(text, pos)
     return token(text, pos)
 end
 
+local function stores(class)
+    local first = class.properties[1]
+    return first and first.id == held.property
+end
+
 local K3 = {}
 K3.__index = K3
 
 function K3.new(data)
     local self = setmetatable({}, K3)
-    self.classes = {}
+    self.classes, self.ids = {}, {}
     for _, class in ipairs(data.registry:list()) do
         local id = rawget(class, "k3")
-        if id then self.classes[id] = class end
+        if id then self.classes[id], self.ids[class] = class, id end
     end
     return self
+end
+
+function K3:_supported(cell)
+    for _, property in ipairs(cell.class.properties) do
+        local value = Properties.value(cell.props, property)
+
+        if property.id == held.property and value.class then
+            if not self.ids[value.class] or Properties.custom(value) then return false end
+        elseif value ~= property.default then
+            return false
+        end
+    end
+    return true
+end
+
+function K3:_stored(cell)
+    local content = cell.props and cell.props[held.property]
+    if not (content and content.class) then return "" end
+
+    return tokens.property .. pack(held.id) .. pack(self.ids[content.class])
+        .. tokens.property .. pack(held.rotation) .. pack(content.rotation)
+end
+
+function K3:_property(target, key, value)
+    if target.kind == "label" then
+        if key == 1 then target.text = tostring(value) end
+    elseif stores(target.class) then
+        if key == held.id then
+            target.props = { [held.property] = { class = self.classes[value], rotation = 0 } }
+        elseif key == held.rotation and target.props then
+            target.props[held.property].rotation = value % 4
+        end
+    end
+end
+
+function K3:supports(data)
+    if data.border and not slots[self.ids[data.border]] then return false end
+
+    for _, cell in ipairs(data.cells) do
+        if not self.ids[cell.class] or not self:_supported(cell) then return false end
+    end
+
+    for _, marker in ipairs(data.markers or {}) do
+        if not (codes[marker.kind] or marker.kind == "placeable") or marker.color then return false end
+    end
+    return true
 end
 
 function K3:matches(text)
@@ -95,7 +175,7 @@ function K3:decode(text)
             key, pos = read(raw, pos + 1)
             value, pos = read(raw, pos)
 
-            if last and key == 1 then last.text = tostring(value) end
+            if last then self:_property(last, key, value) end
         else
             local id, rotation
             if char == "<" then
@@ -112,9 +192,10 @@ function K3:decode(text)
 
             last = nil
             if class and y <= height then
-                cells[#cells + 1] = { class = class, rotation = rotation, x = x, y = y }
+                last = { class = class, rotation = rotation, x = x, y = y }
+                cells[#cells + 1] = last
             elseif kind and y <= height then
-                local marker = { kind = kind, x = x, y = y, rotation = rotating[kind] and rotation or nil }
+                local marker = { kind = kind, x = x, y = y, rotation = rotation }
                 markers[#markers + 1] = marker
                 if kind == "label" then marker.text, last = config.label, marker end
             end
@@ -124,10 +205,44 @@ function K3:decode(text)
     return {
         width = width,
         height = height,
-        border = self.classes[config.borders[number(border)] or config.borders[0]],
+        border = self.classes[config.borders[number(border) + 1]],
         cells = cells,
         markers = markers
     }
+end
+
+function K3:encode(data)
+    local cells, marks = {}, {}
+    for _, cell in ipairs(data.cells) do
+        cells[(cell.y - 1) * data.width + cell.x] = pack(self.ids[cell.class] * 4 + cell.rotation) .. self:_stored(cell)
+    end
+
+    for _, marker in ipairs(data.markers or {}) do
+        local at = (marker.y - 1) * data.width + marker.x
+        marks[at] = marks[at] or {}
+        table.insert(marks[at], marker)
+    end
+
+    local parts = {}
+    for at = 1, data.width * data.height do
+        for _, marker in ipairs(marks[at] or {}) do
+            if marker.kind == "placeable" then parts[#parts + 1] = tokens.placeable .. quote(config.placeable) end
+        end
+
+        parts[#parts + 1] = cells[at] or pack(0)
+        for _, marker in ipairs(marks[at] or {}) do
+            local code = codes[marker.kind]
+            if code then
+                parts[#parts + 1] = tokens.layer .. numeral(1) .. pack(code * 4 + (marker.rotation or 0))
+                if marker.kind == "label" then parts[#parts + 1] = tokens.property .. pack(1) .. quote(marker.text or "") end
+            end
+        end
+    end
+
+    local packed = love.data.compress("string", config.compression, table.concat(parts))
+    local body = love.data.encode("string", "base64", packed)
+    local border = slots[self.ids[data.border]] or 0
+    return table.concat({ config.prefix, numeral(data.width), numeral(data.height), numeral(border), body, "" }, ";")
 end
 
 return K3

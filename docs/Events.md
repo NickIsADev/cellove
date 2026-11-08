@@ -31,11 +31,37 @@ api.off("simulator:tick", onTick)
 | `game:ready` | `context` | the game has finished loading |
 | `game:update` | `dt` | every frame, before drawing |
 | `game:draw` | | every frame, after update |
+| `game:keypressed` | `key, scancode, repeated` | a key is pressed |
+| `game:textinput` | `text` | text is typed |
+| `game:mousepressed` | `x, y, button, touch, presses` | a mouse button is pressed |
+| `game:mousemoved` | `x, y, dx, dy, touch` | the mouse moves |
+| `game:mousereleased` | `x, y, button, touch, presses` | a mouse button is released |
+| `game:wheelmoved` | `x, y` | the mouse wheel moves |
+| `game:filedropped` | `file` | a file is dropped on the window |
+| `game:focus` | `focused` | the window gains or loses focus |
+| `game:quit` | | the game is closing |
 | `scene:enter` | `name, data` | a scene is entered |
+| `scene:leave` | `name` | a scene is left |
 | `simulator:tick` | `simulator` | the simulation finished a tick |
+| `simulator:play` | `simulator` | the simulation starts running |
+| `simulator:pause` | `simulator` | the simulation is paused |
+| `simulator:reset` | `simulator` | the simulation is reset to its start |
+| `simulator:load` | `simulator, data` | a contraption is loaded into the simulation |
 | `editor:commit` | `editor` | an edit is committed |
+| `editor:cell` | `editor, x, y, state, before` | a cell is changed, `state` and `before` are `{ class, rotation, props }` or nothing |
+| `editor:undo` | `editor` | an edit is undone |
+| `editor:tool` | `editor, id` | the tool changes |
+| `editor:select` | `editor, class` | a cell is selected for placing |
 | `contraption:imported` | `data` | a contraption is imported |
+| `contraption:saved` | `name, data` | a contraption is saved |
+| `contraption:deleted` | `name` | a contraption is deleted |
+| `puzzle:start` | `info` | a puzzle is opened, reset or replayed |
 | `puzzle:solved` | `info` | a puzzle is solved |
+| `settings:changed` | `key, value` | a setting changes |
+| `packs:reloaded` | | texture packs are reloaded |
+
+> [!TIP]
+> Turn on the debug menu with `F3` to see every event that has fired and how many listeners it has.
 
 ### Examples
 
@@ -54,6 +80,14 @@ end)
 ```lua
 api.on("game:update", function(dt)
     -- dt is the time since the last frame in seconds
+end)
+```
+
+**React to a key**
+
+```lua
+api.on("game:keypressed", function(key)
+    if key == "h" then print("hello") end
 end)
 ```
 

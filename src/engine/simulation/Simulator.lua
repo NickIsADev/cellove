@@ -3,6 +3,7 @@ local Movement = require("src/engine/simulation/Movement")
 local Events = require("src/engine/modding/Events")
 local Audio = require("src/engine/audio/Audio")
 local constants = require("src/constants")
+local utils = require("src/utils")
 
 local function range(size, direction, rear)
     if (rear and direction or -direction) > 0 then return 1, size, 1 end
@@ -195,11 +196,17 @@ function Simulator:update(dt)
 end
 
 function Simulator:play()
+    if not self.paused then return end
+
     self.paused = false
+    Events.emit("simulator:play", self)
 end
 
 function Simulator:pause()
+    if self.paused then return end
+
     self.paused = true
+    Events.emit("simulator:pause", self)
 end
 
 function Simulator:toggle()
@@ -207,16 +214,26 @@ function Simulator:toggle()
 end
 
 function Simulator:step()
-    self.paused = true
+    self:pause()
     self.timer = 0
     self:_sync()
     self:_tick()
 end
 
 function Simulator:substep()
-    self.paused = true
+    self:pause()
+    self.timer = 0
     self:_sync()
-    self:_pass()
+
+    for _ = 1, self.maxSubticks * #constants.simulator.passes do
+        self:_pass()
+        if self:_changed() then return end
+    end
+end
+
+function Simulator:discard(cell)
+    local index = utils.indexOf(self.dying, cell.arriving)
+    if index then table.remove(self.dying, index) end
 end
 
 function Simulator:click(x, y, button)
@@ -241,11 +258,13 @@ function Simulator:load(data)
     self.grid:resize(data.width, data.height, data.border)
     self.grid:populate(data.cells)
     self.grid:save()
+    Events.emit("simulator:load", self, data)
 end
 
 function Simulator:reset()
     self:_rewind()
     self.grid:reset()
+    Events.emit("simulator:reset", self)
 end
 
 return Simulator

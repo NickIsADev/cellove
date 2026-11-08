@@ -61,6 +61,7 @@ function Editor.new(data)
         onOpen = function() self.simulator:pause() end,
         actions = {
             resize = function() self:_askResize() end,
+            border = function() self:_askBorder() end,
             clear = function() self:_askClear() end,
             export = data.menu.export,
             puzzle = data.menu.puzzle,
@@ -114,7 +115,11 @@ function Editor:_capture(x, y)
 end
 
 function Editor:_restore(x, y, state)
-    self.simulator.grid:set(x, y, state and state.class:new({ rotation = state.rotation, props = state.props }))
+    local sim = self.simulator
+    local old = sim.grid:get(x, y)
+
+    if old then sim:discard(old) end
+    sim.grid:set(x, y, state and state.class:new({ rotation = state.rotation, props = state.props }))
 end
 
 function Editor:_record(undo)
@@ -130,6 +135,7 @@ function Editor:_undo()
         stroke[i]()
     end
     self.simulator:save()
+    Events.emit("editor:undo", self)
 end
 
 function Editor:_toolAt(key)
@@ -179,6 +185,7 @@ function Editor:_clearGrid()
     if #saved == 0 and #items == 0 then return self.toast:show(text.empty, true) end
 
     grid:clear()
+    self.simulator.dying = {}
     markers:load({})
     self:_record(function()
         self.simulator.grid:populate(saved)
@@ -252,6 +259,26 @@ function Editor:_resizeGrid(width, height)
     self.toast:show(string.format(text.done, width, height))
 end
 
+function Editor:_askBorder()
+    self.prompt.cellPicker:open({
+        classes = self.registry:list(),
+        current = self.simulator.grid.border,
+        onPick = function(class) self:_setBorder(class) end
+    })
+end
+
+function Editor:_setBorder(border)
+    local grid, text = self.simulator.grid, config.grid.text.border
+    local old = grid.border
+
+    if border == old then return self.toast:show(text.same, true) end
+
+    grid:setBorder(border)
+    self:_record(function() self.simulator.grid:setBorder(old) end)
+    self:commit()
+    self.toast:show(string.format((#border.subtick > 0 or border.held) and text.inert or text.done, border.title))
+end
+
 function Editor:_setInitial()
     self.simulator.grid:save()
     self.simulator:reset()
@@ -260,7 +287,8 @@ function Editor:_setInitial()
 end
 
 function Editor:_pick(gx, gy)
-    local cell = self.simulator.grid:get(gx, gy)
+    local grid = self.simulator.grid
+    local cell = grid:bounds(gx, gy) and grid:get(gx, gy)
     if not cell then return end
 
     self:select(getmetatable(cell))
@@ -289,6 +317,7 @@ end
 function Editor:select(class)
     self.selected = class
     if class then self:setTool("brush") end
+    Events.emit("editor:select", self, class)
 end
 
 function Editor:selection()
@@ -302,6 +331,7 @@ function Editor:setTool(id)
     self.toolId = id
     self.panel:set(self.tool)
     self.toolbar:setTool(id)
+    Events.emit("editor:tool", self, id)
 end
 
 function Editor:setCell(x, y, state)
@@ -310,6 +340,7 @@ function Editor:setCell(x, y, state)
 
     self:_restore(x, y, state)
     self:_record(function() self:_restore(x, y, before) end)
+    Events.emit("editor:cell", self, x, y, state, before)
     return true
 end
 
@@ -360,7 +391,7 @@ function Editor:commit()
 end
 
 function Editor:typing()
-    return self.library.active or self.stampList.active or self.prompt.active or self.picker.active or self.toolMenu.active or self.pauseMenu.active or self.properties:typing()
+    return self.library.active or self.stampList.active or self.prompt.active or self.prompt.cellPicker.active or self.picker.active or self.toolMenu.active or self.pauseMenu.active or self.properties:typing()
 end
 
 function Editor:reset()
@@ -434,7 +465,7 @@ function Editor:textinput(text)
 end
 
 function Editor:wheelmoved(x, y)
-    if self.library:wheelmoved(x, y) or self.stampList:wheelmoved(x, y) or self.prompt.active or self.picker.active or self.toolMenu.active or self.pauseMenu.active then return true end
+    if self.prompt:wheelmoved(x, y) or self.library:wheelmoved(x, y) or self.stampList:wheelmoved(x, y) or self.prompt.active or self.picker.active or self.toolMenu.active or self.pauseMenu.active then return true end
     return love.keyboard.isDown("lctrl", "rctrl") and self.tool:wheel(y)
 end
 

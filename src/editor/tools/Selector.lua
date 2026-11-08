@@ -6,7 +6,7 @@ local utils = require("src/utils")
 local config = constants.editor.selection
 local files = constants.contraptions
 local ghost = constants.editor.ghost
-local rotating = constants.editor.marker.rotating
+local fixed = constants.markers.fixed
 local colors = constants.ui.colors
 local shadow = constants.ui.shadow
 local label = config.label
@@ -16,12 +16,12 @@ local shortcuts = config.shortcuts
 local function caption(text, x, y)
     local font = love.graphics.getFont()
     local w, h = love.graphics.getDimensions()
+    local halfWidth, halfHeight = font:getWidth(text) / 2, font:getHeight() / 2
 
-    x = utils.clamp(x, font:getWidth(text) / 2, w - font:getWidth(text) / 2)
-    y = utils.clamp(y, font:getHeight() / 2, h - font:getHeight() / 2)
+    x, y = utils.clamp(x, halfWidth, w - halfWidth), utils.clamp(y, halfHeight, h - halfHeight)
 
     utils.drawShadowed(function(ox, oy)
-        love.graphics.print(text, math.floor(x - font:getWidth(text) / 2) + ox, math.floor(y - font:getHeight() / 2) + oy)
+        love.graphics.print(text, math.floor(x - halfWidth) + ox, math.floor(y - halfHeight) + oy)
     end, shadow.offset, shadow.alpha)
 end
 
@@ -59,7 +59,7 @@ local function rotated(clip, amount)
             color = marker.color
         }
         if marker.kind == "box" then turned.width, turned.height = math.abs(x1 - x2) + 1, math.abs(y1 - y2) + 1 end
-        if rotating[marker.kind] then turned.rotation = (marker.rotation + amount) % 4 end
+        if not fixed[marker.kind] then turned.rotation = ((marker.rotation or 0) + amount) % 4 end
         result.markers[#result.markers + 1] = turned
     end
     return result
@@ -221,13 +221,17 @@ function Selector:_drawLabels()
     local font = renderer:font(label.font)
     local left, top = camera:gridToScreen(area.x1, area.y1)
     local right, bottom = camera:gridToScreen(area.x2 + 1, area.y2 + 1)
-    local height = string.format(label.height, area.y2 - area.y1 + 1)
+    local text = {
+        width = string.format(label.width, area.x2 - area.x1 + 1),
+        height = string.format(label.height, area.y2 - area.y1 + 1),
+        count = string.format(label.count, self:_count())
+    }
     local previousFont = love.graphics.getFont()
 
     love.graphics.setFont(font)
-    caption(string.format(label.width, area.x2 - area.x1 + 1), (left + right) / 2, top - label.gap - font:getHeight() / 2)
-    caption(height, left - label.gap - font:getWidth(height) / 2, (top + bottom) / 2)
-    caption(string.format(label.count, self:_count()), (left + right) / 2, bottom + label.gap + font:getHeight() / 2)
+    caption(text.width, (left + right) / 2, top - label.gap - font:getHeight() / 2)
+    caption(text.height, left - label.gap - font:getWidth(text.height) / 2, (top + bottom) / 2)
+    caption(text.count, (left + right) / 2, bottom + label.gap + font:getHeight() / 2)
 
     love.graphics.setFont(previousFont)
     love.graphics.setColor(utils.fromHex(colors.white))

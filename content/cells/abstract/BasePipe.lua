@@ -50,7 +50,7 @@ function BasePipe:absorb(cell, dx, dy)
     })
     self.updated = self.simulator.time.tick
     cell.shrink, cell.born = self.fit, true
-    self.arriving = true
+    self.arriving = cell
     self.grid:touch(self)
 end
 
@@ -58,7 +58,10 @@ function BasePipe:update(_, direction)
     if not (self:held() and direction == self:_heading()) then return end
 
     self:_yield(direction)
-    if self:_release(direction, "eject") then self:_hold({}) end
+    local content, cell = self.props.stored, self:_make(direction)
+
+    self:_hold({})
+    if not self:_release(direction, "eject", cell) then self:_hold(content) end
 end
 
 return BasePipe

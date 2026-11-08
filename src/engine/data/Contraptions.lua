@@ -13,10 +13,14 @@ Contraptions.codecs = { K3 }
 function Contraptions.new(data)
     local self = setmetatable({}, Contraptions)
     self.root = data.root or config.root
+    self.settings = data.settings
+    self.registry = data.registry
     self.cl = CL.new({ registry = data.registry })
     self.codecs = { self.cl }
     for _, Codec in ipairs(Contraptions.codecs) do
-        self.codecs[#self.codecs + 1] = Codec.new({ registry = data.registry })
+        local codec = Codec.new({ registry = data.registry })
+        if Codec == K3 then self.k3 = codec end
+        self.codecs[#self.codecs + 1] = codec
     end
     love.filesystem.createDirectory(self.root)
     return self
@@ -37,11 +41,12 @@ function Contraptions:_unpack(text)
     return nil, "prefix"
 end
 
-function Contraptions:blank(width, height)
+function Contraptions:blank(width, height, border)
     local size = constants.grid.default
     return {
         width = width or size.width,
         height = height or size.height,
+        border = border or self.registry.border,
         cells = {},
         markers = {}
     }
@@ -64,7 +69,8 @@ function Contraptions:unique(name)
 end
 
 function Contraptions:export(data)
-    return self.cl:encode(data)
+    local codec = self.settings:get("exportK3") and self.k3:supports(data) and self.k3 or self.cl
+    return codec:encode(data)
 end
 
 function Contraptions:import(text)
@@ -74,6 +80,7 @@ function Contraptions:import(text)
     local data, key = self:_unpack(text)
     if not data then return nil, config.errors[key] end
 
+    data.border = data.border or self.registry.border
     Events.emit("contraption:imported", data)
     return data
 end
@@ -90,7 +97,10 @@ end
 
 function Contraptions:save(name, data)
     love.filesystem.createDirectory(self.root)
-    return love.filesystem.write(self:_path(name), self:export(data))
+
+    local saved = love.filesystem.write(self:_path(name), self:export(data))
+    if saved then Events.emit("contraption:saved", name, data) end
+    return saved
 end
 
 function Contraptions:rename(name, newName)
@@ -99,7 +109,9 @@ function Contraptions:rename(name, newName)
 end
 
 function Contraptions:delete(name)
-    return love.filesystem.remove(self:_path(name))
+    local deleted = love.filesystem.remove(self:_path(name))
+    if deleted then Events.emit("contraption:deleted", name) end
+    return deleted
 end
 
 function Contraptions:fromFile(file)

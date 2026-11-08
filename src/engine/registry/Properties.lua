@@ -99,6 +99,12 @@ function Properties.value(props, property)
     return types[kind].clean(property, value)
 end
 
+function Properties.custom(entry)
+    for _, property in ipairs(entry.class.properties) do
+        if Properties.value(entry.props, property) ~= property.default then return true end
+    end
+end
+
 function Properties.specs(properties, props)
     local specs = {}
     for _, property in ipairs(properties) do

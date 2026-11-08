@@ -5,15 +5,15 @@ local Repulsor = setmetatable({
     k3 = 21,
     title = "Repulsor",
     description = "Pushes every adjacent cell away from itself every tick.",
-    categories = { "forces" },
-    subtick = { 4 }
+    categories = { "forces", "repulsors" },
+    subtick = { 25 },
+    directional = true,
+    outputs = {  0, 1, 2, 3  }
 }, { __index = BaseCell })
 Repulsor.__index = Repulsor
 
-function Repulsor:update()
-    for direction = 0, 3 do
-        self:repel(direction)
-    end
+function Repulsor:update(_, direction)
+    self:repel(direction, nil, self.row)
 end
 
 return Repulsor

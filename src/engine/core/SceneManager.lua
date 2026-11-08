@@ -35,7 +35,10 @@ function SceneManager:_enter(name, data)
     local scene = self.scenes[name]
     local previous = self.current
 
-    if previous and previous.leave then previous:leave() end
+    if previous then
+        if previous.leave then previous:leave() end
+        Events.emit("scene:leave", self.name)
+    end
 
     self.current, self.name = scene, name
     if scene.enter then scene:enter(previous, data) end
@@ -60,16 +63,22 @@ function SceneManager:_drawLoading()
     love.graphics.print(text, cx - font:getWidth(text) / 2, cy + config.loading.spinner.size / 2 + 24)
 end
 
+function SceneManager:_dispatch(event, name, ...)
+    Events.emit(event, ...)
+
+    local handler = self.current and self.current[name]
+    return handler and handler(self.current, ...)
+end
+
 for _, name in ipairs(config.callbacks.forwarded) do
     local pointer = config.callbacks.pointer[name]
+    local event = "game:" .. name
 
     SceneManager[name] = function(self, ...)
         self.debug:record(name, ...)
 
-        local handler = self.current and self.current[name]
-        if not handler then return end
-        if pointer then return handler(self.current, Display.point(...)) end
-        return handler(self.current, ...)
+        if pointer then return self:_dispatch(event, name, Display.point(...)) end
+        return self:_dispatch(event, name, ...)
     end
 end
 

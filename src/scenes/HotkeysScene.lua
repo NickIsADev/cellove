@@ -1,4 +1,5 @@
 local RowScene = require("src/scenes/abstract/RowScene")
+local KeyCapture = require("src/ui/overlays/KeyCapture")
 local Audio = require("src/engine/audio/Audio")
 local constants = require("src/constants")
 local utils = require("src/utils")
@@ -14,6 +15,7 @@ function HotkeysScene.new(data)
     local self = setmetatable({}, HotkeysScene)
     self:setup(data, config)
     self.hotkeys = data.hotkeys
+    self.capture = KeyCapture.new({ renderer = data.renderer, hotkeys = data.hotkeys })
     self.drawers = {
         heading = self._drawHeading,
         hotkey = self._drawHotkey
@@ -48,11 +50,10 @@ end
 
 function HotkeysScene:_drawHotkey(index, row, x, y, width, height)
     local font = self:_drawFrame(index, row, x, y, width, height)
-    local listening = self.listening == row.id
-    local text = listening and config.listening or self.hotkeys:label(row.id)
+    local text = self.hotkeys:label(row.id)
     local tint = #self.hotkeys:conflicts(row.id) > 0 and colors.warning or colors.white
 
-    love.graphics.setColor(utils.fromHex(tint, listening and 0.5 or 1))
+    love.graphics.setColor(utils.fromHex(tint))
     love.graphics.print(text, x + width - layout.row.pad - font:getWidth(text), y + (height - font:getHeight()) / 2)
 end
 
@@ -65,7 +66,13 @@ function HotkeysScene:_press(_, row)
     if row.kind ~= "hotkey" then return end
 
     self.listening = row.id
+    self.capture:open(row)
     Audio.play("click")
+end
+
+function HotkeysScene:_stop()
+    self.listening = nil
+    self.capture:close()
 end
 
 function HotkeysScene:_restore()
@@ -73,12 +80,17 @@ function HotkeysScene:_restore()
 end
 
 function HotkeysScene:enter(...)
-    self.listening = nil
+    self:_stop()
     RowScene.enter(self, ...)
 end
 
+function HotkeysScene:draw()
+    RowScene.draw(self)
+    self.capture:draw()
+end
+
 function HotkeysScene:mousepressed(...)
-    self.listening = nil
+    self:_stop()
     RowScene.mousepressed(self, ...)
 end
 
@@ -91,7 +103,7 @@ function HotkeysScene:keypressed(key)
         self.hotkeys:bind(self.listening, self.hotkeys:chord(key))
         Audio.play("click")
     end
-    self.listening = nil
+    self:_stop()
 end
 
 return HotkeysScene

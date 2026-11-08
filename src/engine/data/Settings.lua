@@ -1,3 +1,4 @@
+local Events = require("src/engine/modding/Events")
 local constants = require("src/constants")
 
 local config = constants.settings
@@ -73,6 +74,7 @@ function Settings:set(key, value)
     self.values[key] = value
     self:_save()
     self:notify(key)
+    Events.emit("settings:changed", key, value)
 end
 
 function Settings:notify(key)

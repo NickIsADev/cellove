@@ -214,12 +214,13 @@ end
 
 function Renderer:_drawBorder(grid)
     local border = self.border
+    local texture, size = self:_sprite(grid.border.texture)
 
-    if border.cols ~= grid.width or border.rows ~= grid.height then
-        local size = self.sizes[self.textures.cells.ghost]
+    if border.texture ~= texture or border.cols ~= grid.width or border.rows ~= grid.height then
         local right, bottom = grid.width + 1, grid.height + 1
 
-        border.cols, border.rows = grid.width, grid.height
+        border.texture, border.cols, border.rows = texture, grid.width, grid.height
+        border.batch:setTexture(texture)
         border.batch:clear()
         for x = 0, right do
             place(border.batch, size, x, 0)
@@ -299,8 +300,8 @@ function Renderer:_drawFlat(grid)
     local map = self.map
     local width, height = grid.width, grid.height
 
-    if map.grid ~= grid or map.width ~= width or map.height ~= height then
-        local border = self:_tint("ghost")
+    if map.grid ~= grid or map.border ~= grid.border or map.width ~= width or map.height ~= height then
+        local border = self:_tint(grid.border.texture)
 
         map.data = love.image.newImageData(width + 2, height + 2)
         for x = 0, width + 1 do
@@ -314,7 +315,7 @@ function Renderer:_drawFlat(grid)
 
         map.image = love.graphics.newImage(map.data)
         map.image:setFilter("nearest", "nearest")
-        map.grid, map.width, map.height, map.version, map.last = grid, width, height, nil, {}
+        map.grid, map.border, map.width, map.height, map.version, map.last = grid, grid.border, width, height, nil, {}
     end
 
     if map.version ~= grid.version then
@@ -498,6 +499,7 @@ function Renderer:drawMarkers(markers, alpha, ox, oy)
     for _, item in ipairs(markers) do
         local x, y = (item.x + ox - 0.5) * tile, (item.y + oy - 0.5) * tile
         local color = item.color or colors.white
+        local angle = (item.rotation or 0) * math.pi / 2
 
         if item.kind == "box" then
             love.graphics.setColor(utils.fromHex(color, mark.box.alpha * alpha))
@@ -507,18 +509,18 @@ function Renderer:drawMarkers(markers, alpha, ox, oy)
             love.graphics.setLineWidth(1)
         elseif item.kind == "label" then
             local label = self:_label(item, color, alpha)
-            local left, top = x - font:getWidth(label.plain) / 2, y - font:getHeight() / 2
+            local px, py = font:getWidth(label.plain) / 2, font:getHeight() / 2
 
             love.graphics.setColor(utils.fromHex(0x000000, mark.shadow.alpha * alpha))
-            love.graphics.print(label.plain, left + mark.shadow.offset, top + mark.shadow.offset)
+            love.graphics.print(label.plain, x + mark.shadow.offset, y + mark.shadow.offset, angle, 1, 1, px, py)
             love.graphics.setColor(utils.fromHex(colors.white))
-            love.graphics.print(label.colored, left, top)
+            love.graphics.print(label.colored, x, y, angle, 1, 1, px, py)
         elseif item.kind ~= "placeable" then
             local texture = self.textures.markers[names[item.kind]]
             local size = self.sizes[texture]
 
             love.graphics.setColor(utils.fromHex(colors.white, alpha))
-            love.graphics.draw(texture, x, y, (item.rotation or 0) * math.pi / 2, size.scale, size.scale, size.x, size.y)
+            love.graphics.draw(texture, x, y, angle, size.scale, size.scale, size.x, size.y)
         end
     end
 
@@ -582,7 +584,8 @@ end
 
 function Renderer:capture(simulator, markers, area)
     local width, height = (area.x2 - area.x1 + 1) * tile, (area.y2 - area.y1 + 1) * tile
-    local scale = math.min(1, love.graphics.getSystemLimits().texturesize / math.max(width, height))
+    local limit = love.graphics.getSystemLimits().texturesize
+    local scale = math.min(constants.screenshots.scale, limit / math.max(width, height))
     local canvas = love.graphics.newCanvas(math.floor(width * scale), math.floor(height * scale), { dpiscale = 1 })
     local live, previous = self.camera, love.graphics.getCanvas()
     local camera = Camera.new({ size = function() return width, height end })

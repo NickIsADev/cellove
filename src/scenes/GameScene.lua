@@ -53,6 +53,7 @@ function GameScene:_snapshot()
     return {
         width = data.width,
         height = data.height,
+        border = data.border,
         cells = data.cells,
         markers = self.markers.items
     }

@@ -29,8 +29,8 @@ function BaseHolder:_make(direction)
     return self:_cell(self.props.stored, turn)
 end
 
-function BaseHolder:_release(direction, mode)
-    local cell = self:_make(direction)
+function BaseHolder:_release(direction, mode, cell)
+    cell = cell or self:_make(direction)
 
     local facing = constants.directions[direction]
     return self.simulator.movement:release(self.x, self.y, facing[1], facing[2], cell, mode)

@@ -22,6 +22,11 @@ return {
                     height = "Height",
                     done = "Resized the grid to %dx%d",
                     same = "The grid is already that size"
+                },
+                border = {
+                    done = "Changed the border to %s",
+                    inert = "Changed the border to %s, but it will not tick like a normal cell",
+                    same = "The grid already has that border"
                 }
             }
         },
@@ -219,7 +224,6 @@ return {
         marker = {
             default = "arrow",
             color = 0xFFFFFF,
-            rotating = markers.rotating,
             buttons = markers.buttons,
             prompt = {
                 title = "Text Label",
@@ -313,6 +317,12 @@ return {
                     folder = "cells",
                     texture = "tetradisplacer_cw",
                     title = "Resize Grid"
+                },
+                {
+                    id = "border",
+                    folder = "cells",
+                    texture = "ghost",
+                    title = "Change Border"
                 },
                 {
                     id = "clear",
@@ -425,6 +435,17 @@ return {
         dim = 0.6,
         sidebar = 200,
         placeholder = "Search cells...",
+        search = {
+            negate = "!",
+            phrases = { description = true, category = true, exact = true },
+            symbols = {
+                ["#"] = "id",
+                ["@"] = "description",
+                ["/"] = "category",
+                [":"] = "subtick",
+                ["="] = "exact"
+            }
+        },
         empty = "No cells found...",
         all = { title = "All", icon = "cellove" },
         category = {

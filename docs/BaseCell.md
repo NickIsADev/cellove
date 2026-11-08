@@ -25,7 +25,7 @@ Set these in the table you pass to `setmetatable`.
 | `description` | `string` | `""` | description in the library |
 | `categories` | `table` | | required, list of [category IDs](Creating-Cells#categories) |
 | `properties` | `table` | `{}` | [property definitions](Creating-Cells#properties) |
-| `subtick` | `table` | `{}` | subticks `update` runs in. lower runs first and cells sharing a number run together. only the order matters, so any number works, like `21.5` to run between movers (`21`) and nudgers (`22`). see [built-in subticks](Creating-Cells#subticks). empty means never |
+| `subtick` | `table` | `{}` | subticks `update` runs in. lower runs first and cells sharing a number run together. only the order matters, so any number works, like `29.5` to run between movers (`29`) and nudgers (`30`). see [built-in subticks](Creating-Cells#subticks). empty means never |
 | `directional` | `boolean` | | calls `update` once per entry in `outputs` |
 | `outputs` | `table` | `{ 0 }` | output directions relative to rotation: `0` forward, `1` right, `2` back, `3` left |
 | `drive` | `table` | | actions that move the cell forward, like `{ push = true, pull = true }`. a cell moved that way skips its update that tick |
@@ -76,6 +76,7 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | [`absorb`](#basecellabsorbcell-dx-dy-action) | nothing | called after this cell eats a cell |
 | [`bump`](#basecellbumpdx-dy) | nothing | called when a repulsor pushes this cell and it eats the push |
 | [`swapped`](#basecellswappeddx-dy) | nothing | called after a swap carried this cell to the other cell's place |
+| [`pushed`](#basecellpusheddx-dy) | nothing | called after a push moved this cell |
 | [`generatable`](#basecellgeneratable) | `true` | whether generators can copy the cell |
 | [`generated`](#basecellgenerated) | the same class and props | what a generator's copy of the cell becomes |
 | [`force`](#basecellforcedx-dy-action) | `0` | force added to a push or pull |
@@ -183,6 +184,22 @@ function BaseGate:swapped(dx, dy)
 end
 ```
 
+### `BaseCell:pushed(dx, dy)`
+
+Called after a push moved this cell, with the direction it was pushed in. Every cell in a pushed line counts, including the ones a repulsor or generator pushes, but not the pusher itself and not cells that were pulled or swapped. Inertia uses it to store its momentum.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `dx` | `number` | horizontal direction of the push |
+| `dy` | `number` | vertical direction of the push |
+
+```lua
+-- remembers the direction it was last pushed in
+function Glider:pushed(dx, dy)
+    self.heading = { dx, dy }
+end
+```
+
 ### `BaseCell:generatable()`
 
 Whether generators can copy the cell. Default `true`.
@@ -277,7 +294,7 @@ Call these from your own methods, usually from `update`. Where `dx` and `dy` are
 | [`nudge`](#basecellnudgedx-dy) | moves the cell one tile without pushing |
 | [`swap`](#basecellswapax-ay-bx-by) | swaps the cells at two offsets from this one |
 | [`generate`](#basecellgeneratedirection-options) | copies the cell behind this one into the tile in front |
-| [`repel`](#basecellrepeldirection) | pushes the cell in front of this one away without moving this cell |
+| [`repel`](#basecellrepeldirection-force-row) | pushes the cell in front of this one away without moving this cell |
 | [`rotate`](#basecellrotateamount-forced) | rotates the cell |
 | [`rotateNeighbors`](#basecellrotateneighborsamount-predicate) | rotates the four adjacent cells |
 | [`neighbors`](#basecellneighborsdistance-callback) | loops over nearby tiles, no diagonals |
@@ -391,21 +408,21 @@ function Copier:update(_, direction)
 end
 ```
 
-### `BaseCell:repel(direction)`
+### `BaseCell:repel(direction, force, row)`
 
 Pushes the cell next to this one away, along with whatever is in its way. This cell does not move.
 
 | parameter | type | description |
 | --- | --- | --- |
 | `direction` | `number` | direction to push towards (0-3) |
+| `force` | `number` | force of the push, defaults to `constants.force.strength` |
+| `row` | `boolean` | keep pushing past gaps, so the whole row moves |
 
-**Returns** `boolean`, true if the push succeeded.
+**Returns** the move it pushed from, or `false` if the push failed.
 
 ```lua
-function Repulsor:update()
-    for direction = 0, 3 do
-        self:repel(direction)
-    end
+function Repulsor:update(_, direction)
+    self:repel(direction, nil, self.row)
 end
 ```
 

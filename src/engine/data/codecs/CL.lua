@@ -4,7 +4,6 @@ local utils = require("src/utils")
 
 local config = constants.contraptions
 local limits = constants.grid.limits
-local rotating = constants.editor.marker.rotating
 local base = constants.registry.base.namespace
 local kinds, codes = config.kinds, {}
 for code, kind in ipairs(kinds) do
@@ -24,13 +23,7 @@ local function expand(id)
     return id:find(":") and id or base .. ":" .. id
 end
 
-local function custom(entry)
-    for _, property in ipairs(entry.class.properties) do
-        if Properties.value(entry.props, property) ~= property.default then return true end
-    end
-end
-
-local function serialize(data)
+local function serialize(data, default)
     local cells = {}
     for _, entry in ipairs(data.cells) do
         cells[#cells + 1] = entry
@@ -92,29 +85,31 @@ local function serialize(data)
 
         local at = 0
         for _, marker in ipairs(markers) do
-            local code = codes[marker.kind] or config.custom.code
-            parts[#parts + 1] = utils.packVarint(code + (marker.color and config.colorFlag or 0))
+            local code, rotation = codes[marker.kind], marker.rotation or 0
+            local always = not code or config.rotated[marker.kind]
+            local flags = marker.color and config.colorFlag or 0
+            if rotation > 0 and not always then flags = flags + config.turnFlag end
+
+            parts[#parts + 1] = utils.packVarint((code or config.custom.code) + flags)
             parts[#parts + 1] = utils.packVarint(index(marker) - at)
             at = index(marker)
 
-            if not codes[marker.kind] then
+            if not code then
                 parts[#parts + 1] = utils.packString(marker.kind)
-                parts[#parts + 1] = utils.packVarint(marker.rotation or 0)
-            elseif rotating[marker.kind] then
-                parts[#parts + 1] = utils.packVarint(marker.rotation)
             elseif marker.kind == "label" then
                 parts[#parts + 1] = utils.packString(marker.text)
             elseif marker.kind == "box" then
                 parts[#parts + 1] = utils.packVarint(marker.width)
                 parts[#parts + 1] = utils.packVarint(marker.height)
             end
+            if always or rotation > 0 then parts[#parts + 1] = utils.packVarint(rotation) end
             if marker.color then parts[#parts + 1] = utils.packVarint(marker.color) end
         end
     end
 
     local tuned = {}
     for _, entry in ipairs(cells) do
-        if custom(entry) then tuned[#tuned + 1] = entry end
+        if Properties.custom(entry) then tuned[#tuned + 1] = entry end
     end
 
     if #tuned > 0 then
@@ -132,6 +127,11 @@ local function serialize(data)
                 parts[#parts + 1] = Properties.pack(property, Properties.value(entry.props, property))
             end
         end
+    end
+
+    if data.border and data.border ~= default then
+        parts[#parts + 1] = utils.packVarint(data.width * data.height + 2)
+        parts[#parts + 1] = utils.packString(shorten(data.border.id))
     end
     return table.concat(parts)
 end
@@ -151,6 +151,7 @@ local function parseMarkers(payload, position, width, total)
 
         at = at + gap
         local slot = code % config.colorFlag
+        local turned = bit.band(code, config.turnFlag) ~= 0
         local marker = {
             x = at % width + 1,
             y = math.floor(at / width) + 1
@@ -159,17 +160,11 @@ local function parseMarkers(payload, position, width, total)
         if slot == config.custom.code then
             marker.kind, position = utils.unpackString(payload, position)
             if not marker.kind then return end
-
-            marker.rotation, position = utils.unpackVarint(payload, position)
-            if not marker.rotation or marker.rotation > 3 then return end
-            if not rotating[marker.kind] then marker.rotation = nil end
+            turned = true
         else
             marker.kind = kinds[slot + 1]
 
-            if rotating[marker.kind] then
-                marker.rotation, position = utils.unpackVarint(payload, position)
-                if not marker.rotation or marker.rotation > 3 then return end
-            elseif marker.kind == "label" then
+            if marker.kind == "label" then
                 marker.text, position = utils.unpackString(payload, position)
                 if not marker.text then return end
             elseif marker.kind == "box" then
@@ -179,9 +174,14 @@ local function parseMarkers(payload, position, width, total)
                 if not marker.height then return end
                 if marker.width < 1 or marker.height < 1 or marker.x + marker.width - 1 > width or marker.y + marker.height - 1 > total / width then return end
             elseif not marker.kind then return end
+            turned = turned or config.rotated[marker.kind]
         end
 
-        if code >= config.colorFlag then
+        if turned then
+            marker.rotation, position = utils.unpackVarint(payload, position)
+            if not marker.rotation or marker.rotation > 3 then return end
+        end
+        if bit.band(code, config.colorFlag) ~= 0 then
             marker.color, position = utils.unpackVarint(payload, position)
             if not marker.color or marker.color > 0xFFFFFF then return end
         end
@@ -222,6 +222,14 @@ local function parseProps(payload, position, byIndex, partial, registry)
     return position
 end
 
+local function parseBorder(payload, position, registry)
+    local id
+    id, position = utils.unpackString(payload, position)
+    if not id then return end
+
+    return registry.cells[expand(id)], position
+end
+
 local function parse(payload, registry)
     local width, position = utils.unpackVarint(payload, 1)
     if not width then return end
@@ -247,7 +255,7 @@ local function parse(payload, registry)
         if not palette[i] and not utils.has(missing, namespace) then missing[#missing + 1] = namespace end
     end
 
-    local cells, markers, byIndex, index, total = {}, {}, {}, 0, width * height
+    local cells, markers, border, byIndex, index, total = {}, {}, nil, {}, 0, width * height
     while position <= #payload do
         local gap, tag, run = nil, nil, 1
 
@@ -259,6 +267,9 @@ local function parse(payload, registry)
             if not markers then return end
         elseif gap == total + 1 then
             position = parseProps(payload, position, byIndex, #missing > 0, registry)
+            if not position then return end
+        elseif gap == total + 2 then
+            border, position = parseBorder(payload, position, registry)
             if not position then return end
         else
             tag, position = utils.unpackVarint(payload, position)
@@ -294,6 +305,7 @@ local function parse(payload, registry)
     return {
         width = width,
         height = height,
+        border = border,
         cells = cells,
         markers = markers,
         missing = missing
@@ -316,7 +328,7 @@ function CL:matches(text)
 end
 
 function CL:encode(data)
-    local raw = serialize(data)
+    local raw = serialize(data, self.registry.border)
     local packed = love.data.compress("string", config.compression, raw, config.level)
 
     if #packed < #raw then return config.prefix.deflate .. utils.encode85(packed, config.alphabet) end

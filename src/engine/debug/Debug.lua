@@ -1,5 +1,6 @@
 local Panel = require("src/ui/Panel")
 local Audio = require("src/engine/audio/Audio")
+local Events = require("src/engine/modding/Events")
 local Display = require("src/engine/graphics/Display")
 local World = require("src/engine/debug/World")
 local constants = require("src/constants")
@@ -23,6 +24,30 @@ local function systemInfo()
         string.format(system.gpu, device, vendor),
         string.format(system.api, api, apiVersion)
     }
+end
+
+local function eventLines()
+    local lines = {}
+
+    for index, stat in ipairs(Events.stats()) do
+        lines[index] = string.format(text.event, stat.name, stat.count, stat.listeners)
+    end
+    return lines
+end
+
+local function write(message, color, x, y)
+    love.graphics.setColor(utils.fromHex(color))
+    love.graphics.print(message, x, y)
+    return x + love.graphics.getFont():getWidth(message)
+end
+
+local function drawLine(line, x, y)
+    for segment in (line .. "  "):gmatch("(.-)  ") do
+        local label, value = segment:match("^(.-: )(.*)$")
+
+        if label then x = write(label, colors.muted, x, y) end
+        x = write((value or segment) .. "  ", colors.white, x, y)
+    end
 end
 
 local function tint(button)
@@ -145,6 +170,11 @@ function Debug:_collect(manager)
                 string.format(text.music, audio.track and audio.track:match("[^/]+$") or text.none, audio.index, audio.count, audio.time, audio.duration),
                 string.format(text.sound, audio.sources, settings:get("musicVolume"), settings:get("sfxVolume"), settings:get("musicSpeed"))
             }
+        },
+        {
+            side = "left",
+            title = text.titles.events,
+            lines = eventLines()
         }
     }
 
@@ -237,9 +267,8 @@ function Debug:_drawPanel(panel, font, x, y, width, height)
     love.graphics.setColor(utils.fromHex(colors.accent))
     love.graphics.print(panel.title, x + pad, y + pad)
 
-    love.graphics.setColor(utils.fromHex(colors.white))
     for index, line in ipairs(panel.lines) do
-        love.graphics.print(line, x + pad, top + (index - 1) * lineHeight)
+        drawLine(line, x + pad, top + (index - 1) * lineHeight)
     end
     if panel.graph then self:_drawFrames(x + pad, top + #panel.lines * lineHeight + graph.gap, width - pad * 2) end
 end

@@ -105,8 +105,8 @@ local function boot()
     end
 
     step("content")
-    local contraptions = Contraptions.new({ registry = registry })
-    local stamps = Contraptions.new({ registry = registry, root = constants.stamps.root })
+    local contraptions = Contraptions.new({ registry = registry, settings = settings })
+    local stamps = Contraptions.new({ registry = registry, settings = settings, root = constants.stamps.root })
     local puzzles = Puzzles.new({ contraptions = contraptions, mods = mods })
     Window.new({ settings = settings, texturePacks = texturePacks })
 
