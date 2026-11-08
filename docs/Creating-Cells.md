@@ -95,7 +95,7 @@ end
 
 ## Subticks
 
-A tick runs its subticks in ascending order, and a cell's `update` runs in the subticks listed in its `subtick`. Only the order matters, so use any number: `29.5` runs after movers and before nudgers without renumbering anything. These are the ones the built-in cells use.
+A tick runs its subticks in ascending order, and a cell's `update` runs in the subticks listed in its `subtick`. Only the order matters, so use any number: `34.5` runs after movers and before nudgers without renumbering anything. These are the ones the built-in cells use.
 
 | subtick | cells |
 | --- | --- |
@@ -103,19 +103,25 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | `1` | true gears |
 | `2` | midas |
 | `3`, `4`, `5` | super mirrors, mirrors, curved mirrors |
-| `6`, `7`, `8`, `9` | memory generators, generators, memory replicators, makers |
-| `10`, `11` | rotators, the spin of rotator movers |
-| `12` | flip gears |
-| `13`, `14`, `15`, `16` | gears, counter-clockwise gears, half gears, random gears |
-| `17`, `18` | super redirectors, redirectors |
-| `19` | inertia |
-| `20`, `21`, `22` | vacuums, super impulsors, impulsors |
-| `23`, `24`, `25` | fans, super repulsors, repulsors |
-| `26`, `27` | magnets, split by axis |
-| `28`, `29`, `30` | pullers and advancers, movers, nudgers |
-| `31` | gates |
-| `32`, `33` | life, split into spreading and dying |
-| `34` | storages |
+| `6`, `7` | cyclers, counter-clockwise cyclers (paracyclers use both) |
+| `8`, `9`, `10`, `11` | memory generators, generators, memory replicators, makers |
+| `12`, `13` | rotators, the spin of rotator movers |
+| `14` | flip gears |
+| `15`, `16`, `17`, `18` | gears, counter-clockwise gears, 180 gears, random gears |
+| `19`, `20` | super redirectors, redirectors |
+| `21` | inertia |
+| `22`, `23`, `24` | vacuums, super impulsors, impulsors |
+| `25`, `26`, `27` | fans, super repulsors, repulsors |
+| `28`, `29` | magnets, split by axis |
+| `30` | pullers, advancers, luggers, hoisters |
+| `31` | trawlers |
+| `32` | grabbers, heavers |
+| `33` | thrusters, skewers |
+| `34` | movers, birds, the push of rotator movers |
+| `35` | nudgers, CelLoves |
+| `36` | gates |
+| `37`, `38` | life, split into spreading and dying |
+| `39` | settlestorages |
 
 ## Common patterns
 

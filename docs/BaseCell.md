@@ -24,13 +24,15 @@ Set these in the table you pass to `setmetatable`.
 | `title` | `string` | `"Base"` | name in the library |
 | `description` | `string` | `""` | description in the library |
 | `categories` | `table` | | required, list of [category IDs](Creating-Cells#categories) |
+| `k3` | `number` or `string` | | the cell's ID in CelLua or BHMod, used by the K3 format. must be set on the class itself. a contraption with a cell that has none is exported in the other format |
 | `properties` | `table` | `{}` | [property definitions](Creating-Cells#properties) |
-| `subtick` | `table` | `{}` | subticks `update` runs in. lower runs first and cells sharing a number run together. only the order matters, so any number works, like `29.5` to run between movers (`29`) and nudgers (`30`). see [built-in subticks](Creating-Cells#subticks). empty means never |
+| `subtick` | `table` | `{}` | subticks `update` runs in. lower runs first and cells sharing a number run together. only the order matters, so any number works, like `34.5` to run between movers (`34`) and nudgers (`35`). see [built-in subticks](Creating-Cells#subticks). empty means never |
 | `directional` | `boolean` | | calls `update` once per entry in `outputs` |
 | `outputs` | `table` | `{ 0 }` | output directions relative to rotation: `0` forward, `1` right, `2` back, `3` left |
 | `drive` | `table` | | actions that move the cell forward, like `{ push = true, pull = true }`. a cell moved that way skips its update that tick |
 | `sweep` | `table` | | scans the subtick row by row (or column by column) instead of by facing, as `{ x = 1, y = -1 }`. `x` and `y` are `1` or `-1`, and `columns = true` makes `x` the outer loop. a directional cell maps each of its subticks to a table that maps a pass direction to one of these |
 | `rear` | `boolean` | | scans from the back of the pass direction instead of the front |
+| `skew` | `number` | `0` | where [`grab`](#basecellgrabdx-dy) drags cells from: `0` the sides, `1` the front diagonals, `-1` the back diagonals |
 | `hostile` | `boolean` | `false` | counts as an enemy. a puzzle is solved when none remain |
 | `fixed` | `boolean` | | cannot be pushed, swapped or transformed |
 | `anchored` | `boolean` | | cannot be rotated |
@@ -291,6 +293,7 @@ Call these from your own methods, usually from `update`. Where `dx` and `dy` are
 | --- | --- |
 | [`push`](#basecellpushdx-dy-force) | pushes the cell one tile, moving whatever is in the way |
 | [`pull`](#basecellpulldx-dy-force) | moves the cell one tile and drags the cells behind it |
+| [`grab`](#basecellgrabdx-dy) | moves the cell one tile and drags the cells beside it |
 | [`nudge`](#basecellnudgedx-dy) | moves the cell one tile without pushing |
 | [`swap`](#basecellswapax-ay-bx-by) | swaps the cells at two offsets from this one |
 | [`generate`](#basecellgeneratedirection-options) | copies the cell behind this one into the tile in front |
@@ -334,6 +337,23 @@ Moves the cell one tile and drags the cells behind it.
 ```lua
 function Puller:update()
     self:pull()
+end
+```
+
+### `BaseCell:grab(dx, dy)`
+
+Moves the cell one tile and drags the cells on both sides of it one tile the same way. Set [`skew`](#class-fields) on the class to drag the front or back diagonals instead of the sides.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `dx` | `number?` | horizontal direction |
+| `dy` | `number?` | vertical direction |
+
+**Returns** `boolean`, true if it moved.
+
+```lua
+function Grabber:update()
+    self:grab()
 end
 ```
 
