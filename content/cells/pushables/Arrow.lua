@@ -1,16 +1,11 @@
-local BaseCell = require("content/cells/abstract/BaseCell")
+local SliderOneDirectional = require("content/cells/pushables/SliderOneDirectional")
 
 local Arrow = setmetatable({
     name = "arrow",
     title = "Arrow",
-    description = "Pushable that cannot be rotated by other cells.",
-    categories = { "pushables" },
-    faces = { 0 }
-}, { __index = BaseCell })
+    description = "Can only be pushed from behind. Cannot be rotated by other cells.",
+    anchored = true
+}, { __index = SliderOneDirectional })
 Arrow.__index = Arrow
-
-function Arrow:rotatable()
-    return false
-end
 
 return Arrow
