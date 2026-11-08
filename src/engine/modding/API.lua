@@ -13,12 +13,12 @@ local function before(list, id)
     return #list + 1
 end
 
-local function merge(path, values)
+local function find(path)
     local target = constants
     for key in path:gmatch("[^.]+") do
         target = assert(target[key], "unknown constants path " .. path)
     end
-    utils.merge(target, values)
+    return target
 end
 
 ---@class ModAPI
@@ -109,7 +109,17 @@ function API.new(mods, mod)
         for name in pairs(values) do
             mods:claim(mod, path .. "." .. name)
         end
-        merge(path, values)
+        utils.merge(find(path), values)
+    end
+
+    ---Replaces a constants table, like the splash list at `menu.splash.list`. Unlike `api.merge`, entries missing from values are removed.
+    ---@param path string dotted path into the constants
+    ---@param values table the new contents of the table
+    ---@example
+    ---api.overwrite("menu.splash.list", { "hello!", "goodbye!" })
+    function api.overwrite(path, values)
+        mods:claim(mod, path)
+        utils.overwrite(find(path), values)
     end
 
     ---Runs patch(module) when the module first loads, or at once if it already has. The module is changed in place.

@@ -39,6 +39,13 @@ function lists.merge(target, source)
     end
 end
 
+function lists.overwrite(target, source)
+    for key in pairs(target) do
+        target[key] = nil
+    end
+    lists.merge(target, source)
+end
+
 function lists.same(a, b)
     a, b = a or {}, b or {}
     for key, value in pairs(a) do

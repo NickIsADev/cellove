@@ -9,7 +9,7 @@ mods/mymod/
 ```
 
 > [!NOTE]
-> Folder names cannot contain dots.
+> Folder names cannot contain dots. That includes the name of a `.zip`, and of the folder inside it.
 
 ## mod.lua
 

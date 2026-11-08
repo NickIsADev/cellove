@@ -5,6 +5,7 @@ Patching changes the game without editing its files. Modules are addressed by re
 | you want to | use | works on |
 | --- | --- | --- |
 | add to or change a constant | [`api.merge`](#apimergepath-values) | constants |
+| replace a constants table entirely | [`api.overwrite`](#apioverwritepath-values) | constants |
 | edit a module in place | [`api.patch`](#apipatchpath-patch) | modules |
 | run code around a method | [`api.wrap`](#apiwrappath-method-wrapper) | module methods |
 | swap a module for something else | [`api.replace`](#apireplacepath-replacement) | modules, before they load |
@@ -17,6 +18,17 @@ Deep-merges `values` into the constants table at `path`.
 
 ```lua
 api.merge("background.logo", { textures = { "mymod/thing" } })
+```
+
+> [!NOTE]
+> Merging only adds and changes keys. A list is merged by index, so a shorter list leaves the old entries behind. Use `api.overwrite` to replace a table.
+
+### `api.overwrite(path, values)`
+
+Replaces everything in the constants table at `path` with `values`.
+
+```lua
+api.overwrite("menu.splash.list", { "hello!", "goodbye!" })
 ```
 
 ## Modules
@@ -65,6 +77,7 @@ What counts as a claim:
 | call | claims |
 | --- | --- |
 | `api.merge("background.logo", { ... })` | each key, like `background.logo.textures` |
+| `api.overwrite(path, { ... })` | the path, like `menu.splash.list` |
 | `api.patch(path, ...)` and `api.replace(path, ...)` | the module path |
 | `api.wrap(path, method, ...)` | `path:method` |
 | `api.tools.add({ key = "x", ... })` | the hotkey `x` |
