@@ -8,6 +8,7 @@ return {
     force = {
         push = 0,
         pull = 0,
+        grab = 0,
         generate = 1,
         strength = 1,
         weight = -1
@@ -26,6 +27,12 @@ return {
                 id = "pullers",
                 title = "Pullers",
                 icon = "puller",
+                parent = "movers"
+            },
+            {
+                id = "grabbers",
+                title = "Grabbers",
+                icon = "grabber",
                 parent = "movers"
             },
             {

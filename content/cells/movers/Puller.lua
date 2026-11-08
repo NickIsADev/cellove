@@ -8,13 +8,13 @@ local Puller = setmetatable({
     description = "Moves forward into empty space, pulling everything behind it. Cannot push.",
     categories = { "pullers" },
     subtick = { 30 },
-    drive = { push = true, pull = true },
+    drive = { push = true, pull = true, grab = true },
     directional = true
 }, { __index = BaseCell })
 Puller.__index = Puller
 
 function Puller:force(dx, dy, action)
-    if action == "push" then return 0 end
+    if action ~= "pull" then return 0 end
     return self:_alignment(dx, dy) * constants.force.strength
 end
 

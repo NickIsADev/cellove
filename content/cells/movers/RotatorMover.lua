@@ -6,7 +6,7 @@ local RotatorMover = setmetatable({
     title = "Rotator Mover",
     description = "Rotates the cell in front of it clockwise and the cell behind it counterclockwise, then pushes forward.",
     categories = { "movers", "rotators" },
-    subtick = { 13, 31 }
+    subtick = { 13, 32 }
 }, { __index = Mover })
 RotatorMover.__index = RotatorMover
 

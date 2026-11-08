@@ -447,6 +447,66 @@ function Movement:advance(x, y, dx, dy)
     return true
 end
 
+function Movement:_flanks(chain, x, y, dx, dy, force)
+    local seen = {}
+    for _, move in ipairs(chain) do
+        seen[move.cell] = true
+    end
+
+    for _, side in ipairs({ 1, -1 }) do
+        local cx, cy, sx, sy = x, y, -side * dy, side * dx
+
+        for _ = 1, constants.grid.limits.max do
+            local walk = self:_route(cx, cy, sx, sy)
+            local cell = walk and walk.target
+            if not cell or seen[cell] then break end
+
+            local fx, fy = side * walk.dy, -side * walk.dx
+            local move = self:_route(walk.x, walk.y, fx, fy)
+            if not (move and cell:pushable(fx, fy) and self:_open(move.x, move.y, move.dx, move.dy)) then break end
+
+            force = force + cell:force(fx, fy, "grab")
+            if force <= 0 then return false end
+
+            move.cell = cell
+            seen[cell] = true
+            chain[#chain + 1] = move
+            cx, cy, sx, sy = walk.x, walk.y, walk.dx, walk.dy
+        end
+    end
+    return true
+end
+
+function Movement:grab(x, y, dx, dy)
+    local grabber = self.grid:get(x, y)
+    if not grabber then return false end
+
+    self.top = 0
+    local move = self:_route(x, y, dx, dy)
+    if not move then return false end
+
+    move.cell, move.action = grabber, "pull"
+    if not self:_reach(move) then return false end
+
+    local force = constants.force.grab + grabber:force(dx, dy, "grab")
+    local chain = { move }
+    if force <= 0 or not self:_flanks(chain, x, y, dx, dy, force) then return false end
+
+    self:_drive(chain, "grab")
+    self:_shift(chain)
+    return true
+end
+
+function Movement:flank(x, y, dx, dy)
+    self.top = 0
+    local chain = {}
+    if not self:_flanks(chain, x, y, dx, dy, constants.force.strength) then return false end
+
+    self:_drive(chain, "grab")
+    self:_shift(chain, true)
+    return true
+end
+
 function Movement:swap(ax, ay, bx, by, heading)
     self.top = 0
     local chain = {}

@@ -8,12 +8,13 @@ local Advancer = setmetatable({
     description = "Moves forward every tick, pushing whatever is in front of it and pulling everything behind it.",
     categories = { "movers", "pullers" },
     subtick = { 30 },
-    drive = { push = true, pull = true },
+    drive = { push = true, pull = true, grab = true },
     directional = true
 }, { __index = BaseCell })
 Advancer.__index = Advancer
 
-function Advancer:force(dx, dy)
+function Advancer:force(dx, dy, action)
+    if action == "grab" then return 0 end
     return self:_alignment(dx, dy) * constants.force.strength
 end
 

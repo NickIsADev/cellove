@@ -108,6 +108,11 @@ function BaseCell:pull(dx, dy, force)
     return self.simulator.movement:pull(self.x, self.y, dx, dy, force)
 end
 
+function BaseCell:grab(dx, dy)
+    dx, dy = self:_aim(dx, dy)
+    return self.simulator.movement:grab(self.x, self.y, dx, dy)
+end
+
 function BaseCell:advance(dx, dy)
     dx, dy = self:_aim(dx, dy)
     return self.simulator.movement:advance(self.x, self.y, dx, dy)

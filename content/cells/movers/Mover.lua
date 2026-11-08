@@ -7,15 +7,15 @@ local Mover = setmetatable({
     title = "Mover",
     description = "Moves forward every tick, pushing whatever is in front of it.",
     categories = { "movers" },
-    subtick = { 31 },
+    subtick = { 32 },
     rear = true,
-    drive = { push = true, pull = true },
+    drive = { push = true, pull = true, grab = true },
     directional = true
 }, { __index = BaseCell })
 Mover.__index = Mover
 
 function Mover:force(dx, dy, action)
-    if action == "pull" then return 0 end
+    if action ~= "push" then return 0 end
     return self:_alignment(dx, dy) * constants.force.strength
 end
 
