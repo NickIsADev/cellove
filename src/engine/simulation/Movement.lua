@@ -120,14 +120,19 @@ function Movement:_step(x, y, dx, dy, reverse, moved)
         x, y = x + dx, y + dy
 
         local cell = grid:get(x, y)
-        local nx, ny, spin, halt
-        if cell and cell.lookup.divert and not (moved and moved[cell]) then nx, ny, spin, halt = cell:divert(dx, dy, reverse) end
+        local free = cell and not (moved and moved[cell])
+        local nx, ny, spin, halt, jx, jy
+        if free and cell.lookup.jump then jx, jy = cell:jump(dx, dy, x, y) end
+
+        if jx then nx, ny, spin = dx, dy, 0
+        elseif free and cell.lookup.divert then nx, ny, spin, halt = cell:divert(dx, dy, reverse) end
 
         if halt then dx, dy, nx, turn = nx, ny, nil, turn + spin end
         if not nx then return x, y, dx, dy, reverse and -turn or turn, via, cell, halt end
 
         if via == none then via = {} end
         table.insert(via, reverse and 1 or #via + 1, { x, y })
+        if jx then x, y = jx, jy end
         dx, dy, turn = nx, ny, turn + spin
     end
 end

@@ -79,7 +79,8 @@ function Registry:_register(class, namespace, source)
     class.lookup = {
         subtick = utils.set(class.subtick),
         outputs = utils.set(class.outputs),
-        divert = class.divert ~= BaseCell.divert
+        divert = class.divert ~= BaseCell.divert,
+        jump = class.jump ~= BaseCell.jump
     }
 
     class.id = namespace .. ":" .. class.name

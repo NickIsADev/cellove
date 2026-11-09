@@ -70,6 +70,12 @@ return {
                 parent = "divergers"
             },
             {
+                id = "wraps",
+                title = "Wraps",
+                icon = "wrap",
+                parent = "divergers"
+            },
+            {
                 id = "mirrors",
                 title = "Mirrors",
                 icon = "mirror",

@@ -94,6 +94,9 @@ end
 function BaseCell:divert(dx, dy, reverse)
 end
 
+function BaseCell:jump(dx, dy, x, y)
+end
+
 function BaseCell:nudge(dx, dy)
     return self.simulator.movement:nudge(self.x, self.y, self:_aim(dx, dy))
 end

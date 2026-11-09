@@ -83,6 +83,7 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | [`generated`](#basecellgenerated) | the same class and props | what a generator's copy of the cell becomes |
 | [`force`](#basecellforcedx-dy-action) | `0` | force added to a push or pull |
 | [`divert`](#basecelldivertdx-dy-reverse) | nothing | bends the path of a move passing through |
+| [`jump`](#basecelljumpdx-dy-x-y) | nothing | moves the path of a move passing through somewhere else |
 | [`draw`](#basecelldrawrenderer-x-y-angle-scale-offset) | default sprite | draws the cell |
 
 ### `BaseCell:update(subtick, direction)`
@@ -262,6 +263,26 @@ Called when a push, pull or generation passes through the cell. Return a new dir
 -- bends every path a quarter turn clockwise and rotates the cell with it
 function Bender:divert(dx, dy)
     return -dy, dx, 1
+end
+```
+
+### `BaseCell:jump(dx, dy, x, y)`
+
+Called when a push, pull or generation passes through the cell. Return a position to continue the path from, or nothing to let it pass straight through. Does nothing by default.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `dx` | `number` | horizontal direction the path is travelling |
+| `dy` | `number` | vertical direction the path is travelling |
+| `x` | `number` | horizontal position the path reached |
+| `y` | `number` | vertical position the path reached |
+
+**Returns** the new `x` and `y`.
+
+```lua
+-- sends every path to the left edge of its row
+function Warper:jump(_, _, _, y)
+    return 0, y
 end
 ```
 

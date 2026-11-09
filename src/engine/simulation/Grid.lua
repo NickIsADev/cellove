@@ -121,7 +121,7 @@ function Grid:setBorder(border)
     self.version = self.version + 1
     self.border = border
     self.edge = border:new()
-    self.edge.fixed, self.edge.anchored = true, true
+    self.edge.fixed, self.edge.anchored, self.edge.grid = true, true, self
     if self.edge.held then self.edge.eats = function() return false end end
     if self.saved then self.saved.border = border end
 end
