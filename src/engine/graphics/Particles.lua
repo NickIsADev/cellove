@@ -4,6 +4,11 @@ local utils = require("src/utils")
 local blast = constants.renderer.explosion
 local tile = constants.grid.tile
 local colors = constants.ui.colors
+local fallback = {}
+
+for i, hex in ipairs(blast.colors) do
+    fallback[i] = { utils.fromHex(hex) }
+end
 
 local Particles = {}
 Particles.__index = Particles
@@ -15,19 +20,25 @@ function Particles.new()
     return self
 end
 
-function Particles:blast(cell, progress)
+function Particles:burst(x, y, palette)
+    if not self.enabled then return end
+    if not (palette and #palette > 0) then palette = fallback end
+
+    local item = { x = x, y = y, start = love.timer.getTime(), colors = {} }
+
+    for i = 1, blast.count do
+        item.colors[i] = palette[love.math.random(#palette)]
+    end
+    self.blasts[#self.blasts + 1] = item
+end
+
+function Particles:blast(cell, progress, palette)
     local start = self.blasted[cell]
 
     if not start and progress >= 0.5 then
         start = love.timer.getTime()
         self.blasted[cell] = start
-        if self.enabled then
-            self.blasts[#self.blasts + 1] = {
-                x = cell.x,
-                y = cell.y,
-                start = start
-            }
-        end
+        self:burst(cell.x, cell.y, palette)
     end
     return start and (love.timer.getTime() - start) / blast.pop or 0
 end
@@ -49,8 +60,9 @@ function Particles:draw()
             for i = 1, blast.count do
                 local angle = i * 2 * math.pi / blast.count + i * i
                 local distance = reach * (0.5 + (i * 0.618) % 0.5)
+                local color = item.colors[i]
 
-                love.graphics.setColor(utils.fromHex(blast.colors[i % #blast.colors + 1], 1 - t))
+                love.graphics.setColor(color[1], color[2], color[3], 1 - t)
                 love.graphics.rectangle("fill", x + math.cos(angle) * distance - size / 2, y + math.sin(angle) * distance - size / 2, size, size)
             end
         end

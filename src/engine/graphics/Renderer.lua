@@ -125,6 +125,24 @@ function Renderer:_tint(name)
     return tint
 end
 
+function Renderer:_palette(name)
+    local palette = self.palettes[name]
+    if palette then return palette end
+
+    local data = love.image.newImageData(self:_image("cells", name))
+    palette = {}
+
+    for y = 0, data:getHeight() - 1 do
+        for x = 0, data:getWidth() - 1 do
+            local r, g, b, a = data:getPixel(x, y)
+            if a > 0.5 then palette[#palette + 1] = { r, g, b } end
+        end
+    end
+
+    self.palettes[name] = palette
+    return palette
+end
+
 function Renderer:_queue(list, cell, x, y, progress, dying)
     local size, fade = 1, 0
     if cell.grow then size = utils.lerp(cell.grow, 1, progress) end
@@ -147,7 +165,7 @@ function Renderer:_queue(list, cell, x, y, progress, dying)
     end
 
     if cell.exploded then
-        fade = self.particles:blast(cell, progress)
+        fade = self.particles:blast(cell, progress, self:_palette(cell.texture))
         if fade >= 1 then return end
         size = 1 + fade * blast.grow
     end
@@ -557,6 +575,7 @@ function Renderer:loadTextures()
     }
 
     self.tints = {}
+    self.palettes = {}
     self.map = {}
     self.cache.key = nil
     if self.classes then self:preload(self.classes) end
