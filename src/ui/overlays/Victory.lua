@@ -67,6 +67,7 @@ function Victory:open(options)
     self.age = 0
     self.actions = options.actions
     self.name = options.name
+    self.title = options.failed and config.failed or config.title
     self.shown = {}
 
     for _, item in ipairs(self.buttons) do
@@ -124,7 +125,7 @@ function Victory:draw()
 
     love.graphics.setFont(renderer:font(config.font.title))
     utils.drawShadowed(function(ox, oy)
-        love.graphics.printf(config.title, box.x + config.pad + ox, box.y + config.pad + oy, box.inner, "center")
+        love.graphics.printf(self.title, box.x + config.pad + ox, box.y + config.pad + oy, box.inner, "center")
     end, shadow.offset, shadow.alpha, colors.accent)
 
     love.graphics.setFont(renderer:font(config.font.name))

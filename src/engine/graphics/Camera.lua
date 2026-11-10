@@ -56,9 +56,9 @@ function Camera:focus(width, height)
     self.zoom, self.targetZoom = view.zoom.default, view.zoom.default
 end
 
-function Camera:update(dt, locked)
+function Camera:update(dt, locked, gx, gy)
     local ix, iy = 0, 0
-    if not (locked or love.keyboard.isDown("lctrl", "rctrl")) then
+    if not (locked or gx or love.keyboard.isDown("lctrl", "rctrl")) then
         if self.hotkeys:down("moveUp") then iy = iy - 1 end
         if self.hotkeys:down("moveDown") then iy = iy + 1 end
         if self.hotkeys:down("moveLeft") then ix = ix - 1 end
@@ -80,6 +80,13 @@ function Camera:update(dt, locked)
 
     local settled = math.abs(self.zoom - self.targetZoom) < self.targetZoom * zoom.settle
     if settled then self.zoom = self.targetZoom end
+
+    if gx then
+        self.pin = nil
+        self.x = utils.lerp(self.x, (gx - 0.5) * tile, ease)
+        self.y = utils.lerp(self.y, (gy - 0.5) * tile, ease)
+        return
+    end
 
     local pin = self.pin
     if not pin then return end

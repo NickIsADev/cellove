@@ -36,6 +36,12 @@ return {
                 parent = "movers"
             },
             {
+                id = "players",
+                title = "Players",
+                icon = "player",
+                parent = "movers"
+            },
+            {
                 id = "generators",
                 title = "Generators",
                 icon = "generator"

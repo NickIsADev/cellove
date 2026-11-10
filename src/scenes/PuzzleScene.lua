@@ -61,6 +61,11 @@ function PuzzleScene:_screenshot()
     self.toast:show(constants.screenshots.text.saved)
 end
 
+function PuzzleScene:_replay()
+    self.victory:close()
+    self:_reset()
+end
+
 function PuzzleScene:_locked()
     return self.victory.active or self.pauseMenu.active
 end
@@ -75,12 +80,23 @@ function PuzzleScene:_win()
     self.victory:open({
         name = self.info.name,
         actions = {
-            replay = function()
-                self.victory:close()
-                self:_reset()
-            end,
+            replay = function() self:_replay() end,
             puzzles = function() self:_exit() end,
             next = following and function() self.manager:switch("puzzle", { id = following.id }) end
+        }
+    })
+end
+
+function PuzzleScene:_lose()
+    self.cleared = true
+    self.simulator:pause()
+    Events.emit("puzzle:failed", self.info)
+    self.victory:open({
+        name = self.info.name,
+        failed = true,
+        actions = {
+            replay = function() self:_replay() end,
+            puzzles = function() self:_exit() end
         }
     })
 end
@@ -91,6 +107,8 @@ function PuzzleScene:_watch(dt)
     elseif self.timer then
         self.timer = self.timer - dt
         if self.timer <= 0 then self:_win() end
+    elseif not self.cleared and self.puzzle:failed() then
+        self:_lose()
     elseif not self.cleared and self.puzzle:solved() then
         self.timer = self.simulator.interval + config.delay
         self.simulator:pause()
@@ -202,7 +220,7 @@ function PuzzleScene:leave()
 end
 
 function PuzzleScene:update(dt)
-    self.renderer.camera:update(dt, self:_locked())
+    self.renderer.camera:update(dt, self:_locked(), self.simulator:focus())
     self.simulator:update(dt)
     if self.puzzle.held then self:_follow(dt) end
 
@@ -280,6 +298,8 @@ end
 
 function PuzzleScene:keypressed(key)
     if self.victory:keypressed(key) or self.pauseMenu:keypressed(key) or self.puzzle.held then return end
+
+    self.simulator:press(key)
 
     local hotkeys = self.hotkeys
 

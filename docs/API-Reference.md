@@ -4,6 +4,7 @@ Everything on the `api` object that `main.lua` receives. This page is generated 
 return function(api)
     api.categories.add({ id = "machines", title = "Machines", icon = "mymod/thing" })
     api.on("puzzle:solved", function() print("solved") end)
+    api.on("puzzle:failed", function() print("failed") end)
 end
 ```
 

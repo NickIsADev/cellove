@@ -144,7 +144,7 @@ function GameScene:debugInfo()
 end
 
 function GameScene:update(dt)
-    self.renderer.camera:update(dt, self.editor:typing())
+    self.renderer.camera:update(dt, self.editor:typing(), self.simulator:focus())
     self.editor:update(dt)
     self.simulator:update(dt)
     self.toast:update(dt)
@@ -182,6 +182,8 @@ end
 
 function GameScene:keypressed(key)
     if self.editor:keypressed(key) then return end
+
+    self.simulator:press(key)
 
     local hotkeys = self.hotkeys
 

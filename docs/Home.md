@@ -45,5 +45,9 @@ return function(api)
     api.on("puzzle:solved", function()
         print("nice")
     end)
+
+    api.on("puzzle:failed", function()
+        print("you suck, it's time to retire")
+    end)
 end
 ```

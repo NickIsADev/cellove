@@ -66,6 +66,7 @@ return {
         fade = 0.25,
         font = { title = 28, name = 16 },
         title = "Puzzle Solved!",
+        failed = "Puzzle Failed",
         button = {
             size = 40,
             gap = 40,

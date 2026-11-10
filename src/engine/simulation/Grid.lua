@@ -100,6 +100,7 @@ function Grid:set(x, y, cell)
     if old then self:_count(old, x, y, -1) end
 
     self.cells[index] = cell
+    self.players[index] = cell and cell.player and cell or nil
     self.total = self.total - (old and 1 or 0) + (cell and 1 or 0)
 
     if cell then
@@ -143,6 +144,7 @@ end
 function Grid:clear()
     self.version = self.version + 1
     self.cells = {}
+    self.players = {}
     self.counts = {}
     self.touched = {}
     self.total = 0

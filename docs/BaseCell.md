@@ -34,6 +34,8 @@ Set these in the table you pass to `setmetatable`.
 | `rear` | `boolean` | | scans from the back of the pass direction instead of the front |
 | `skew` | `number` | `0` | where [`grab`](#basecellgrabdx-dy) drags cells from: `0` the sides, `1` the front diagonals, `-1` the back diagonals |
 | `hostile` | `boolean` | `false` | counts as an enemy. a puzzle is solved when none remain |
+| `friendly` | `boolean` | `false` | counts as an ally. a puzzle is failed when fewer remain than there were at the start |
+| `player` | `boolean` | `false` | counts as a player. a puzzle is failed when none remain, unless no enemies do either |
 | `fixed` | `boolean` | | cannot be pushed, swapped or transformed |
 | `anchored` | `boolean` | | cannot be rotated |
 | `faces` | `table` | `outputs` | directions relative to rotation that flip gears mirror, in the same format as `outputs`. `{}` keeps the rotation when flipped |

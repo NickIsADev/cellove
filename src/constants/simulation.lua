@@ -35,6 +35,12 @@ return {
             [1] = 2.5
         },
         scan = 3,
+        controls = {
+            { direction = 0, keys = { "d", "right" } },
+            { direction = 2, keys = { "a", "left" } },
+            { direction = 3, keys = { "w", "up" } },
+            { direction = 1, keys = { "s", "down" } }
+        },
         hops = 100,
         flushes = 5,
         interval = 0.2

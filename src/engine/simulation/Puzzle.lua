@@ -16,10 +16,25 @@ function Puzzle.new(data)
     return self
 end
 
+function Puzzle:_count(tag)
+    local grid = self.simulator.grid
+    local count = self.held and self.held.cell[tag] and 1 or 0
+
+    for index = 1, grid.width * grid.height do
+        local cell = grid.cells[index]
+        if cell and cell[tag] then count = count + 1 end
+    end
+    return count
+end
+
 function Puzzle:load(data)
     self.simulator:load(data)
     self.markers:load(data.markers)
     self.held = nil
+    self.initial = {
+        friendly = self:_count("friendly"),
+        player = self:_count("player")
+    }
 end
 
 function Puzzle:placeable(x, y)
@@ -56,14 +71,16 @@ function Puzzle:cancel()
 end
 
 function Puzzle:remaining()
-    local grid = self.simulator.grid
-    local count = self.held and self.held.cell.hostile and 1 or 0
+    return self:_count("hostile")
+end
 
-    for index = 1, grid.width * grid.height do
-        local cell = grid.cells[index]
-        if cell and cell.hostile then count = count + 1 end
-    end
-    return count
+function Puzzle:failed()
+    local initial = self.initial
+
+    return self.simulator:started() and (
+        self:_count("friendly") < initial.friendly
+        or initial.player > 0 and self:_count("player") == 0 and self:remaining() > 0
+    )
 end
 
 function Puzzle:solved()

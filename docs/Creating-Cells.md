@@ -119,9 +119,10 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | `33` | thrusters, skewers |
 | `34` | movers, birds, the push of rotator movers |
 | `35` | nudgers, CelLoves |
-| `36` | gates |
-| `37`, `38` | life, split into spreading and dying |
-| `39` | settlestorages |
+| `36` | players |
+| `37` | gates |
+| `38`, `39` | life, split into spreading and dying |
+| `40` | settlestorages |
 
 ## Common patterns
 

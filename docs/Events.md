@@ -57,6 +57,7 @@ api.off("simulator:tick", onTick)
 | `contraption:deleted` | `name` | a contraption is deleted |
 | `puzzle:start` | `info` | a puzzle is opened, reset or replayed |
 | `puzzle:solved` | `info` | a puzzle is solved |
+| `puzzle:failed` | `info` | a puzzle is failed |
 | `settings:changed` | `key, value` | a setting changes |
 | `packs:reloaded` | | texture packs are reloaded |
 

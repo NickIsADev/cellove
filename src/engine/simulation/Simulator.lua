@@ -109,6 +109,16 @@ function Simulator:_changed()
     end
 end
 
+function Simulator:_input()
+    local pressed = self.pressed
+    self.pressed = nil
+    if pressed then return pressed end
+
+    for _, control in ipairs(constants.simulator.controls) do
+        if love.keyboard.isDown(unpack(control.keys)) then return control.direction end
+    end
+end
+
 function Simulator:_tick()
     local profile, start, memory = self.profile, love.timer.getTime(), collectgarbage("count")
     self.movement.moves = 0
@@ -133,6 +143,7 @@ function Simulator:_pass()
         time.subtick = time.subtick + 1
         if (time.subtick - 1) % self.maxSubticks == 0 then
             time.tick = time.tick + 1
+            self.input = self:_input()
         end
     end
 
@@ -181,6 +192,24 @@ end
 
 function Simulator:progress()
     return math.min(self.timer / self.interval, 1.0)
+end
+
+function Simulator:press(key)
+    if self.paused then return end
+
+    for _, control in ipairs(constants.simulator.controls) do
+        if utils.indexOf(control.keys, key) then self.pressed = control.direction end
+    end
+end
+
+function Simulator:focus()
+    if self.paused then return end
+
+    local count, x, y = 0, 0, 0
+    for _, cell in pairs(self.grid.players) do
+        count, x, y = count + 1, x + cell.x, y + cell.y
+    end
+    if count > 0 then return x / count, y / count end
 end
 
 function Simulator:update(dt)
