@@ -3,15 +3,15 @@ local Panel = require("src/ui/Panel")
 local constants = require("src/constants")
 local utils = require("src/utils")
 
-local config = constants.victory
+local config = constants.result
 local colors = constants.ui.colors
 local shadow = constants.ui.shadow
 
-local Victory = {}
-Victory.__index = Victory
+local Result = {}
+Result.__index = Result
 
-function Victory.new(renderer)
-    local self = setmetatable({}, Victory)
+function Result.new(renderer)
+    local self = setmetatable({}, Result)
     self.renderer = renderer
     self.active = false
     self.age = 0
@@ -35,11 +35,11 @@ function Victory.new(renderer)
     return self
 end
 
-function Victory:_ready()
-    return self.age >= config.fade
+function Result:_ready()
+    return self.age >= config.lock
 end
 
-function Victory:_layout()
+function Result:_layout()
     local w, h = love.graphics.getDimensions()
     local renderer, button, font = self.renderer, config.button, config.font
     local title, name, label = renderer:font(font.title), renderer:font(font.name), renderer:font(button.font)
@@ -62,12 +62,12 @@ function Victory:_layout()
     end
 end
 
-function Victory:open(options)
+function Result:open(options)
     self.active = true
     self.age = 0
     self.actions = options.actions
     self.name = options.name
-    self.title = options.failed and config.failed or config.title
+    self.outcome = options.failed and config.lose or config.win
     self.shown = {}
 
     for _, item in ipairs(self.buttons) do
@@ -75,11 +75,11 @@ function Victory:open(options)
     end
 end
 
-function Victory:close()
+function Result:close()
     self.active = false
 end
 
-function Victory:update(dt)
+function Result:update(dt)
     if not self.active then return end
 
     self.age = self.age + dt
@@ -87,7 +87,7 @@ function Victory:update(dt)
     for _, item in ipairs(self.shown) do item:update(dt) end
 end
 
-function Victory:mousepressed(x, y, button)
+function Result:mousepressed(x, y, button)
     if not self.active then return false end
     if button ~= 1 or not self:_ready() then return true end
 
@@ -98,7 +98,7 @@ function Victory:mousepressed(x, y, button)
     return true
 end
 
-function Victory:keypressed(key)
+function Result:keypressed(key)
     if not self.active then return false end
 
     if self:_ready() then
@@ -111,7 +111,7 @@ function Victory:keypressed(key)
     return true
 end
 
-function Victory:draw()
+function Result:draw()
     if not self.active then return end
 
     self:_layout()
@@ -119,14 +119,14 @@ function Victory:draw()
     local w, h = love.graphics.getDimensions()
     local previousFont = love.graphics.getFont()
 
-    love.graphics.setColor(utils.fromHex(0x000000, config.dim * math.min(1, self.age / config.fade)))
+    love.graphics.setColor(utils.fromHex(0x000000, config.dim))
     love.graphics.rectangle("fill", 0, 0, w, h)
     Panel.draw(box.x, box.y, box.width, box.height, { alpha = 1 })
 
     love.graphics.setFont(renderer:font(config.font.title))
     utils.drawShadowed(function(ox, oy)
-        love.graphics.printf(self.title, box.x + config.pad + ox, box.y + config.pad + oy, box.inner, "center")
-    end, shadow.offset, shadow.alpha, colors.accent)
+        love.graphics.printf(self.outcome.title, box.x + config.pad + ox, box.y + config.pad + oy, box.inner, "center")
+    end, shadow.offset, shadow.alpha, colors[self.outcome.color])
 
     love.graphics.setFont(renderer:font(config.font.name))
     love.graphics.setColor(utils.fromHex(colors.white, 0.7))
@@ -138,4 +138,4 @@ function Victory:draw()
     love.graphics.setColor(utils.fromHex(colors.white))
 end
 
-return Victory
+return Result

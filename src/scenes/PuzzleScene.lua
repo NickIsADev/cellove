@@ -1,4 +1,4 @@
-local Victory = require("src/ui/overlays/Victory")
+local Result = require("src/ui/overlays/Result")
 local Lift = require("src/ui/decor/Lift")
 local PauseMenu = require("src/editor/panels/PauseMenu")
 local Controls = require("src/editor/panels/Controls")
@@ -29,7 +29,7 @@ function PuzzleScene.new(data)
     self.puzzle = Puzzle.new({ registry = data.registry, settings = data.settings })
     self.simulator = self.puzzle.simulator
     self.controls = Controls.new(data.renderer, self.simulator, config.hidden)
-    self.victory = Victory.new(data.renderer)
+    self.result = Result.new(data.renderer)
     self.pauseMenu = PauseMenu.new({
         renderer = data.renderer,
         layout = "puzzle",
@@ -62,12 +62,12 @@ function PuzzleScene:_screenshot()
 end
 
 function PuzzleScene:_replay()
-    self.victory:close()
+    self.result:close()
     self:_reset()
 end
 
 function PuzzleScene:_locked()
-    return self.victory.active or self.pauseMenu.active
+    return self.result.active or self.pauseMenu.active
 end
 
 function PuzzleScene:_win()
@@ -77,7 +77,7 @@ function PuzzleScene:_win()
     self.timer, self.cleared = nil, true
     if id then self.progress:complete(id) end
     Events.emit("puzzle:solved", self.info)
-    self.victory:open({
+    self.result:open({
         name = self.info.name,
         actions = {
             replay = function() self:_replay() end,
@@ -91,7 +91,7 @@ function PuzzleScene:_lose()
     self.cleared = true
     self.simulator:pause()
     Events.emit("puzzle:failed", self.info)
-    self.victory:open({
+    self.result:open({
         name = self.info.name,
         failed = true,
         actions = {
@@ -214,7 +214,7 @@ end
 function PuzzleScene:leave()
     self.puzzle:cancel()
     self.simulator:pause()
-    self.victory:close()
+    self.result:close()
     self.pauseMenu:close()
     self.toast:clear()
 end
@@ -238,12 +238,12 @@ function PuzzleScene:update(dt)
     self.renderer.hidden = hidden
     self:_watch(dt)
     self.pauseMenu:update(dt)
-    self.victory:update(dt)
+    self.result:update(dt)
     self.toast:update(dt)
 end
 
 function PuzzleScene:mousepressed(x, y, button)
-    if self.victory:mousepressed(x, y, button) or self.pauseMenu:mousepressed(x, y, button) then return end
+    if self.result:mousepressed(x, y, button) or self.pauseMenu:mousepressed(x, y, button) then return end
     if button == 3 and not self:_locked() then return self.renderer.camera:grab(x, y) end
     if button ~= 1 then return end
 
@@ -297,7 +297,7 @@ function PuzzleScene:wheelmoved(x, y)
 end
 
 function PuzzleScene:keypressed(key)
-    if self.victory:keypressed(key) or self.pauseMenu:keypressed(key) or self.puzzle.held then return end
+    if self.result:keypressed(key) or self.pauseMenu:keypressed(key) or self.puzzle.held then return end
 
     self.simulator:press(key)
 
@@ -325,7 +325,7 @@ function PuzzleScene:draw()
     self:_drawHud()
     self.controls:draw()
     self.pauseMenu:draw()
-    self.victory:draw()
+    self.result:draw()
     self.toast:draw(constants.toast.top)
 end
 

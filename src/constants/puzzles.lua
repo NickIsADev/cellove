@@ -57,16 +57,22 @@ return {
         }
     },
 
-    victory = {
+    result = {
         width = 360,
         margin = 16,
         pad = 24,
         gap = 8,
         dim = 0.6,
-        fade = 0.25,
+        lock = 0.25,
         font = { title = 28, name = 16 },
-        title = "Puzzle Solved!",
-        failed = "Puzzle Failed",
+        win = {
+            title = "Victory",
+            color = "accent"
+        },
+        lose = {
+            title = "Defeat",
+            color = "danger"
+        },
         button = {
             size = 40,
             gap = 40,

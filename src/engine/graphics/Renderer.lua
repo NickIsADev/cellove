@@ -135,7 +135,7 @@ function Renderer:_palette(name)
     for y = 0, data:getHeight() - 1 do
         for x = 0, data:getWidth() - 1 do
             local r, g, b, a = data:getPixel(x, y)
-            if a > 0.5 then palette[#palette + 1] = { r, g, b } end
+            if a > 0.5 then palette[#palette + 1] = utils.toHex(r, g, b) end
         end
     end
 
