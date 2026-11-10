@@ -148,6 +148,12 @@ return {
                 icon = "storage"
             },
             {
+                id = "midases",
+                title = "Midases",
+                icon = "midas",
+                parent = "storage"
+            },
+            {
                 id = "infectious",
                 title = "Infectious",
                 icon = "life"

@@ -5,6 +5,7 @@ local Midas = setmetatable({
     k3 = 737,
     title = "Midas",
     description = "Transforms the cell it points to into the cell it holds. Is immune to transformation.",
+    categories = { "midases" },
     subtick = { 2 },
     directional = true
 }, { __index = BaseHolder })
