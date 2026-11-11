@@ -3,16 +3,16 @@ local constants = require("src/constants")
 
 local BaseCycler = setmetatable({
     categories = { "cyclers" },
-    subtick = { 6 },
+    subtick = { "cyclerCW" },
     directional = true,
     sweep = {
-        [6] = {
+        cyclerCW = {
             [0] = { x = 1, y = -1, columns = true },
             [2] = { x = -1, y = 1, columns = true },
             [3] = { x = -1, y = -1 },
             [1] = { x = 1, y = 1 }
         },
-        [7] = {
+        cyclerCCW = {
             [0] = { x = 1, y = 1, columns = true },
             [2] = { x = -1, y = -1, columns = true },
             [3] = { x = 1, y = -1 },

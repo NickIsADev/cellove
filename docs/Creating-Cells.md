@@ -22,7 +22,7 @@ local Eraser = setmetatable({
     title = "Eraser",
     description = "Deletes the cells around it every tick.",
     categories = { "machines" },
-    subtick = { 9 }
+    subtick = { "generator" }
 }, { __index = BaseCell })
 Eraser.__index = Eraser
 
@@ -95,34 +95,34 @@ end
 
 ## Subticks
 
-A tick runs its subticks in ascending order, and a cell's `update` runs in the subticks listed in its `subtick`. Only the order matters, so use any number: `34.5` runs after movers and before nudgers without renumbering anything. These are the ones the built-in cells use.
+A tick runs its subticks in ascending order, and a cell's `update` runs in the subticks listed in its `subtick`. Use the names of the built-in subticks, like `subtick = { "mover" }`, to run alongside them. A name stands for its position in the list below, starting at `0`, so a number works too, and only the order matters: `34.5` runs after movers and before nudgers without renumbering anything.
 
 | subtick | cells |
 | --- | --- |
-| `0` | pipes |
-| `1` | true gears |
-| `2` | midas |
-| `3`, `4`, `5` | super mirrors, mirrors, curved mirrors |
-| `6`, `7` | cyclers, counter-clockwise cyclers (paracyclers use both) |
-| `8`, `9`, `10`, `11` | memory generators, generators, memory replicators, makers |
-| `12`, `13` | rotators, the spin of rotator movers |
-| `14` | flip gears |
-| `15`, `16`, `17`, `18` | gears, counter-clockwise gears, 180 gears, random gears |
-| `19`, `20` | super redirectors, redirectors |
-| `21` | inertia |
-| `22`, `23`, `24` | vacuums, super impulsors, impulsors |
-| `25`, `26`, `27` | fans, super repulsors, repulsors |
-| `28`, `29` | magnets, split by axis |
-| `30` | pullers, advancers, luggers, hoisters |
-| `31` | trawlers |
-| `32` | grabbers, heavers |
-| `33` | thrusters, skewers |
-| `34` | movers, birds, the push of rotator movers |
-| `35` | nudgers, CelLoves |
-| `36` | players |
-| `37` | gates |
-| `38`, `39` | life, split into spreading and dying |
-| `40` | settlestorages |
+| `pipe` | pipes |
+| `trueGear` | true gears |
+| `midas` | midas |
+| `superMirror`, `mirror`, `curvedMirror` | super mirrors, mirrors, curved mirrors |
+| `cyclerCW`, `cyclerCCW` | clockwise cyclers, counter-clockwise cyclers (paracyclers use both) |
+| `memoryGenerator`, `generator`, `memoryReplicator`, `maker` | memory generators, generators, memory replicators, makers |
+| `rotator`, `spin` | rotators, the spin of rotator movers |
+| `flipGear` | flip gears |
+| `gearCW`, `gearCCW`, `gear180`, `gearRNG` | clockwise gears, counter-clockwise gears, 180 gears, random gears |
+| `superRedirector`, `redirector` | super redirectors, redirectors |
+| `inertia` | inertia |
+| `vacuum`, `superImpulsor`, `impulsor` | vacuums, super impulsors, impulsors |
+| `fan`, `superRepulsor`, `repulsor` | fans, super repulsors, repulsors |
+| `magnetX`, `magnetY` | magnets, split by axis |
+| `puller` | pullers, advancers, luggers, hoisters |
+| `trawler` | trawlers |
+| `grabber` | grabbers, heavers |
+| `thruster` | thrusters, skewers |
+| `mover` | movers, birds, the push of rotator movers |
+| `nudger` | nudgers, CelLoves |
+| `player` | players |
+| `gate` | gates |
+| `spread`, `decay` | life, split into spreading and dying |
+| `settlestorage` | settlestorages |
 
 ## Common patterns
 
@@ -152,7 +152,7 @@ end
 ```lua
 local Mover = setmetatable({
     name = "mover",
-    subtick = { 20 },
+    subtick = { "mover" },
     drive = { push = true, pull = true },
     directional = true
 }, { __index = BaseCell })

@@ -7,7 +7,7 @@ local Lugger = setmetatable({
     title = "Lugger",
     description = "A Grabber that also pulls everything behind it. Cannot push.",
     categories = { "pullers", "grabbers" },
-    subtick = { 30 }
+    subtick = { "puller" }
 }, { __index = Grabber })
 Lugger.__index = Lugger
 

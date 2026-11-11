@@ -3,7 +3,7 @@ local BaseCell = require("content/cells/abstract/BaseCell")
 local BaseRotator = setmetatable({
     categories = { "rotators" },
     faces = {},
-    subtick = { 12 },
+    subtick = { "rotator" },
     sweep = { x = 1, y = -1 },
     spin = 1
 }, { __index = BaseCell })

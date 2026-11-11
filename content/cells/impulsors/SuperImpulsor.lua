@@ -6,7 +6,7 @@ local SuperImpulsor = setmetatable({
     k3 = 248,
     title = "Super Impulsor",
     description = "Pulls the nearest cell on every side all the way to itself with unlimited force every tick.",
-    subtick = { 23 }
+    subtick = { "superImpulsor" }
 }, { __index = Impulsor })
 SuperImpulsor.__index = SuperImpulsor
 

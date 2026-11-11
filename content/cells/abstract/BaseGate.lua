@@ -2,7 +2,7 @@ local BaseCell = require("content/cells/abstract/BaseCell")
 
 local BaseGate = setmetatable({
     categories = { "gates" },
-    subtick = { 37 },
+    subtick = { "gate" },
     directional = true,
     rear = true
 }, { __index = BaseCell })

@@ -7,7 +7,7 @@ local Grabber = setmetatable({
     title = "Grabber",
     description = "Moves forward into empty space, dragging the cells at its sides along with it. Cannot push or pull.",
     categories = { "grabbers" },
-    subtick = { 32 },
+    subtick = { "grabber" },
     drive = { push = true, pull = true, grab = true },
     directional = true
 }, { __index = BaseCell })

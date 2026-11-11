@@ -19,6 +19,35 @@ local function expand(id, source, list, seen)
     list[#list + 1] = id
 end
 
+local order = {}
+
+for i, name in ipairs(constants.simulator.subticks) do
+    order[name] = i - 1
+end
+
+local function position(subtick, source)
+    if type(subtick) == "number" then return subtick end
+
+    assert(order[subtick], source .. " has an unknown subtick " .. tostring(subtick))
+    return order[subtick]
+end
+
+local function resolve(class, source)
+    local subtick, sweep = {}, class.sweep
+
+    for i, name in ipairs(class.subtick) do
+        subtick[i] = position(name, source)
+    end
+
+    if sweep and not sweep.x then
+        class.sweep = {}
+        for name, directions in pairs(sweep) do
+            class.sweep[position(name, source)] = directions
+        end
+    end
+    class.subtick = subtick
+end
+
 local function sweepOf(class, subtick)
     local sweep = class.sweep
     if not sweep then return end
@@ -75,6 +104,7 @@ function Registry:_register(class, namespace, source)
     class.category = resolved[1]
 
     if class.setup then class:setup() end
+    resolve(class, source)
 
     class.lookup = {
         subtick = utils.set(class.subtick),

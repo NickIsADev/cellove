@@ -1,7 +1,7 @@
 local BaseGear = require("content/cells/abstract/BaseGear")
 
 local BaseTrueGear = setmetatable({
-    subtick = { 1 },
+    subtick = { "trueGear" },
     sweep = { x = 1, y = 1 },
     forced = true,
     fixed = true,

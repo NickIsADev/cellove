@@ -4,7 +4,7 @@ local utils = require("src/utils")
 
 local BasePipe = setmetatable({
     categories = { "pipes" },
-    subtick = { 0 },
+    subtick = { "pipe" },
     directional = true,
     pipe = true,
     outputs = { 0, 1, 2, 3 },

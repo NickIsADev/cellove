@@ -26,7 +26,7 @@ Set these in the table you pass to `setmetatable`.
 | `categories` | `table` | | required, list of [category IDs](Creating-Cells#categories) |
 | `k3` | `number` or `string` | | the cell's ID in CelLua or BHMod, used by the K3 format. must be set on the class itself. a contraption with a cell that has none is exported in the other format |
 | `properties` | `table` | `{}` | [property definitions](Creating-Cells#properties) |
-| `subtick` | `table` | `{}` | subticks `update` runs in. lower runs first and cells sharing a number run together. only the order matters, so any number works, like `34.5` to run between movers (`34`) and nudgers (`35`). see [built-in subticks](Creating-Cells#subticks). empty means never |
+| `subtick` | `table` | `{}` | subticks `update` runs in, as names or numbers. names come from the built-in order, like `"mover"`. lower runs first and cells sharing a subtick run together. only the order matters, so a decimal like `34.5` runs between movers (`34`) and nudgers (`35`). see [built-in subticks](Creating-Cells#subticks). empty means never |
 | `directional` | `boolean` | | calls `update` once per entry in `outputs` |
 | `outputs` | `table` | `{ 0 }` | output directions relative to rotation: `0` forward, `1` right, `2` back, `3` left |
 | `drive` | `table` | | actions that move the cell forward, like `{ push = true, pull = true }`. a cell moved that way skips its update that tick |
@@ -47,7 +47,7 @@ local Mover = setmetatable({
     title = "Mover",
     description = "Moves forward every tick.",
     categories = { "movers" },
-    subtick = { 20 },
+    subtick = { "mover" },
     drive = { push = true, pull = true },
     directional = true
 }, { __index = BaseCell })

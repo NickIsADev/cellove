@@ -5,7 +5,7 @@ local BicurvedMirror = setmetatable({
     k3 = 630,
     title = "Bicurved Mirror",
     description = "Two Curved Mirrors on opposite corners.",
-    subtick = { 5 },
+    subtick = { "curvedMirror" },
     swaps = {
         { 0, 1 },
         { 2, 3 }

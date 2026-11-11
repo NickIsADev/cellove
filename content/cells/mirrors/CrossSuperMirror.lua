@@ -9,7 +9,7 @@ local CrossSuperMirror = setmetatable({
         { 0, 2 },
         { 1, 3 }
     },
-    subtick = { 3 },
+    subtick = { "superMirror" },
     reach = math.huge
 }, { __index = BaseMirror })
 CrossSuperMirror.__index = CrossSuperMirror

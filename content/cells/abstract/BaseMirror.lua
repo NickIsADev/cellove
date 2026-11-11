@@ -7,21 +7,17 @@ end
 
 local BaseMirror = setmetatable({
     categories = { "mirrors" },
-    subtick = { 4 },
+    subtick = { "mirror" },
     outputs = { 0, 1, 2, 3 },
     directional = true,
     sweep = {
-        [3] = {
+        superMirror = {
             [0] = { x = 1, y = -1, columns = true },
             [1] = { x = 1, y = -1 },
             [2] = { x = 1, y = -1 },
             [3] = { x = 1, y = 1 }
         },
-        [2] = {
-            [0] = { x = 1, y = -1, columns = true },
-            [1] = { x = 1, y = -1, columns = true }
-        },
-        [4] = {
+        mirror = {
             [0] = { x = 1, y = -1 },
             [1] = { x = -1, y = -1 },
             [2] = { x = -1, y = 1 },

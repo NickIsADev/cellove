@@ -11,7 +11,7 @@ local function covers(faces, rotation, directions)
 end
 
 local BaseFlipGear = setmetatable({
-    subtick = { 14 },
+    subtick = { "flipGear" },
     sweep = { x = 1, y = -1 },
     axis = "straight"
 }, { __index = BaseGear })

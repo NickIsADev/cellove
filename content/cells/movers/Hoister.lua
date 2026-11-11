@@ -7,7 +7,7 @@ local Hoister = setmetatable({
     title = "Hoister",
     description = "A Grabber that also pushes whatever is in front of it and pulls everything behind it.",
     categories = { "movers", "pullers", "grabbers" },
-    subtick = { 30 }
+    subtick = { "puller" }
 }, { __index = Grabber })
 Hoister.__index = Hoister
 
