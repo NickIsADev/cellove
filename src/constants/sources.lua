@@ -29,6 +29,7 @@ return {
         text = {
             author = "by %s",
             default = "Always enabled",
+            bundled = "Bundled with %s mod",
             installed = "Installed \"%s\"",
             exists = "\"%s\" is already installed.",
             notArchive = "Only .zip texture packs can be installed.",

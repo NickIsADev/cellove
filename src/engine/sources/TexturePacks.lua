@@ -32,8 +32,11 @@ function TexturePacks:_discover()
 
     for _, mod in ipairs(self.mods:bundled()) do
         local id = config.bundle .. mod.id
-        self.roots[id] = mod.root .. "/" .. constants.mods.textures
+        local root = mod.root .. "/" .. constants.mods.textures
+
+        self.roots[id] = root
         self.bundles[#self.bundles + 1] = id
+        entries[#entries + 1] = { id = id, root = root, mod = mod }
     end
     return entries
 end
@@ -61,6 +64,20 @@ function TexturePacks:_isRoot(directory)
 end
 
 function TexturePacks:_read(entry)
+    local mod = entry.mod
+    if mod then
+        return {
+            id = entry.id,
+            folder = entry.id,
+            root = mod.root,
+            name = mod.name,
+            description = "",
+            modtime = mod.modtime,
+            iconPath = mod.iconPath,
+            locked = string.format(text.bundled, mod.name)
+        }
+    end
+
     local pack = {
         id = entry.id,
         folder = entry.id,

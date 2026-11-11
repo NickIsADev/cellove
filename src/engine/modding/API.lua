@@ -8,7 +8,7 @@ local editor = constants.editor
 
 local function before(list, id, field)
     for index, item in ipairs(list) do
-        if item[field or "id"] == id then return index end
+        if (type(item) == "table" and item[field or "id"] or item) == id then return index end
     end
     return #list + 1
 end
@@ -103,6 +103,7 @@ function API.new(mods, mod)
         hotkeys = {},
         splash = {},
         logos = {},
+        toolbar = {},
         markers = {},
         tools = {},
         scenes = {},
@@ -347,12 +348,44 @@ function API.new(mods, mod)
         table.insert(constants.menu.splash.list, text)
     end
 
+    ---Removes a line from the splash texts, like a built-in one.
+    ---@param text string the exact splash text
+    ---@example
+    ---api.splash.remove("now with mods!")
+    function api.splash.remove(text)
+        drop(constants.menu.splash.list, text)
+    end
+
     ---Adds a texture to the logos scattered across the scrolling background.
     ---@param texture string texture name
     ---@example
     ---api.logos.add("mymod/logo")
     function api.logos.add(texture)
         table.insert(constants.background.logo.textures, texture)
+    end
+
+    ---Removes a texture from the scrolling background's logos, like the built-in one.
+    ---@param texture string full texture name
+    ---@example
+    ---api.logos.remove("cellove")
+    function api.logos.remove(texture)
+        drop(constants.background.logo.textures, texture)
+    end
+
+    ---Adds a cell to the default toolbar, ID gets the mod prefix.
+    ---@param name string cell name without the mod prefix
+    ---@example
+    ---api.toolbar.add("eraser")
+    function api.toolbar.add(name)
+        table.insert(constants.toolbar.layout, key(name))
+    end
+
+    ---Removes a cell from the default toolbar, like a built-in one.
+    ---@param id string full cell ID
+    ---@example
+    ---api.toolbar.remove("cellove:wall")
+    function api.toolbar.remove(id)
+        drop(constants.toolbar.layout, id)
     end
 
     ---Adds an editor marker button.

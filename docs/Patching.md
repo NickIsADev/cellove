@@ -20,7 +20,7 @@ Adding something new gets an `api.<things>.add` function only when patching can'
 
 | reason | why patching fails | examples |
 | --- | --- | --- |
-| it goes in a list | `api.merge` works by index and replaces other mods' entries, `api.overwrite` drops them | `api.splash.add`, `api.logos.add`, `api.categories.add` |
+| it goes in a list | `api.merge` works by index and replaces other mods' entries, `api.overwrite` drops them | `api.splash.add`, `api.logos.add`, `api.toolbar.add`, `api.categories.add` |
 | its ID needs your mod prefix | patching would make you write the prefix yourself | `api.options.add`, `api.hotkeys.add` |
 | its position matters | a list entry can't be placed before "back" | `api.pause.add`, `api.markers.add` |
 | several places must change together | a marker is a button and a contraption kind, an option is a row and a setting | `api.markers.add`, `api.options.add` |
