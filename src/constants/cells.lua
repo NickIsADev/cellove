@@ -149,6 +149,18 @@ return {
                 icon = "trash"
             },
             {
+                id = "enemies",
+                title = "Enemies",
+                icon = "enemy",
+                parent = "destroyers"
+            },
+            {
+                id = "allies",
+                title = "Allies",
+                icon = "ally",
+                parent = "destroyers"
+            },
+            {
                 id = "storage",
                 title = "Storage",
                 icon = "storage"

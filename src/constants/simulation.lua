@@ -59,6 +59,7 @@ return {
             "mover",
             "nudger",
             "player",
+            "fearful",
             "gate",
             "spread",
             "decay",

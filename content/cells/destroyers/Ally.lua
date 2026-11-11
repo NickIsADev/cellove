@@ -5,6 +5,7 @@ local Ally = setmetatable({
     k3 = 768,
     title = "Ally",
     description = "Explodes when pushed into, taking the cell that pushed it along. A puzzle is failed if fewer Allies remain than there were at the start.",
+    categories = { "allies" },
     hostile = false,
     friendly = true
 }, { __index = Enemy })

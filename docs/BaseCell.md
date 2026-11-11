@@ -78,7 +78,7 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | [`pushable`](#basecellpushabledx-dy-bare) | `true` | whether the cell can be pushed |
 | [`eats`](#basecelleatsdx-dy-action) | `false` | whether cells moving into this one are deleted |
 | [`absorb`](#basecellabsorbcell-dx-dy-action) | nothing | called after this cell eats a cell |
-| [`bump`](#basecellbumpdx-dy) | nothing | called when a repulsor pushes this cell and it eats the push |
+| [`bump`](#basecellbumpdx-dy-pusher) | nothing | called when a repulsor pushes this cell and it eats the push |
 | [`swapped`](#basecellswappeddx-dy) | nothing | called after a swap carried this cell to the other cell's place |
 | [`pushed`](#basecellpusheddx-dy) | nothing | called after a push moved this cell |
 | [`generatable`](#basecellgeneratable) | `true` | whether generators can copy the cell |
@@ -159,7 +159,7 @@ function Counter:absorb(cell)
 end
 ```
 
-### `BaseCell:bump(dx, dy)`
+### `BaseCell:bump(dx, dy, pusher)`
 
 Called when a Repulsor pushes this cell and it eats the push instead of moving. Storage uses it to release its content.
 
@@ -167,6 +167,7 @@ Called when a Repulsor pushes this cell and it eats the push instead of moving. 
 | --- | --- | --- |
 | `dx` | `number` | horizontal direction of the push |
 | `dy` | `number` | vertical direction of the push |
+| `pusher` | `BaseCell?` | the cell that ran into this one, or `nil` when the push came from a force like a Repulsor or a generator |
 
 ```lua
 function Storage:bump(dx, dy)

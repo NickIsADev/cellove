@@ -69,7 +69,7 @@ end
 function BaseCell:absorb(cell, dx, dy)
 end
 
-function BaseCell:bump(dx, dy)
+function BaseCell:bump(dx, dy, pusher)
 end
 
 function BaseCell:swapped(dx, dy)

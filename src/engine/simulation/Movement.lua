@@ -86,7 +86,7 @@ function Movement:_reach(move)
     if cell == move.cell then return true end
 
     local open = self:_open(move.x, move.y, move.dx, move.dy, move.action)
-    if not open and cell then self:_bump(cell, move.dx, move.dy) end
+    if not open and cell then self:_bump(cell, move.dx, move.dy, move.cell) end
     return open
 end
 
@@ -147,11 +147,11 @@ function Movement:_route(x, y, dx, dy, reverse, moved)
     return move
 end
 
-function Movement:_bump(cell, dx, dy)
+function Movement:_bump(cell, dx, dy, pusher)
     if self.dry then return end
 
     cell.simulator = self.simulator
-    cell:bump(dx, dy)
+    cell:bump(dx, dy, pusher)
 end
 
 function Movement:_line(x, y, dx, dy, force, chain, bare)
@@ -172,7 +172,10 @@ function Movement:_line(x, y, dx, dy, force, chain, bare)
         if cell.walked == stamp then return cell == chain[1].cell and chain or nil end
 
         local pushable = cell:pushable(dx, dy, bare and #chain == first)
-        if not pushable then self:_bump(cell, dx, dy) end
+        if not pushable then
+            local last = chain[#chain]
+            self:_bump(cell, dx, dy, last and last.cell)
+        end
         if not pushable or dead[key(width, x, y, dx, dy)] == version then return self:_seal(chain, first) end
 
         force = force + cell:force(dx, dy, "push")

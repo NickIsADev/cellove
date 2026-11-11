@@ -120,6 +120,7 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | `mover` | movers, birds, the push of rotator movers |
 | `nudger` | nudgers, CelLoves |
 | `player` | players |
+| `fearful` | fearful enemies, fearful allies |
 | `gate` | gates |
 | `spread`, `decay` | life, split into spreading and dying |
 | `settlestorage` | settlestorages |
