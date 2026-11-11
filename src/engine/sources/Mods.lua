@@ -66,7 +66,6 @@ function Mods:_read(entry)
     for _, field in ipairs(config.fields) do
         if type(data[field]) == "string" then mod[field] = data[field] end
     end
-    mod.texturepack = data.texturepack
     mod.dependencies = type(data.dependencies) == "table" and data.dependencies or {}
     mod.iconPath = data.icon
     mod.error = problem(entry, data)
@@ -150,10 +149,12 @@ function Mods:failed()
     return list
 end
 
-function Mods:linked()
+function Mods:bundled()
     local list = {}
     for _, mod in ipairs(self.loaded) do
-        if mod.texturepack and not mod.error then list[#list + 1] = mod end
+        if not mod.error and love.filesystem.getInfo(mod.root .. "/" .. config.textures, "directory") then
+            list[#list + 1] = mod
+        end
     end
     return list
 end

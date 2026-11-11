@@ -23,11 +23,19 @@ function TexturePacks.new(data)
 end
 
 function TexturePacks:_locked(id)
-    if id == config.default then return text.default end
+    return id == config.default and text.default
+end
 
-    for _, mod in ipairs(self.mods:linked()) do
-        if mod.texturepack == id then return string.format(text.linked, mod.name) end
+function TexturePacks:_discover()
+    local entries = BaseSource._discover(self)
+    self.bundles = {}
+
+    for _, mod in ipairs(self.mods:bundled()) do
+        local id = config.bundle .. mod.id
+        self.roots[id] = mod.root .. "/" .. constants.mods.textures
+        self.bundles[#self.bundles + 1] = id
     end
+    return entries
 end
 
 function TexturePacks:_order()
@@ -36,8 +44,8 @@ function TexturePacks:_order()
         if not self:_locked(id) then ids[#ids + 1] = id end
     end
 
-    for _, mod in ipairs(self.mods:linked()) do
-        if not utils.has(ids, mod.texturepack) then ids[#ids + 1] = mod.texturepack end
+    for _, id in ipairs(self.bundles) do
+        ids[#ids + 1] = id
     end
     ids[#ids + 1] = config.default
     return ids
@@ -81,10 +89,6 @@ function TexturePacks:reload()
     self:_discover()
     self.settings:notify(config.setting)
     Events.emit("packs:reloaded")
-end
-
-function TexturePacks:has(id)
-    return self.roots[id] ~= nil
 end
 
 function TexturePacks:path(id)
