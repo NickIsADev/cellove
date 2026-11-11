@@ -1,6 +1,11 @@
 local toolbar = require("src/constants/toolbar").toolbar
 local markers = require("src/constants/markers").markers
 
+local hues = {}
+for _, preset in ipairs(markers.presets) do
+    hues[preset.id] = preset.color
+end
+
 return {
     settings = {
         path = "settings.cfg",
@@ -72,7 +77,17 @@ return {
         },
         label = "?",
         held = { property = "stored", id = 1, rotation = 2 },
-        placeable = "placeable",
+        placeables = {
+            { id = "placeable", color = hues.white },
+            { id = "placeableW", color = hues.white },
+            { id = "placeableR", color = hues.red },
+            { id = "placeableO", color = hues.orange },
+            { id = "placeableY", color = hues.yellow },
+            { id = "placeableG", color = hues.green },
+            { id = "placeableC", color = hues.cyan },
+            { id = "placeableB", color = hues.blue },
+            { id = "placeableP", color = hues.purple }
+        },
         compression = "zlib",
         tokens = { layer = "\\", placeable = "]", property = "[", quote = "<", wide = "(", long = ")" }
     },

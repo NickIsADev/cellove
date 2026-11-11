@@ -30,8 +30,10 @@ function Swatch:draw()
     local size = config.size * (1 + constants.ui.hover.growth * self.hover)
     local x, y = self.x + (self.width - size) / 2, self.y + (self.height - size) / 2
 
-    Panel.fill(x, y, size, size, self.color, 1)
-    Panel.outline(x, y, size, size, colors.white, 0.6)
+    local alpha = self.enabled and 1 or constants.ui.disabled
+
+    Panel.fill(x, y, size, size, self.color, alpha)
+    Panel.outline(x, y, size, size, self.selected and colors.accent or colors.white, (self.selected and 1 or 0.6) * alpha)
 end
 
 return Swatch

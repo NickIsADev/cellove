@@ -7,6 +7,8 @@ local config = constants.editor.marker
 local ghost = constants.editor.ghost
 local colors = constants.ui.colors
 local fixed = constants.markers.fixed
+local presets = constants.markers.presets
+local colored = constants.markers.colored
 
 local Marker = setmetatable({}, { __index = BaseTool })
 Marker.__index = Marker
@@ -14,6 +16,9 @@ Marker.__index = Marker
 function Marker.new(editor)
     local self = setmetatable({}, Marker)
     self:setup(editor, config.buttons)
+    for _, preset in ipairs(presets) do
+        self.byId[preset.id].color = preset.color
+    end
     self:reset()
     return self
 end
@@ -60,7 +65,7 @@ function Marker:_paint(gx, gy)
     local editor = self.editor
 
     if self.kind == "placeable" then
-        editor:setPlaceable(gx, gy, not self.erasing)
+        editor:setPlaceable(gx, gy, not self.erasing and self.color)
     elseif self.erasing then
         editor:setMarker(gx, gy)
     else
@@ -83,11 +88,9 @@ function Marker:leave()
 end
 
 function Marker:click(id)
-    if id == "color" then
-        self.editor.picker:open(self.color, function(color) self.color = color end)
-    else
-        self.kind = id
-    end
+    local hue = self.byId[id].color
+
+    if hue then self.color = hue else self.kind = id end
 end
 
 function Marker:refresh()
@@ -97,7 +100,12 @@ function Marker:refresh()
         button.tint = id == self.kind and colors.accent or colors.white
         button.rotation = fixed[id] and 0 or turn
     end
-    self.byId.color.color = self.color
+    for _, preset in ipairs(presets) do
+        local swatch = self.byId[preset.id]
+
+        swatch.selected = preset.color == self.color
+        swatch.enabled = colored[self.kind]
+    end
 end
 
 function Marker:press(gx, gy, button)
@@ -144,7 +152,7 @@ function Marker:draw(gx, gy)
     if not (gx and editor.simulator.grid:bounds(gx, gy)) then return end
 
     if self.kind == "label" or Markers.areas[self.kind] then
-        editor.renderer:drawBox(gx, gy, gx, gy, colors.white)
+        editor.renderer:drawBox(gx, gy, gx, gy, self.kind == "placeable" and self.color or colors.white)
     else
         editor.renderer:drawMarkers({
             {

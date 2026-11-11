@@ -368,15 +368,12 @@ function Editor:removeArea(area)
     self:_record(function() self.markers:add(area) end)
 end
 
-function Editor:setPlaceable(x, y, enabled)
+function Editor:setPlaceable(x, y, color)
     local existing = self.markers:placeableAt(x, y)
-    if not self.simulator.grid:bounds(x, y) or (existing ~= nil) == enabled then return end
+    if not self.simulator.grid:bounds(x, y) or existing and Markers.hue(existing) == color or not (existing or color) then return end
 
-    if enabled then
-        self:addArea({ kind = "placeable", x = x, y = y })
-    else
-        self:removeArea(existing)
-    end
+    if existing then self:removeArea(existing) end
+    if color then self:addArea({ kind = "placeable", x = x, y = y, color = color }) end
 end
 
 function Editor:commit()

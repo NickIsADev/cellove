@@ -1,4 +1,5 @@
 local Properties = require("src/engine/registry/Properties")
+local Markers = require("src/engine/simulation/Markers")
 local constants = require("src/constants")
 
 local config = constants.k3
@@ -6,11 +7,16 @@ local limits = constants.grid.limits
 local tokens = config.tokens
 local held = config.held
 local base, digits, codes, slots = #config.alphabet, {}, {}, {}
+local hues, ids = {}, {}
 for index = 1, base do
     digits[config.alphabet:sub(index, index)] = index - 1
 end
 for id, kind in pairs(config.markers) do
     codes[kind] = id
+end
+for _, placeable in ipairs(config.placeables) do
+    hues[placeable.id] = placeable.color
+    ids[placeable.color] = ids[placeable.color] or placeable.id
 end
 for slot, id in ipairs(config.borders) do
     slots[id] = slot - 1
@@ -149,7 +155,7 @@ function K3:supports(data)
     end
 
     for _, marker in ipairs(data.markers or {}) do
-        if not (codes[marker.kind] or marker.kind == "placeable") or marker.color then return false end
+        if not (marker.kind == "placeable" and ids[Markers.hue(marker)] or codes[marker.kind] and not marker.color) then return false end
     end
     return true
 end
@@ -177,8 +183,9 @@ function K3:decode(text)
             index = index - 1
             layer, pos = number(raw:sub(pos + 1, pos + 1)), pos + 2
         elseif char == "]" then
-            pos = select(2, read(raw, pos + 1))
-            if y <= height then markers[#markers + 1] = { kind = "placeable", x = x, y = y } end
+            local id
+            id, pos = read(raw, pos + 1)
+            if y <= height then markers[#markers + 1] = { kind = "placeable", x = x, y = y, color = hues[id] } end
         elseif char == "[" then
             local key, value
             key, pos = read(raw, pos + 1)
@@ -235,7 +242,7 @@ function K3:encode(data)
     local parts = {}
     for at = 1, data.width * data.height do
         for _, marker in ipairs(marks[at] or {}) do
-            if marker.kind == "placeable" then parts[#parts + 1] = tokens.placeable .. quote(config.placeable) end
+            if marker.kind == "placeable" then parts[#parts + 1] = tokens.placeable .. quote(ids[Markers.hue(marker)]) end
         end
 
         parts[#parts + 1] = cells[at] or pack(0)

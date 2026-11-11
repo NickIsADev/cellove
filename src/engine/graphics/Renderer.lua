@@ -2,6 +2,7 @@ local constants = require("src/constants")
 local Display = require("src/engine/graphics/Display")
 local Camera = require("src/engine/graphics/Camera")
 local Particles = require("src/engine/graphics/Particles")
+local Markers = require("src/engine/simulation/Markers")
 local utils = require("src/utils")
 
 local config = constants.texturepacks
@@ -253,31 +254,32 @@ function Renderer:_drawBorder(grid)
     love.graphics.draw(border.batch)
 end
 
-function Renderer:_drawTile(name, x, y)
+function Renderer:_drawTile(name, slot)
     local texture = self.textures.ui[name]
     local scale = self.sizes[texture].scale
 
-    love.graphics.draw(texture, (x - 1) * tile, (y - 1) * tile, 0, scale, scale)
+    love.graphics.setColor(utils.fromHex(Markers.hue(slot)))
+    love.graphics.draw(texture, (slot.x - 1) * tile, (slot.y - 1) * tile, 0, scale, scale)
 end
 
 function Renderer:_eachSlot(markers, visit)
     for _, marker in ipairs(markers) do
-        if marker.kind == "placeable" then visit(marker.x, marker.y) end
+        if marker.kind == "placeable" then visit(marker) end
     end
+    love.graphics.setColor(utils.fromHex(colors.white))
 end
 
 function Renderer:_drawPlaceables(markers)
-    self:_eachSlot(markers, function(x, y)
+    self:_eachSlot(markers, function(slot)
         love.graphics.setColor(utils.fromHex(colors.dark))
-        love.graphics.rectangle("fill", (x - 1) * tile, (y - 1) * tile, tile, tile)
-        love.graphics.setColor(utils.fromHex(colors.white))
-        self:_drawTile("placeable", x, y)
+        love.graphics.rectangle("fill", (slot.x - 1) * tile, (slot.y - 1) * tile, tile, tile)
+        self:_drawTile("placeable", slot)
     end)
 end
 
 function Renderer:_drawOverlays(markers, grid)
-    self:_eachSlot(markers, function(x, y)
-        if grid:get(x, y) then self:_drawTile("placeable_overlay", x, y) end
+    self:_eachSlot(markers, function(slot)
+        if grid:get(slot.x, slot.y) then self:_drawTile("placeable_overlay", slot) end
     end)
 end
 

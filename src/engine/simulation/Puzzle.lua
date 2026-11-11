@@ -41,6 +41,13 @@ function Puzzle:placeable(x, y)
     return self.markers:placeableAt(x, y) ~= nil
 end
 
+function Puzzle:accepts(x, y)
+    local held, markers = self.held, self.markers
+    local slot = markers:placeableAt(x, y)
+
+    return slot and Markers.hue(slot) == Markers.hue(markers:placeableAt(held.x, held.y))
+end
+
 function Puzzle:movable(x, y)
     return not self.simulator:started() and self:placeable(x, y) and self.simulator.grid:get(x, y) ~= nil
 end
@@ -56,7 +63,7 @@ end
 
 function Puzzle:drop(x, y)
     local held, grid = self.held, self.simulator.grid
-    if not self:placeable(x, y) then x, y = held.x, held.y end
+    if not self:accepts(x, y) then x, y = held.x, held.y end
 
     local other = grid:get(x, y)
     grid:set(held.x, held.y, other)

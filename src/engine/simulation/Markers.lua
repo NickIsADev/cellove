@@ -1,7 +1,13 @@
+local white = require("src/constants").ui.colors.white
+
 local Markers = {
     areas = { box = true, placeable = true }
 }
 Markers.__index = Markers
+
+function Markers.hue(marker)
+    return marker.color or white
+end
 
 function Markers.offset(marker, dx, dy)
     return {
