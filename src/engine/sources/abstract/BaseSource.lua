@@ -37,7 +37,8 @@ end
 
 function BaseSource:_mount(id, archive)
     if not self.mounted[id] then
-        self.mounted[id] = love.filesystem.mount(archive, self.config.root .. "/" .. id)
+        local data = love.filesystem.newFileData(archive)
+        self.mounted[id] = data and love.filesystem.mount(data, self.config.root .. "/" .. id)
     end
     return self.mounted[id]
 end
