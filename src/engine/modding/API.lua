@@ -6,11 +6,15 @@ local utils = require("src/utils")
 local config = constants.mods
 local editor = constants.editor
 
-local function before(list, id)
+local function before(list, id, field)
     for index, item in ipairs(list) do
-        if item.id == id then return index end
+        if item[field or "id"] == id then return index end
     end
     return #list + 1
+end
+
+local function drop(list, id, field)
+    table.remove(list, before(list, id, field))
 end
 
 local function find(path)
@@ -34,6 +38,13 @@ end
 ---@field title string name shown in the cell library
 ---@field icon string texture shown for the category
 ---@field parent? string full ID of the category it is listed under
+
+---@class ModHotkey
+---@field id string unique within the mod, gets the mod prefix
+---@field key string default binding, like `"x"` or `"ctrl shift x"`
+---@field title string name shown in the hotkeys menu
+---@field description string tooltip shown in the hotkeys menu
+---@field group? string section of the hotkeys menu, defaults to the mod's name
 
 ---@class ModMarker
 ---@field id string unique within the mod, gets the mod prefix
@@ -89,6 +100,9 @@ function API.new(mods, mod)
         codecs = {},
         categories = {},
         cells = {},
+        hotkeys = {},
+        splash = {},
+        logos = {},
         markers = {},
         tools = {},
         scenes = {},
@@ -97,15 +111,21 @@ function API.new(mods, mod)
         options = {}
     }
 
+    local hotkeys
+
     local function key(name)
         return id .. ":" .. name
     end
+
+    Events.on("game:ready", function(context)
+        hotkeys = context.hotkeys
+    end)
 
     ---Deep-merges values into a constants path such as `background.logo`.
     ---@param path string dotted path into the constants
     ---@param values table keys to merge in
     ---@example
-    ---api.merge("background.logo", { textures = { "mymod/thing" } })
+    ---api.merge("menu.splash", { color = 0xFF6AFF, size = 24 })
     function api.merge(path, values)
         for name in pairs(values) do
             mods:claim(mod, path .. "." .. name)
@@ -275,6 +295,66 @@ function API.new(mods, mod)
         table.insert(mod.cells, class)
     end
 
+    ---Adds a rebindable hotkey to the hotkeys menu, ID gets the mod prefix. Check it with `api.hotkeys.pressed` or `api.hotkeys.down`.
+    ---@param spec ModHotkey
+    ---@example
+    ---api.hotkeys.add({
+    ---    id = "flag",
+    ---    key = "ctrl f",
+    ---    title = "Place Flag",
+    ---    description = "Places a flag under the cursor."
+    ---})
+    function api.hotkeys.add(spec)
+        mods:claim(mod, "hotkey " .. spec.key)
+
+        table.insert(constants.hotkeys.list, {
+            id = key(spec.id),
+            group = spec.group or mod.name,
+            title = spec.title,
+            description = spec.description,
+            key = spec.key
+        })
+    end
+
+    ---True if the pressed key completes the hotkey's current binding. False until the game has loaded.
+    ---@param name string hotkey ID without the mod prefix
+    ---@param pressed string key from `game:keypressed`
+    ---@return boolean
+    ---@example
+    ---api.on("game:keypressed", function(pressed)
+    ---    if api.hotkeys.pressed("flag", pressed) then print("flag") end
+    ---end)
+    function api.hotkeys.pressed(name, pressed)
+        return hotkeys ~= nil and hotkeys:pressed(key(name), pressed)
+    end
+
+    ---True while the hotkey's key is held. False until the game has loaded.
+    ---@param name string hotkey ID without the mod prefix
+    ---@return boolean
+    ---@example
+    ---api.on("game:update", function()
+    ---    if api.hotkeys.down("flag") then print("holding flag") end
+    ---end)
+    function api.hotkeys.down(name)
+        return hotkeys ~= nil and hotkeys:down(key(name))
+    end
+
+    ---Adds a line to the splash texts on the main menu.
+    ---@param text string
+    ---@example
+    ---api.splash.add("now with mods!")
+    function api.splash.add(text)
+        table.insert(constants.menu.splash.list, text)
+    end
+
+    ---Adds a texture to the logos scattered across the scrolling background.
+    ---@param texture string texture name
+    ---@example
+    ---api.logos.add("mymod/logo")
+    function api.logos.add(texture)
+        table.insert(constants.background.logo.textures, texture)
+    end
+
     ---Adds an editor marker button.
     ---@param spec ModMarker
     ---@example
@@ -295,6 +375,14 @@ function API.new(mods, mod)
             description = spec.description or "Places the " .. spec.title:lower() .. " marker."
         })
         constants.contraptions.custom.kinds[kind] = true
+    end
+
+    ---Removes an editor marker button, like a built-in one.
+    ---@param id string full marker ID
+    ---@example
+    ---api.markers.remove("mymod:flag")
+    function api.markers.remove(id)
+        drop(editor.marker.buttons, id)
     end
 
     ---Adds an editor tool.
@@ -352,6 +440,14 @@ function API.new(mods, mod)
         })
     end
 
+    ---Removes a button from the main menu, like a built-in one.
+    ---@param id string full button ID
+    ---@example
+    ---api.menu.remove("mymod:gallery")
+    function api.menu.remove(id)
+        drop(constants.menu.button.list, id)
+    end
+
     ---Adds an entry above "back" in the "editor" or "puzzle" pause menu.
     ---@param layout "editor"|"puzzle" menu the entry goes in
     ---@param spec ModPauseButton
@@ -374,6 +470,17 @@ function API.new(mods, mod)
         for _, name in ipairs(config.layouts[layout]) do
             local list = constants.pauseMenu.layouts[name]
             table.insert(list, before(list, "back"), entry)
+        end
+    end
+
+    ---Removes an entry from the "editor" or "puzzle" pause menu, like a built-in one.
+    ---@param layout "editor"|"puzzle" menu the entry is in
+    ---@param id string full entry ID
+    ---@example
+    ---api.pause.remove("editor", "mymod:export")
+    function api.pause.remove(layout, id)
+        for _, name in ipairs(config.layouts[layout]) do
+            drop(constants.pauseMenu.layouts[name], id)
         end
     end
 
@@ -401,6 +508,14 @@ function API.new(mods, mod)
             deferred = spec.deferred,
             height = constants.rows.row.height
         })
+    end
+
+    ---Removes a row from the options menu, like a built-in one. The setting itself stays.
+    ---@param name string full setting name
+    ---@example
+    ---api.options.remove("mymod:volume")
+    function api.options.remove(name)
+        drop(constants.options.pages.main.rows, name, "key")
     end
 
     return api

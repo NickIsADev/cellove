@@ -9,7 +9,7 @@ end
 ```
 
 > [!NOTE]
-> IDs you pass to the `add` functions are prefixed with your mod ID. See [Getting Started](Getting-Started#mainlua).
+> IDs you pass to the `add` functions are prefixed with your mod ID, while `remove` takes full IDs. See [Getting Started](Getting-Started#mainlua) and [when there is a function for it](Patching#when-there-is-a-function-for-it).
 
 <!-- api:start -->
 <!-- api:end -->

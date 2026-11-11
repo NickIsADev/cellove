@@ -4,11 +4,36 @@ Patching changes the game without editing its files. Modules are addressed by re
 
 | you want to | use | works on |
 | --- | --- | --- |
-| add to or change a constant | [`api.merge`](#apimergepath-values) | constants |
+| change a constant | [`api.merge`](#apimergepath-values) | constants |
 | replace a constants table entirely | [`api.overwrite`](#apioverwritepath-values) | constants |
 | edit a module in place | [`api.patch`](#apipatchpath-patch) | modules |
 | run code around a method | [`api.wrap`](#apiwrappath-method-wrapper) | module methods |
 | swap a module for something else | [`api.replace`](#apireplacepath-replacement) | modules, before they load |
+
+Adding something new, like a list entry or a hotkey, usually has its own function. See [When there is a function for it](#when-there-is-a-function-for-it).
+
+## When there is a function for it
+
+Changing something that already exists never gets its own function. Use the table above: recoloring a splash, tweaking a number, renaming a title or rewriting a method is a `merge`, `overwrite`, `patch` or `wrap`.
+
+Adding something new gets an `api.<things>.add` function only when patching can't do it safely:
+
+| reason | why patching fails | examples |
+| --- | --- | --- |
+| it goes in a list | `api.merge` works by index and replaces other mods' entries, `api.overwrite` drops them | `api.splash.add`, `api.logos.add`, `api.categories.add` |
+| its ID needs your mod prefix | patching would make you write the prefix yourself | `api.options.add`, `api.hotkeys.add` |
+| its position matters | a list entry can't be placed before "back" | `api.pause.add`, `api.markers.add` |
+| several places must change together | a marker is a button and a contraption kind, an option is a row and a setting | `api.markers.add`, `api.options.add` |
+| it lives in runtime state | there is no constants path or module to patch | `api.cells.add`, `api.scenes.add`, `api.settings.define` |
+
+If it is on this list, the function also exists in reverse. `api.<things>.remove(id)` deletes one entry, which `merge` and `overwrite` can't do without replacing the whole list. `remove` takes the full ID, since it targets built-in and other mods' entries, and only exists where nothing else in the game depends on the entry, so there is no `remove` for categories, tools or hotkeys.
+
+Every function follows the same shape:
+
+- Top-level `api.*` functions are reserved for patching (`merge`, `overwrite`, `patch`, `replace`, `wrap`) and for `require`, `emit`, `on` and `off`.
+- Everything else lives under a plural noun, with `add(spec)`, `remove(id)`, `get(name)` and `has(name)`. Anything else is named for what it does, like `api.hotkeys.pressed`.
+- `add` prefixes your mod ID onto the ID or key you give it.
+- Only changes that two mods can disagree on are claimed as [conflicts](#conflicts). Adding and removing entries never is.
 
 ## Constants
 
@@ -17,11 +42,11 @@ Patching changes the game without editing its files. Modules are addressed by re
 Deep-merges `values` into the constants table at `path`.
 
 ```lua
-api.merge("background.logo", { textures = { "mymod/thing" } })
+api.merge("menu.splash", { color = 0xFF6AFF, size = 24 })
 ```
 
 > [!NOTE]
-> Merging only adds and changes keys. A list is merged by index, so a shorter list leaves the old entries behind. Use `api.overwrite` to replace a table.
+> Merging only adds and changes keys. A list is merged by index, so it can't add to a list and a shorter list leaves the old entries behind. Use `api.overwrite` to replace a table, or the `add` function for that list, like `api.splash.add`.
 
 ### `api.overwrite(path, values)`
 
@@ -30,6 +55,9 @@ Replaces everything in the constants table at `path` with `values`.
 ```lua
 api.overwrite("menu.splash.list", { "hello!", "goodbye!" })
 ```
+
+> [!WARNING]
+> This removes every splash text, including other mods'. To add one, use `api.splash.add`.
 
 ## Modules
 
@@ -76,11 +104,11 @@ What counts as a claim:
 
 | call | claims |
 | --- | --- |
-| `api.merge("background.logo", { ... })` | each key, like `background.logo.textures` |
+| `api.merge("menu.splash", { ... })` | each key, like `menu.splash.color` |
 | `api.overwrite(path, { ... })` | the path, like `menu.splash.list` |
 | `api.patch(path, ...)` and `api.replace(path, ...)` | the module path |
 | `api.wrap(path, method, ...)` | `path:method` |
-| `api.tools.add({ key = "x", ... })` | the hotkey `x` |
+| `api.tools.add({ key = "x", ... })` and `api.hotkeys.add({ key = "x", ... })` | the hotkey `x` |
 
 ## Reloading
 
