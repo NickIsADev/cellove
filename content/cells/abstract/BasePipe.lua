@@ -3,12 +3,12 @@ local BaseDiverger = require("content/cells/abstract/BaseDiverger")
 local utils = require("src/utils")
 
 local BasePipe = setmetatable({
+    faces = { 0 },
     categories = { "pipes" },
     subtick = { "pipe" },
     directional = true,
     pipe = true,
     outputs = { 0, 1, 2, 3 },
-    faces = { 0 },
     fixed = true,
     stockable = false,
     rotates = true,

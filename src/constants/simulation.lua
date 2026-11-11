@@ -24,6 +24,7 @@ return {
         subticks = {
             "pipe",
             "trueGear",
+            "dumpster",
             "midas",
             "superMirror",
             "mirror",
@@ -34,6 +35,7 @@ return {
             "generator",
             "memoryReplicator",
             "maker",
+            "superRotator",
             "rotator",
             "spin",
             "flipGear",

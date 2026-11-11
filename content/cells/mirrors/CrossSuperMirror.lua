@@ -5,11 +5,11 @@ local CrossSuperMirror = setmetatable({
     k3 = 314,
     title = "Cross Super Mirror",
     description = "Two Super Mirrors in one.",
+    subtick = { "superMirror" },
     swaps = {
         { 0, 2 },
         { 1, 3 }
     },
-    subtick = { "superMirror" },
     reach = math.huge
 }, { __index = BaseMirror })
 CrossSuperMirror.__index = CrossSuperMirror

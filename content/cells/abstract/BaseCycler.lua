@@ -4,7 +4,6 @@ local constants = require("src/constants")
 local BaseCycler = setmetatable({
     categories = { "cyclers" },
     subtick = { "cyclerCW" },
-    directional = true,
     sweep = {
         cyclerCW = {
             [0] = { x = 1, y = -1, columns = true },
@@ -19,6 +18,7 @@ local BaseCycler = setmetatable({
             [1] = { x = -1, y = 1 }
         }
     },
+    directional = true,
     spin = 1
 }, { __index = BaseCell })
 BaseCycler.__index = BaseCycler

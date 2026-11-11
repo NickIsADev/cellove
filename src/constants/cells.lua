@@ -149,6 +149,12 @@ return {
                 icon = "trash"
             },
             {
+                id = "trashes",
+                title = "Trashes",
+                icon = "trash",
+                parent = "destroyers"
+            },
+            {
                 id = "enemies",
                 title = "Enemies",
                 icon = "enemy",

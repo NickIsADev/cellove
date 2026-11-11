@@ -8,19 +8,8 @@ local Staller = setmetatable({
 }, { __index = Wall })
 Staller.__index = Staller
 
-function Staller:_destroy(cell, exploded)
-    local sim = self.simulator
-
-    sim.movement:defer(function()
-        if cell.grid:get(cell.x, cell.y) ~= cell then return end
-
-        cell.simulator = sim
-        cell:kill(exploded)
-    end)
-end
-
 function Staller:bump()
-    self:_destroy(self, true)
+    self.simulator.movement:destroy(self, true)
 end
 
 return Staller

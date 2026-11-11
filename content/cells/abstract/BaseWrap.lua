@@ -2,8 +2,8 @@ local BaseCell = require("content/cells/abstract/BaseCell")
 local BaseDiverger = require("content/cells/abstract/BaseDiverger")
 
 local BaseWrap = setmetatable({
-    categories = { "wraps" },
     faces = {},
+    categories = { "wraps" },
     fixed = true,
     anchored = true,
     _entry = BaseDiverger._entry

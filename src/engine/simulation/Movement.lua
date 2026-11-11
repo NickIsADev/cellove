@@ -662,6 +662,15 @@ function Movement:repel(x, y, dx, dy, force, row)
     return front
 end
 
+function Movement:destroy(cell, exploded)
+    self:defer(function()
+        if self.grid:get(cell.x, cell.y) ~= cell then return end
+
+        cell.simulator = self.simulator
+        cell:kill(exploded)
+    end)
+end
+
 function Movement:place(x, y, cell)
     local target = self.grid:get(x, y)
     if target then

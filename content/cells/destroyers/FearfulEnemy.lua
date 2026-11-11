@@ -1,5 +1,6 @@
 local Enemy = require("content/cells/destroyers/Enemy")
 local constants = require("src/constants")
+local utils = require("src/utils")
 
 local FearfulEnemy = setmetatable({
     name = "fearfulenemy",
@@ -25,7 +26,7 @@ function FearfulEnemy:update()
     elseif dy == 0 then
         if left == up then return end
 
-        local side = math.random(0, 1) * 2 - 1
+        local side = utils.randomSign()
         dx, dy = up * side, left * side
     end
     self:push(dx, dy, constants.force.strength)

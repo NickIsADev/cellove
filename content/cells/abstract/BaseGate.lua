@@ -3,9 +3,10 @@ local BaseCell = require("content/cells/abstract/BaseCell")
 local BaseGate = setmetatable({
     categories = { "gates" },
     subtick = { "gate" },
-    directional = true,
-    rear = true
+    rear = true,
+    directional = true
 }, { __index = BaseCell })
+BaseGate.__index = BaseGate
 
 function BaseGate:new(data)
     local cell = BaseCell.new(self, data)

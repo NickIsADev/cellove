@@ -101,11 +101,12 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | --- | --- |
 | `pipe` | pipes |
 | `trueGear` | true gears |
+| `dumpster` | dumpsters, cross dumpsters |
 | `midas` | midas |
 | `superMirror`, `mirror`, `curvedMirror` | super mirrors, mirrors, curved mirrors |
 | `cyclerCW`, `cyclerCCW` | clockwise cyclers, counter-clockwise cyclers (paracyclers use both) |
 | `memoryGenerator`, `generator`, `memoryReplicator`, `maker` | memory generators, generators, memory replicators, makers |
-| `rotator`, `spin` | rotators, the spin of rotator movers |
+| `superRotator`, `rotator`, `spin` | super rotators, rotators, the spin of rotator movers |
 | `flipGear` | flip gears |
 | `gearCW`, `gearCCW`, `gear180`, `gearRNG` | clockwise gears, counter-clockwise gears, 180 gears, random gears |
 | `superRedirector`, `redirector` | super redirectors, redirectors |

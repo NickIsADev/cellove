@@ -12,6 +12,10 @@ function calc.sign(value)
     return value > 0 and 1 or value < 0 and -1 or 0
 end
 
+function calc.randomSign()
+    return math.random(0, 1) * 2 - 1
+end
+
 function calc.turn(dx, dy, amount)
     for _ = 1, amount % 4 do
         dx, dy = -dy, dx

@@ -5,7 +5,7 @@ local Monogeneratable = setmetatable({
     name = "monogeneratable",
     k3 = 643,
     title = "Monogeneratable",
-    description = "A pushable that turns into an Ungeneratable when generated."
+    description = "A Pushable that turns into an Ungeneratable when generated."
 }, { __index = Pushable })
 Monogeneratable.__index = Monogeneratable
 

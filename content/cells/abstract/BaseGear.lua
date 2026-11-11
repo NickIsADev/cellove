@@ -1,13 +1,14 @@
 local BaseCell = require("content/cells/abstract/BaseCell")
 local constants = require("src/constants")
+local utils = require("src/utils")
 
 local late = { ccw = "gearCCW", ["180"] = "gear180", rng = "gearRNG" }
 
 local BaseGear = setmetatable({
+    faces = {},
     categories = { "gears" },
     subtick = { "gearCW" },
     sweep = { x = 1, y = -1 },
-    faces = {},
     sides = { orthogonal = true, diagonal = true },
     spin = 1,
     steps = 1,
@@ -58,7 +59,7 @@ function BaseGear:_turn(ring, spin)
 end
 
 function BaseGear:update()
-    local spin = self.random and math.random(0, 1) * 2 - 1 or self.spin
+    local spin = self.random and utils.randomSign() or self.spin
     local ring = self:_ring(spin)
     if not self.forced and self:_jammed(ring) then return end
 
