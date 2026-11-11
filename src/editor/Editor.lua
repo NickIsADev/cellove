@@ -78,6 +78,7 @@ function Editor.new(data)
         fresh = self.fresh,
         on = {
             cell = function(class) self:select(self.selected ~= class and class or nil) end,
+            pick = function(class) self:select(class) end,
             menu = function() self.toolMenu:open(self.toolId) end,
             library = function() self.library:open() end
         }
@@ -418,7 +419,7 @@ function Editor:update(dt)
     self.stampList:update(dt)
     self.toolMenu:update(dt)
     self.pauseMenu:update(dt)
-    self.toolbar:update(dt)
+    self.toolbar:update(dt, self.selected)
     self.panel:update(dt)
     self.properties:update(dt, self.toolId == "brush" and self.selected or nil)
 
@@ -479,7 +480,7 @@ function Editor:mousepressed(x, y, button)
         return true
     end
 
-    if self.properties:mousepressed(x, y, button) or self.toolbar:mousepressed(x, y, button) or self.panel:mousepressed(x, y, button) then return true end
+    if self.toolbar:mousepressed(x, y, button) or self.properties:mousepressed(x, y, button) or self.panel:mousepressed(x, y, button) then return true end
 
     local gx, gy = self.renderer.camera:screenToGrid(x, y)
     if button == 3 then
@@ -540,9 +541,9 @@ function Editor:draw()
     end
 
     self.tool:draw(gx, gy)
-    self.toolbar:draw(self.selected, self.visualRotation)
     self.panel:draw()
     self.properties:draw()
+    self.toolbar:draw(self.visualRotation)
     self.controls:draw()
     self.toolbar:drawTooltip()
     self.panel:drawTooltip()

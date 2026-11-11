@@ -26,6 +26,8 @@ local toolbar = {
         alpha = 0.5
     },
     panel = { pad = 6, gap = 6 },
+    history = 10,
+    pop = { speed = 18, stagger = 0.15 },
     layout = {
         "cellove:wall",
         "cellove:pushable",
