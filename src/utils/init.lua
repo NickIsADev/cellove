@@ -1,8 +1,12 @@
 local utils = {}
 
-for _, name in ipairs({ "color", "strings", "graphics", "calc", "lists", "encoding", "files", "version" }) do
-    for key, value in pairs(require("src/utils/" .. name)) do
-        utils[key] = value
+for _, file in ipairs(love.filesystem.getDirectoryItems("src/utils")) do
+    local name = file:match("^(.+)%.lua$")
+
+    if name and name ~= "init" then
+        for key, value in pairs(require("src/utils/" .. name)) do
+            utils[key] = value
+        end
     end
 end
 

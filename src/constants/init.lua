@@ -1,8 +1,12 @@
 local constants = {}
 
-for _, name in ipairs({ "simulation", "cells", "data", "scene", "reload", "audio", "debug", "graphics", "sources", "ui", "menu", "hotkeys", "puzzles", "editor", "toolbar", "markers", "version", "updates", "screenshots" }) do
-    for key, value in pairs(require("src/constants/" .. name)) do
-        constants[key] = value
+for _, file in ipairs(love.filesystem.getDirectoryItems("src/constants")) do
+    local name = file:match("^(.+)%.lua$")
+
+    if name and name ~= "init" then
+        for key, value in pairs(require("src/constants/" .. name)) do
+            constants[key] = value
+        end
     end
 end
 

@@ -2,6 +2,7 @@ local constants = require("src/constants")
 local Display = require("src/engine/graphics/Display")
 local Camera = require("src/engine/graphics/Camera")
 local Particles = require("src/engine/graphics/Particles")
+local RichText = require("src/engine/graphics/RichText")
 local Markers = require("src/engine/simulation/Markers")
 local utils = require("src/utils")
 
@@ -44,6 +45,17 @@ end
 
 local function place(batch, size, x, y)
     batch:add((x - 0.5) * tile, (y - 0.5) * tile, 0, size.scale, size.scale, size.x, size.y)
+end
+
+local function drawLabel(text, x, y, angle, unit, tint)
+    local width, height = text:measure(love.graphics.getFont())
+
+    love.graphics.push()
+    love.graphics.translate(x, y)
+    love.graphics.rotate(angle)
+    love.graphics.scale(unit)
+    text:draw(-width / 2, -height / 2, nil, nil, tint)
+    love.graphics.pop()
 end
 
 local Renderer = {}
@@ -291,8 +303,7 @@ function Renderer:_label(item, color, alpha)
         text = item.text,
         color = color,
         alpha = alpha,
-        plain = utils.plain(item.text),
-        colored = utils.colored(item.text, { utils.fromHex(color, alpha) }, alpha)
+        rich = RichText.new(self, item.text, { utils.fromHex(color, alpha) }, alpha)
     }
     self.labels[item] = label
     return label
@@ -429,12 +440,36 @@ function Renderer:font(size)
     return font
 end
 
+function Renderer:dominant(name)
+    if not self:_path("cells", name .. ".png") then return end
+
+    local color = self.dominants[name]
+    if color then return color end
+
+    local counts, best = {}, 0
+    for _, hex in ipairs(self:_palette(name)) do
+        local count = (counts[hex] or 0) + 1
+        counts[hex] = count
+        if count > best then best, color = count, hex end
+    end
+
+    self.dominants[name] = color
+    return color
+end
+
 function Renderer:drawSprite(name, x, y, angle, scale, offset)
     local texture, size = self:_sprite(name)
     local factor = size.scale * scale
 
     love.graphics.draw(texture, (x - 0.5) * tile + offset, (y - 0.5) * tile + offset,
         angle * math.pi / 2, factor, factor, size.x, size.y)
+end
+
+function Renderer:drawCell(name, x, y, size)
+    local texture, info = self:_sprite(name)
+    local scale = info.scale * size / tile
+
+    love.graphics.draw(texture, x + size / 2, y + size / 2, 0, scale, scale, info.x, info.y)
 end
 
 function Renderer:drawTag(text, x, y, _, scale, offset)
@@ -509,12 +544,10 @@ end
 function Renderer:drawMarkers(markers, alpha, ox, oy)
     alpha, ox, oy = alpha or 1, ox or 0, oy or 0
 
-    local font = self:font(mark.font)
     local previousFont = love.graphics.getFont()
 
     love.graphics.push()
     self.camera:apply()
-    love.graphics.setFont(font)
 
     for _, item in ipairs(markers) do
         local x, y = (item.x + ox - 0.5) * tile, (item.y + oy - 0.5) * tile
@@ -528,13 +561,14 @@ function Renderer:drawMarkers(markers, alpha, ox, oy)
                 item.width * tile, item.height * tile)
             love.graphics.setLineWidth(1)
         elseif item.kind == "label" then
-            local label = self:_label(item, color, alpha)
-            local px, py = font:getWidth(label.plain) / 2, font:getHeight() / 2
+            local text = self:_label(item, color, alpha).rich
+            local tint = { utils.fromHex(0x000000, mark.shadow.alpha * alpha) }
+            local size = math.max(1, math.floor(mark.font * self.camera.zoom + 0.5))
+            local unit = mark.font / size
 
-            love.graphics.setColor(utils.fromHex(0x000000, mark.shadow.alpha * alpha))
-            love.graphics.print(label.plain, x + mark.shadow.offset, y + mark.shadow.offset, angle, 1, 1, px, py)
-            love.graphics.setColor(utils.fromHex(colors.white))
-            love.graphics.print(label.colored, x, y, angle, 1, 1, px, py)
+            love.graphics.setFont(self:font(size))
+            drawLabel(text, x + mark.shadow.offset, y + mark.shadow.offset, angle, unit, tint)
+            drawLabel(text, x, y, angle, unit)
         elseif item.kind ~= "placeable" then
             local texture = self.textures.markers[names[item.kind]]
             local size = self.sizes[texture]
@@ -578,6 +612,7 @@ function Renderer:loadTextures()
 
     self.tints = {}
     self.palettes = {}
+    self.dominants = {}
     self.map = {}
     self.cache.key = nil
     if self.classes then self:preload(self.classes) end

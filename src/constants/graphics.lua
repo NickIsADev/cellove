@@ -18,7 +18,7 @@ return {
         },
         marker = {
             font = 20,
-            shadow = { offset = 2, alpha = 0.6 },
+            shadow = { offset = 4, alpha = 0.6 },
             box = { width = 3, alpha = 0.9 }
         },
         tag = {

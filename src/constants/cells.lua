@@ -1,10 +1,4 @@
 return {
-    tags = {
-        mover = 0x1979FF,
-        enemy = 0xEB1A00,
-        pushable = 0xFFB009
-    },
-
     force = {
         push = 0,
         pull = 0,

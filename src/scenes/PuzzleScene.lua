@@ -4,6 +4,7 @@ local PauseMenu = require("src/editor/panels/PauseMenu")
 local Controls = require("src/editor/panels/Controls")
 local Toast = require("src/ui/overlays/Toast")
 local Puzzle = require("src/engine/simulation/Puzzle")
+local RichText = require("src/engine/graphics/RichText")
 local Events = require("src/engine/modding/Events")
 local Audio = require("src/engine/audio/Audio")
 local constants = require("src/constants")
@@ -190,8 +191,7 @@ function PuzzleScene:_drawHud()
     end, shadow.offset, shadow.alpha)
 
     love.graphics.setFont(detail)
-    love.graphics.printf(utils.colored(self.info.tip or "", { utils.fromHex(colors.white, 0.7) }),
-        x, hud.margin + title:getHeight() + hud.gap, hud.width, "center")
+    self.tip:draw(x, hud.margin + title:getHeight() + hud.gap, hud.width, "center")
 
     self:_drawEnemies()
 
@@ -204,6 +204,7 @@ function PuzzleScene:enter(_, data)
     if data.resume then return end
 
     self.info = data.id and self.puzzles:get(data.id) or data
+    self.tip = RichText.new(self.renderer, self.info.tip or "", { utils.fromHex(colors.white, 0.7) })
     self.back = data.back or { scene = "puzzles", data = { select = data.id } }
 
     self.pauseMenu:setLayout(data.back and "custom" or "puzzle")
