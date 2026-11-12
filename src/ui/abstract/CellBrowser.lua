@@ -12,17 +12,44 @@ local config = constants.library
 local syntax = config.search
 local colors = constants.ui.colors
 
-local titles = {}
+local titles, parents, lines = {}, {}, {}
 for _, category in ipairs(constants.registry.categories) do
-    titles[category.id] = category.title
+    titles[category.id], parents[category.id] = category.title, category.parent
 end
 
 local function categoryLine(class)
-    local names = {}
-    for _, category in ipairs(class.lineage) do
-        names[#names + 1] = titles[category]
+    if lines[class] then return lines[class] end
+
+    local roots, groups = {}, {}
+    for _, category in ipairs(class.categories) do
+        local chain = { category }
+        while parents[chain[1]] do
+            table.insert(chain, 1, parents[chain[1]])
+        end
+
+        local root = table.remove(chain, 1)
+        if not groups[root] then
+            groups[root] = {}
+            roots[#roots + 1] = root
+        end
+
+        if #chain > 0 then
+            local names = {}
+            for _, id in ipairs(chain) do
+                names[#names + 1] = titles[id]
+            end
+            table.insert(groups[root], table.concat(names, " > "))
+        end
     end
-    return table.concat(names, " / ")
+
+    local parts = {}
+    for _, root in ipairs(roots) do
+        local children = groups[root]
+        parts[#parts + 1] = #children > 0 and titles[root] .. " > " .. table.concat(children, ", ") or titles[root]
+    end
+
+    lines[class] = table.concat(parts, " | ")
+    return lines[class]
 end
 
 local sorts = {}
