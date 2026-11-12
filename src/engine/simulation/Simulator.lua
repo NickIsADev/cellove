@@ -110,13 +110,19 @@ function Simulator:_changed()
 end
 
 function Simulator:_input()
-    local pressed = self.pressed
+    local first, held = self.pressed, {}
     self.pressed = nil
-    if pressed then return pressed end
+    if first then held[first] = true end
 
     for _, control in ipairs(constants.simulator.controls) do
-        if love.keyboard.isDown(unpack(control.keys)) then return control.direction end
+        if love.keyboard.isDown(unpack(control.keys)) then
+            held[control.direction] = true
+            first = first or control.direction
+        end
     end
+
+    self.held = held
+    return first
 end
 
 function Simulator:_tick()

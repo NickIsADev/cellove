@@ -14,6 +14,12 @@ return {
         weight = -1
     },
 
+    scissors = {
+        left = { side = -1, turn = 1 },
+        right = { side = 1, turn = -1 },
+        back = { side = 2, turn = 0 }
+    },
+
     registry = {
         base = { path = "content/cells", namespace = "cellove" },
         pattern = "^[a-z0-9_]+$",
@@ -33,6 +39,18 @@ return {
                 id = "grabbers",
                 title = "Grabbers",
                 icon = "grabber",
+                parent = "movers"
+            },
+            {
+                id = "scissors",
+                title = "Scissors",
+                icon = "scissor",
+                parent = "movers"
+            },
+            {
+                id = "drillers",
+                title = "Drillers",
+                icon = "driller",
                 parent = "movers"
             },
             {

@@ -54,6 +54,7 @@ return {
             "repulsor",
             "magnetX",
             "magnetY",
+            "driller",
             "puller",
             "trawler",
             "grabber",

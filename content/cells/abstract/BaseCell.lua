@@ -103,6 +103,11 @@ function BaseCell:nudge(dx, dy)
     return self.simulator.movement:nudge(self.x, self.y, self:_aim(dx, dy))
 end
 
+function BaseCell:slice(dx, dy)
+    dx, dy = self:_aim(dx, dy)
+    return self.simulator.movement:slice(self.x, self.y, dx, dy)
+end
+
 function BaseCell:push(dx, dy, force)
     dx, dy = self:_aim(dx, dy)
     return self.simulator.movement:push(self.x, self.y, dx, dy, force)

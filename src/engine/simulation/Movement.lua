@@ -363,6 +363,22 @@ function Movement:nudge(x, y, dx, dy)
     return true
 end
 
+function Movement:slice(x, y, dx, dy)
+    if self:nudge(x, y, dx, dy) then return true end
+
+    local grid = self.grid
+    local slicer, front = grid:get(x, y), grid:get(x + dx, y + dy)
+    if not (slicer and front) then return end
+
+    for _, side in ipairs({ 1, -1 }) do
+        local sx, sy = math.abs(dy) * side, -math.abs(dx) * side
+
+        if front:pushable(sx, sy) and self:push(x + dx, y + dy, sx, sy, constants.force.strength) then
+            return slicer.x == x and slicer.y == y and self:nudge(x, y, dx, dy)
+        end
+    end
+end
+
 function Movement:push(x, y, dx, dy, force)
     local pusher = self.grid:get(x, y)
     if not pusher then return false end

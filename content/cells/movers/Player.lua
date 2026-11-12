@@ -8,6 +8,7 @@ local Player = setmetatable({
     description = "Moves with the arrow keys or WASD while the simulation runs, pushing whatever is in front of it. A puzzle is failed if every Player is destroyed, unless all Enemies are defeated at the same time.",
     faces = {},
     player = true,
+    fragile = false,
     categories = { "players" },
     subtick = { "player" },
     directional = true,
@@ -15,11 +16,20 @@ local Player = setmetatable({
 }, { __index = BaseCell })
 Player.__index = Player
 
-function Player:update(_, direction)
-    if direction ~= self.simulator.input then return end
-
-    local dx, dy = unpack(constants.directions[direction])
+function Player:_move(dx, dy)
     self:push(dx, dy, constants.force.strength)
+end
+
+function Player:eats()
+    return self.fragile
+end
+
+function Player:absorb()
+    self:kill(true)
+end
+
+function Player:update(_, direction)
+    if direction == self.simulator.input then self:_move(unpack(constants.directions[direction])) end
 end
 
 return Player
