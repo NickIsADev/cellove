@@ -1,9 +1,12 @@
 local Grid = require("src/engine/simulation/Grid")
 local Movement = require("src/engine/simulation/Movement")
+local Effects = require("src/engine/simulation/Effects")
 local Events = require("src/engine/modding/Events")
 local Audio = require("src/engine/audio/Audio")
 local constants = require("src/constants")
 local utils = require("src/utils")
+
+local none = {}
 
 local function range(size, direction, rear)
     if (rear and direction or -direction) > 0 then return 1, size, 1 end
@@ -17,6 +20,7 @@ function Simulator.new(data)
     local self = setmetatable({}, Simulator)
     self.order = data.subticks or { 0 }
     self.maxSubticks = #self.order
+    self.effects = data.effects or {}
     self.rear = data.rear or {}
     self.sweeps = data.sweeps or {}
     self.grid = Grid.new(data)
@@ -32,6 +36,7 @@ function Simulator:_rewind()
     self.paused = true
     self.timer = 0
     self.dying = {}
+    self.stores = {}
     self.movement.queue = {}
     self.time = {
         tick = 0,
@@ -45,8 +50,10 @@ function Simulator:_sync()
 
     for _, cell in ipairs(self.grid.touched) do
         cell.path, cell.own, cell.turn, cell.born, cell.grow, cell.shrink, cell.arriving = nil, nil, 0, nil, nil, nil, nil
+        cell.spark, cell.sparked = nil, nil
     end
     self.grid.touched = {}
+    Effects.sweep(self.grid)
 end
 
 function Simulator:_sweep(subtick, direction, sweep)
@@ -55,7 +62,7 @@ function Simulator:_sweep(subtick, direction, sweep)
     local lines = grid:lines(subtick, columns and "cols" or "rows")
     if not lines then return end
 
-    local cells, width = grid.cells, grid.width
+    local stacks, width = grid:scanned(), grid.width
     local outerFrom, outerTo, outerStep = range(columns and width or grid.height, columns and sweep.x or sweep.y, true)
     local innerFrom, innerTo, innerStep = range(columns and grid.height or width, columns and sweep.y or sweep.x, true)
 
@@ -65,8 +72,11 @@ function Simulator:_sweep(subtick, direction, sweep)
                 local x, y = inner, outer
                 if columns then x, y = outer, inner end
 
-                local cell = cells[(y - 1) * width + x]
-                if cell then self:run(cell, subtick, direction) end
+                local index = (y - 1) * width + x
+                for _, stack in ipairs(stacks) do
+                    local cell = stack[index]
+                    if cell then self:run(cell, subtick, direction) end
+                end
             end
         end
     end
@@ -86,7 +96,7 @@ function Simulator:_scan(subtick, direction)
     local lines = grid:lines(subtick, horizontal and "cols" or "rows")
     if not lines then return end
 
-    local cells, width, height = grid.cells, grid.width, grid.height
+    local stacks, width, height = grid:scanned(), grid.width, grid.height
     local outerFrom, outerTo, outerStep = range(horizontal and width or height, horizontal and facing[1] or facing[2], self.rear[subtick])
     local innerFrom, innerTo, innerStep = 1, width, 1
     if horizontal then innerFrom, innerTo, innerStep = height, 1, -1 end
@@ -94,8 +104,11 @@ function Simulator:_scan(subtick, direction)
     for outer = outerFrom, outerTo, outerStep do
         if (lines[outer] or 0) > 0 then
             for inner = innerFrom, innerTo, innerStep do
-                local cell = cells[horizontal and (inner - 1) * width + outer or (outer - 1) * width + inner]
-                if cell then self:run(cell, subtick, direction) end
+                local index = horizontal and (inner - 1) * width + outer or (outer - 1) * width + inner
+                for _, stack in ipairs(stacks) do
+                    local cell = stack[index]
+                    if cell then self:run(cell, subtick, direction) end
+                end
             end
         end
     end
@@ -154,8 +167,14 @@ function Simulator:_pass()
     end
 
     time.pass = time.pass + 1
-    self:_scan(self.order[(time.subtick - 1) % self.maxSubticks + 1], passes[time.pass])
-    if time.pass == #passes then time.pass = 0 end
+    local subtick = self.order[(time.subtick - 1) % self.maxSubticks + 1]
+    local direction, last = passes[time.pass], time.pass == #passes
+    self:_scan(subtick, direction)
+
+    for _, effect in ipairs(self.effects[subtick] or none) do
+        if effect.directional or last then Effects.run(self.grid, effect, subtick, direction) end
+    end
+    if last then time.pass = 0 end
 end
 
 function Simulator:run(cell, subtick, direction)
@@ -272,16 +291,34 @@ function Simulator:discard(cell)
 end
 
 function Simulator:click(x, y, button)
-    local cell = self.grid:get(x, y)
-    if not (cell and self:started()) then return false end
+    local grid = self.grid
+    if not (self:started() and grid:bounds(x, y)) then return false end
 
-    cell.simulator = self
-    return cell:click(button)
+    for i = #grid.order, 1, -1 do
+        local cell = grid.order[i][(y - 1) * grid.width + x]
+        if cell then
+            cell.simulator = self
+            if cell:click(button) then return true end
+        end
+    end
+    return false
+end
+
+function Simulator:store(name, build)
+    local store = self.stores[name]
+    if store and (self:started() or store.version == self.grid.version) then return store.data end
+
+    store = { build = build, data = build(self.grid), version = self.grid.version }
+    self.stores[name] = store
+    return store.data
 end
 
 function Simulator:save()
     if self.time.subtick ~= 0 then return end
     self.grid:save()
+    for _, store in pairs(self.stores) do
+        store.data = store.build(self.grid)
+    end
 end
 
 function Simulator:snapshot()

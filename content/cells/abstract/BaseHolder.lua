@@ -21,7 +21,7 @@ function BaseHolder:_hold(content)
 end
 
 function BaseHolder:_cell(content, turn)
-    return content.class:new({ rotation = content.rotation + (turn or 0), props = content.props })
+    return content.class:new({ rotation = content.rotation + (turn or 0), props = content.props, effects = content.effects })
 end
 
 function BaseHolder:_make(direction)
@@ -63,7 +63,7 @@ function BaseHolder:eats()
 end
 
 function BaseHolder:absorb(cell)
-    self:_hold({ class = getmetatable(cell), rotation = cell.rotation })
+    self:_hold(cell:contents())
 end
 
 function BaseHolder:rotate(amount, forced)

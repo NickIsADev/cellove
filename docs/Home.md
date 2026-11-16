@@ -6,7 +6,8 @@ New to modding? Read these in order:
 
 1. [Getting Started](Getting-Started): the folder layout, `mod.lua`, `main.lua` and textures
 2. [Creating Cells](Creating-Cells): write a cell, put it in a category, give it properties
-3. [Events](Events): react to what the game is doing
+3. [Layers](Layers) and [Effects](Effects): cells that sit on top of others, and statuses cells carry
+4. [Events](Events): react to what the game is doing
 
 ## All pages
 
@@ -16,6 +17,8 @@ New to modding? Read these in order:
 | --- | --- |
 | [Getting Started](Getting-Started) | folder layout, `mod.lua`, `main.lua`, textures |
 | [Creating Cells](Creating-Cells) | cell classes, categories, properties, patterns |
+| [Layers](Layers) | the background, foreground and overlay layers, blocking, shared state |
+| [Effects](Effects) | effect classes, givers, removers |
 
 ### Topics
 

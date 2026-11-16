@@ -59,13 +59,19 @@ Registry.__index = Registry
 
 function Registry.new(data)
     local self = setmetatable({}, Registry)
-    self.cells = {}
+    self.cells, self.effects = {}, {}
     self:load(config.base.path, config.base.namespace)
+    self:_effects(config.effects, config.base.namespace)
 
     data.mods:each(function(mod)
         self:load(mod.root .. "/" .. constants.mods.cells, mod.id)
         for _, class in ipairs(mod.cells) do
             self:_register(class, mod.id, mod.id .. " cell " .. tostring(class.name))
+        end
+
+        self:_effects(mod.root .. "/" .. constants.mods.effects, mod.id)
+        for _, effect in ipairs(mod.effects) do
+            self:_effect(effect, mod.id, mod.id .. " effect " .. tostring(effect.name))
         end
     end)
 
@@ -80,6 +86,9 @@ function Registry:_twin()
             or class.id:match("_ccw$") and class.name:gsub("_ccw$", "_cw")
             or class.id:match("_cw$") and class.name:gsub("_cw$", "_ccw")
         class.flipped = twin and self.cells[(class.id:gsub("[^:]+$", twin))] or false
+
+        local pair = rawget(class, "pair")
+        class.paired = pair and self.cells[(class.id:gsub("[^:]+$", pair))] or false
     end
 end
 
@@ -92,6 +101,8 @@ function Registry:_register(class, namespace, source)
         assert(property.id and property.title, source .. " has a property without an id or title")
         assert(Properties.valid(property), source .. " has an invalid definition for property " .. property.id)
     end
+
+    assert(utils.has(constants.grid.layers, class.layer), source .. " has an unknown layer: " .. tostring(class.layer))
 
     local resolved, lineage, seen = {}, {}, {}
     for _, id in ipairs(class.categories) do
@@ -133,6 +144,34 @@ function Registry:_load(path, namespace)
     end
 end
 
+function Registry:_effect(effect, namespace, source)
+    assert(rawget(effect, "name"), source .. " must define its own name")
+    assert(effect.name:match(config.pattern), source .. " has an invalid name: " .. effect.name)
+
+    if not rawget(effect, "id") then
+        effect.id = namespace .. ":" .. effect.name
+        if namespace ~= config.base.namespace then effect.name = utils.texture(effect.id) end
+    end
+    assert(not self.effects[effect.id], "duplicate effect id " .. effect.id)
+
+    for i, name in ipairs(effect.subtick) do
+        effect.subtick[i] = position(name, source)
+    end
+    self.effects[#self.effects + 1] = effect
+    self.effects[effect.id] = effect
+end
+
+function Registry:_effects(path, namespace)
+    for _, item in ipairs(love.filesystem.getDirectoryItems(path)) do
+        local name = item:match("^(.+)%.lua$")
+
+        if name then
+            local module = path .. "/" .. name
+            self:_effect(require(module), namespace, module)
+        end
+    end
+end
+
 function Registry:load(path, namespace)
     assert(namespace:match(config.pattern), "invalid namespace: " .. namespace)
     self:_load(path, namespace)
@@ -149,20 +188,31 @@ function Registry:list()
 end
 
 function Registry:subticks()
-    local order, seen, rear, sweeps = {}, {}, {}, {}
+    local order, seen, rear, sweeps, effects = {}, {}, {}, {}, {}
+
+    local function add(subtick)
+        if seen[subtick] then return end
+        seen[subtick] = true
+        order[#order + 1] = subtick
+    end
 
     for _, class in pairs(self.cells) do
         for _, subtick in ipairs(class.subtick) do
-            if not seen[subtick] then
-                seen[subtick] = true
-                order[#order + 1] = subtick
-            end
+            add(subtick)
             rear[subtick] = rear[subtick] or class.rear
             sweeps[subtick] = sweeps[subtick] or sweepOf(class, subtick)
         end
     end
+    for _, effect in ipairs(self.effects) do
+        for _, subtick in ipairs(effect.subtick) do
+            add(subtick)
+            effects[subtick] = effects[subtick] or {}
+            table.insert(effects[subtick], effect)
+        end
+    end
+
     table.sort(order)
-    return #order > 0 and order or { 0 }, rear, sweeps
+    return #order > 0 and order or { 0 }, rear, sweeps, effects
 end
 
 return Registry

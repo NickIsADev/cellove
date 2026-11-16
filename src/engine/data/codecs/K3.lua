@@ -4,6 +4,7 @@ local constants = require("src/constants")
 
 local config = constants.k3
 local limits = constants.grid.limits
+local main = constants.grid.layer
 local tokens = config.tokens
 local held = config.held
 local base, digits, codes, slots = #config.alphabet, {}, {}, {}
@@ -101,6 +102,15 @@ local function stores(class)
     return first and first.id == held.property
 end
 
+local function slot(class, index)
+    return index + (stores(class) and index > 1 and 1 or 0)
+end
+
+local function scalar(value)
+    if type(value) == "boolean" then return pack(value and 1 or 0) end
+    return write(value)
+end
+
 local K3 = {}
 K3.__index = K3
 
@@ -118,9 +128,7 @@ function K3:_supported(cell)
     for _, property in ipairs(cell.class.properties) do
         local value = Properties.value(cell.props, property)
 
-        if property.id == held.property and value.class then
-            if not self.ids[value.class] or Properties.custom(value) then return false end
-        elseif value ~= property.default then
+        if property.id == held.property and value.class and (not self.ids[value.class] or Properties.custom(value)) then
             return false
         end
     end
@@ -128,21 +136,39 @@ function K3:_supported(cell)
 end
 
 function K3:_stored(cell)
-    local content = cell.props and cell.props[held.property]
-    if not (content and content.class) then return "" end
+    local parts = {}
 
-    return tokens.property .. pack(held.id) .. write(self.ids[content.class])
-        .. tokens.property .. pack(held.rotation) .. pack(content.rotation)
+    for index, property in ipairs(cell.class.properties) do
+        local value = Properties.value(cell.props, property)
+
+        if property.id == held.property then
+            if value.class then
+                parts[#parts + 1] = tokens.property .. pack(held.id) .. write(self.ids[value.class])
+                    .. tokens.property .. pack(held.rotation) .. pack(value.rotation)
+            end
+        elseif value ~= property.default then
+            parts[#parts + 1] = tokens.property .. pack(slot(cell.class, index)) .. scalar(value)
+        end
+    end
+    return table.concat(parts)
 end
 
 function K3:_property(target, key, value)
     if target.kind == "label" then
         if key == 1 then target.text = tostring(value) end
-    elseif stores(target.class) then
-        if key == held.id then
-            target.props = { [held.property] = { class = self.classes[value], rotation = 0 } }
-        elseif key == held.rotation and target.props then
-            target.props[held.property].rotation = value % 4
+        return
+    end
+
+    if stores(target.class) and key == held.id then
+        target.props = { [held.property] = { class = self.classes[value], rotation = 0 } }
+    elseif stores(target.class) and key == held.rotation and target.props then
+        target.props[held.property].rotation = value % 4
+    end
+
+    for index, property in ipairs(target.class.properties) do
+        if property.id ~= held.property and slot(target.class, index) == key then
+            target.props = target.props or {}
+            target.props[property.id] = type(property.default) == "boolean" and value == 1 or value
         end
     end
 end
@@ -151,7 +177,7 @@ function K3:supports(data)
     if data.border and not slots[self.ids[data.border]] then return false end
 
     for _, cell in ipairs(data.cells) do
-        if not self.ids[cell.class] or not self:_supported(cell) then return false end
+        if not (self.ids[cell.class] and config.layers[cell.class.layer] and self:_supported(cell)) then return false end
     end
 
     for _, marker in ipairs(data.markers or {}) do
@@ -203,10 +229,11 @@ function K3:decode(text)
                 id, rotation = math.floor(code / 4), code % 4
             end
 
-            local class = layer == 0 and self.classes[id]
+            local class = self.classes[id]
             local kind = config.markers[id]
 
             last = nil
+            if class and config.layers[class.layer] ~= layer then class = nil end
             if class and y <= height then
                 last = { class = class, rotation = rotation, x = x, y = y }
                 cells[#cells + 1] = last
@@ -228,9 +255,16 @@ function K3:decode(text)
 end
 
 function K3:encode(data)
-    local cells, marks = {}, {}
+    local cells, above, marks = {}, {}, {}
     for _, cell in ipairs(data.cells) do
-        cells[(cell.y - 1) * data.width + cell.x] = entry(self.ids[cell.class], cell.rotation) .. self:_stored(cell)
+        local at, layer = (cell.y - 1) * data.width + cell.x, config.layers[cell.class.layer]
+        local text = entry(self.ids[cell.class], cell.rotation) .. self:_stored(cell)
+
+        if layer == config.layers[main] then
+            cells[at] = text
+        else
+            above[at] = (above[at] or "") .. tokens.layer .. numeral(layer) .. text
+        end
     end
 
     for _, marker in ipairs(data.markers or {}) do
@@ -245,7 +279,7 @@ function K3:encode(data)
             if marker.kind == "placeable" then parts[#parts + 1] = tokens.placeable .. quote(ids[Markers.hue(marker)]) end
         end
 
-        parts[#parts + 1] = cells[at] or pack(0)
+        parts[#parts + 1] = (cells[at] or pack(0)) .. (above[at] or "")
         for _, marker in ipairs(marks[at] or {}) do
             local code = codes[marker.kind]
             if code then

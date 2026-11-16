@@ -42,12 +42,9 @@ end
 function BasePipe:absorb(cell, dx, dy)
     local nx, ny, spin = self:_bend(dx, dy)
 
-    self:_hold({
-        class = getmetatable(cell),
-        rotation = (cell.rotation + spin) % 4,
-        props = cell.props,
-        exit = (utils.direction(nx, ny) - self.rotation) % 4
-    })
+    local content = cell:contents((cell.rotation + spin) % 4)
+    content.exit = (utils.direction(nx, ny) - self.rotation) % 4
+    self:_hold(content)
     self.updated = self.simulator.time.tick
     cell.shrink, cell.born = self.fit, true
     self.arriving = cell

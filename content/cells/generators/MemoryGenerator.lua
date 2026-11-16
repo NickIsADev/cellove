@@ -22,7 +22,7 @@ function MemoryGenerator:update()
     local target = look and look.target
 
     if target and target:generatable() then
-        self:_hold({ class = target:generated(), rotation = (target.rotation - look.turn) % 4 })
+        self:_hold({ class = target:generated(), rotation = (target.rotation - look.turn) % 4, effects = target:kept() })
     end
 
     if self:held() then self:_release(self.rotation) end

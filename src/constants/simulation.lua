@@ -22,6 +22,11 @@ return {
 
     simulator = {
         subticks = {
+            "thawer",
+            "freezer",
+            "effectGiver",
+            "effectRemover",
+            "goo",
             "pipe",
             "trueGear",
             "dumpster",
@@ -35,6 +40,7 @@ return {
             "generator",
             "memoryReplicator",
             "maker",
+            "perpetual",
             "superRotator",
             "rotator",
             "spin",
@@ -63,10 +69,13 @@ return {
             "nudger",
             "player",
             "fearful",
+            "gravity",
             "gate",
+            "coinExtractor",
             "spread",
             "decay",
-            "settlestorage"
+            "settlestorage",
+            "compel"
         },
         passes = { 0, 2, 3, 1 },
         axes = {
@@ -96,6 +105,8 @@ return {
     grid = {
         default = { width = 25, height = 25 },
         border = "wall",
+        layers = { "background", "foreground", "overlay" },
+        layer = "foreground",
         limits = { min = 1, max = 500 },
         tile = 40
     },

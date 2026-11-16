@@ -22,9 +22,10 @@ return {
             box = { width = 3, alpha = 0.9 }
         },
         tag = {
-            font = 10,
-            margin = 3,
-            shadow = { offset = 5, alpha = 0.9 }
+            font = 8,
+            margin = 4,
+            count = { x = -0.2, y = -0.1375 },
+            shadow = { offset = 1, alpha = 1 }
         },
         stored = {
             storage = 0.5,
@@ -40,9 +41,23 @@ return {
             size = 10,
             colors = { 0xFF2E2E, 0xFF4D4D, 0xFF6A3D, 0xFF9A3D }
         },
+        spark = {
+            texture = "sparkle",
+            folder = "particles",
+            scale = 2,
+            speed = 200,
+            area = 10,
+            life = { 0.5, 1 },
+            kinds = {
+                coin = { colors = { 1, 0.75, 0.25, 1, 0.5, 0.25, 0, 1 }, size = 1, count = 25 },
+                sparkle = { colors = { 1, 0, 0.75, 1, 0.5, 0, 0.25, 1 }, size = 1, count = 50 },
+                greysparkle = { colors = { 0.75, 0.75, 0.75, 1, 0.5, 0.5, 0.5, 1 }, size = 1, count = 25 },
+                quantum = { colors = { 0.75, 0, 1, 1, 0.375, 0, 0.5, 1 }, size = 1, count = 50 }
+            }
+        },
         shadow = {
-            offset = 6,
-            alpha = 0.5,
+            distance = 0.15,
+            alpha = 0.25,
             shader = [[
 vec4 effect(vec4 color, Image tex, vec2 uv, vec2 screen)
 {

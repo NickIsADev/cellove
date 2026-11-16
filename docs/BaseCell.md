@@ -36,7 +36,13 @@ Set these in the table you pass to `setmetatable`.
 | `hostile` | `boolean` | `false` | counts as an enemy. a puzzle is solved when none remain |
 | `friendly` | `boolean` | `false` | counts as an ally. a puzzle is failed when fewer remain than there were at the start |
 | `player` | `boolean` | `false` | counts as a player. a puzzle is failed when none remain, unless no enemies do either |
+| `layer` | `string` | `"foreground"` | the [layer](Layers) the cell lives on: `"background"`, `"foreground"` or `"overlay"` |
+| `tile` | `string` | | the marker kind this library item paints instead of placing a cell, like `"placeable"`. Such an item is never put on the grid, so it has no behavior |
+| `pair` | `string` | | the name of the cell [`alternate`](#basecellalternate) turns this one into, like a door's gate |
+| `outcome` | `string` | | `"win"` or `"lose"`. a puzzle is won (or lost) when every foreground cell sharing a [`group`](#basecellgroup) is [`lit`](#basecelllit), for any group |
 | `fixed` | `boolean` | | cannot be pushed, swapped or transformed |
+| `destroys` | `boolean` | | cells moving into it are destroyed unless protected by an effect |
+| `freezes` | `boolean` | | keeps updating while frozen, like freezers do |
 | `anchored` | `boolean` | | cannot be rotated |
 | `faces` | `table` | `outputs` | directions relative to rotation that flip gears mirror, in the same format as `outputs`. `{}` keeps the rotation when flipped |
 | `twin` | `string` | | the name of the cell this one becomes when flipped by a flip gear, such as a clockwise gear's counter-clockwise twin. cells that look the same mirrored don't need one |
@@ -60,7 +66,9 @@ local Mover = setmetatable({
 | `rotation` | `number` | `0` right, `1` down, `2` left, `3` up |
 | `props` | `table` | property values by ID |
 | `x`, `y` | `number` | grid position |
+| `effects` | `table` | active effects and their values, keyed by effect class like `Frozen` or `Armored`. `nil` when there are none |
 | `simulator` | `Simulator` | set while the cell updates |
+| `spark` | `string` | name of a spark kind from `constants.graphics.spark.kinds` to burst when the cell is next drawn. [layered](Layers) cells and cells that were just killed play it once |
 
 ```lua
 function Thing:update()
@@ -76,7 +84,11 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | --- | --- | --- |
 | [`update`](#basecellupdatesubtick-direction) | nothing | runs during the cell's subticks |
 | [`pushable`](#basecellpushabledx-dy-bare) | `true` | whether the cell can be pushed |
-| [`eats`](#basecelleatsdx-dy-action) | `false` | whether cells moving into this one are deleted |
+| [`eats`](#basecelleatsdx-dy-action-mover) | `false` | whether cells moving into this one are deleted |
+| [`bars`](#basecellbarsdx-dy-action-mover) | `false` | whether this cell stops cells from moving onto its tile, for [layered](Layers) cells |
+| [`click`](#basecellclickbutton) | `false` | called when the tile is clicked while the simulation runs |
+| [`tint`](#basecelltint) | nothing | color the sprite is drawn in |
+| [`group`](#basecellgroup) and [`lit`](#basecelllit) | | what an `outcome` cell reports |
 | [`absorb`](#basecellabsorbcell-dx-dy-action) | nothing | called after this cell eats a cell |
 | [`bump`](#basecellbumpdx-dy-pusher) | nothing | called when a repulsor pushes this cell and it eats the push |
 | [`swapped`](#basecellswappeddx-dy) | nothing | called after a swap carried this cell to the other cell's place |
@@ -86,6 +98,8 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | [`force`](#basecellforcedx-dy-action) | `0` | force added to a push or pull |
 | [`divert`](#basecelldivertdx-dy-reverse) | nothing | bends the path of a move passing through |
 | [`jump`](#basecelljumpdx-dy-x-y) | nothing | moves the path of a move passing through somewhere else |
+| [`preview`](#basecellpreviewprops) | `self.texture` | name of the texture a cell with these properties looks like |
+| [`look`](#basecelllook) | `self:preview(self.props)` | name of the texture `draw` uses |
 | [`draw`](#basecelldrawrenderer-x-y-angle-scale-offset) | default sprite | draws the cell |
 
 ### `BaseCell:update(subtick, direction)`
@@ -124,9 +138,9 @@ function Rail:pushable(dx, dy)
 end
 ```
 
-### `BaseCell:eats(dx, dy, action)`
+### `BaseCell:eats(dx, dy, action, mover)`
 
-Whether cells moving into this one are deleted. Default `false`.
+Whether cells moving into this one are deleted. Default `false`. A [layered](Layers) cell can eat too: the mover is deleted before it reaches whatever is in the foreground.
 
 | parameter | type | description |
 | --- | --- | --- |
@@ -134,17 +148,92 @@ Whether cells moving into this one are deleted. Default `false`.
 | `dy` | `number` | vertical direction the other cell is moving |
 | `action` | `string?` | how the other cell arrives: `nil` when pushed, `"pull"` when a puller or nudger moves itself in, `"swap"` when it swaps places with this cell. a Storage or Converter accepts the last two even when it cannot eject what it holds |
 
+| `mover` | `BaseCell?` | the cell moving in, `nil` when it is not known |
+
 **Returns** `boolean`
 
 ```lua
 function Trash:eats()
     return true
 end
+
+-- only lets keys in
+function Door:eats(dx, dy, action, mover)
+    return mover ~= nil and mover.key == "door"
+end
 ```
+
+### `BaseCell:bars(dx, dy, action, mover)`
+
+Whether this cell stops `mover` from moving onto its tile. Only [layered](Layers) cells are asked. Pushes, pulls, swaps and generators all respect it, and a push that would enter a barred tile is blocked as a whole.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `dx` | `number` | horizontal direction the mover is moving |
+| `dy` | `number` | vertical direction the mover is moving |
+| `action` | `string?` | how it arrives, as in [`eats`](#basecelleatsdx-dy-action-mover), or `"generate"` for a generator's copy |
+| `mover` | `BaseCell?` | the cell moving in, `nil` for a probe |
+
+**Returns** `boolean`
+
+```lua
+-- a one way tile that only lets cells in from the left
+function OneWay:bars(dx)
+    return dx ~= 1
+end
+```
+
+### `BaseCell:click(button)`
+
+Called when the tile is clicked while the simulation has started. [Layers](Layers) are asked from the top down and the first cell to return `true` takes the click.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `button` | `number` | mouse button, `1` is left |
+
+**Returns** `boolean`
+
+### `BaseCell:preview(props)`
+
+Optional. Returns the texture name for a cell with the given `props`. The editor calls it on the class, before any cell exists, for the placement preview. [`look`](#basecelllook) uses it for placed cells, so a cell whose sprite only depends on its properties only needs this one.
+
+```lua
+function Gem:preview(props)
+    return self.texture .. "_" .. names[props.color]
+end
+```
+
+### `BaseCell:look()`
+
+Optional. Returns the texture name to draw, so a cell can change its sprite without overriding `draw`. Override it for sprites that depend on the cell's state, and `preview` for the look it starts with. The library icon always uses `self.texture`.
+
+```lua
+function Lamp:look()
+    return self.lit and self.texture .. "_on" or self.texture
+end
+```
+
+### `BaseCell:tint()`
+
+Optional. Define it to draw the sprite in a color, as a hex number. Effects such as paint take priority.
+
+```lua
+function Gem:tint()
+    return colors[self.props.color]
+end
+```
+
+### `BaseCell:group()`
+
+For `outcome` cells, the group the cell belongs to. Cells with the same group are judged together.
+
+### `BaseCell:lit()`
+
+For `outcome` cells, whether the cell is enabled. An `outcome` is reached when every cell of one group is lit.
 
 ### `BaseCell:absorb(cell, dx, dy, action)`
 
-Called after this cell eats `cell`.
+Called after this cell eats `cell`. Return `true` to let `cell` survive and take the eaten cell's place instead, like a coin being collected.
 
 | parameter | type | description |
 | --- | --- | --- |
@@ -250,7 +339,7 @@ function Weight:force()
 end
 ```
 
-### `BaseCell:divert(dx, dy, reverse)`
+### `BaseCell:divert(dx, dy, reverse, mover)`
 
 Called when a push, pull or generation passes through the cell. Return a new direction to bend the path, or nothing to let it pass straight through. Does nothing by default.
 
@@ -259,6 +348,7 @@ Called when a push, pull or generation passes through the cell. Return a new dir
 | `dx` | `number` | horizontal direction the path is travelling |
 | `dy` | `number` | vertical direction the path is travelling |
 | `reverse` | `boolean` | whether the path is being traced backwards, as when pulling |
+| `mover` | `BaseCell?` | the cell travelling through, for diverters that depend on it |
 
 **Returns** the new `dx`, the new `dy`, and how many clockwise quarter turns to rotate the moved cell by.
 
@@ -327,6 +417,8 @@ Call these from your own methods, usually from `update`. Where `dx` and `dy` are
 | [`neighbors`](#basecellneighborsdistance-callback) | loops over nearby tiles, no diagonals |
 | [`surrounding`](#basecellsurroundingdistance-callback) | loops over the square around the cell, diagonals included |
 | [`kill`](#basecellkillexploded) | removes the cell from the grid |
+| [`become`](#basecellbecomeclass) | turns the cell into another class in place |
+| [`alternate`](#basecellalternate) | turns the cell into its `pair` |
 
 ### `BaseCell:push(dx, dy, force)`
 
@@ -543,5 +635,32 @@ Removes the cell from the grid.
 ```lua
 function Bomb:update()
     self:kill(true)
+end
+```
+
+### `BaseCell:become(class)`
+
+Turns the cell into another class without moving it or changing its rotation and props. The cell object stays the same, so references to it stay valid.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `class` | `table` | the cell class to become |
+
+```lua
+function Sprout:update()
+    self:become(Tree)
+end
+```
+
+### `BaseCell:alternate()`
+
+Turns the cell into the class named by its `pair` field. Toggle doors and gates use it to swap with each other.
+
+```lua
+local Door = setmetatable({ name = "door", pair = "gate" }, { __index = BaseCell })
+
+function Door:click()
+    self:alternate()
+    return true
 end
 ```

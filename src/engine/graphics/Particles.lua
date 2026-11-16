@@ -2,17 +2,47 @@ local constants = require("src/constants")
 local utils = require("src/utils")
 
 local blast = constants.renderer.explosion
+local spark = constants.renderer.spark
 local tile = constants.grid.tile
 local colors = constants.ui.colors
 
 local Particles = {}
 Particles.__index = Particles
 
-function Particles.new()
+local function system(texture, kind)
+    local built = love.graphics.newParticleSystem(texture)
+
+    built:setColors(unpack(kind.colors))
+    built:setSizes(kind.size * spark.scale, 0)
+    built:setSizeVariation(1)
+    built:setSpread(2 * math.pi)
+    built:setSpeed(0, spark.speed * spark.scale)
+    built:setParticleLifetime(unpack(spark.life))
+    built:setEmissionArea("uniform", spark.area * spark.scale, spark.area * spark.scale)
+    built:setLinearDamping(1)
+    built:setBufferSize(1000)
+    return built
+end
+
+function Particles.new(sprite)
     local self = setmetatable({}, Particles)
+    self.sprite = sprite
     self.blasts = {}
     self.blasted = setmetatable({}, { __mode = "k" })
+    self.systems = {}
     return self
+end
+
+function Particles:spark(cell)
+    if not self.enabled or cell.sparked then return end
+
+    local kind = spark.kinds[cell.spark]
+    local emitter = self.systems[cell.spark] or system(self.sprite(spark.texture, spark.folder), kind)
+
+    self.systems[cell.spark] = emitter
+    cell.sparked = true
+    emitter:setPosition((cell.x - 0.5) * tile, (cell.y - 0.5) * tile)
+    emitter:emit(kind.count)
 end
 
 function Particles:burst(x, y, palette)
@@ -40,6 +70,14 @@ end
 
 function Particles:draw()
     local now = love.timer.getTime()
+    local step = math.min(now - (self.clock or now), 0.1)
+
+    self.clock = now
+    for _, emitter in pairs(self.systems) do
+        emitter:update(step)
+        love.graphics.setColor(utils.fromHex(colors.white))
+        love.graphics.draw(emitter)
+    end
 
     for index = #self.blasts, 1, -1 do
         local item = self.blasts[index]

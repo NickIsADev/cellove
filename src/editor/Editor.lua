@@ -22,6 +22,7 @@ local utils = require("src/utils")
 
 local config = constants.editor
 local colors = constants.ui.colors
+local hues = constants.markers.hues
 
 local tools = {
     brush = Brush,
@@ -110,17 +111,17 @@ function Editor.new(data)
     return self
 end
 
-function Editor:_capture(x, y)
-    local cell = self.simulator.grid:get(x, y)
+function Editor:_capture(x, y, layer)
+    local cell = self.simulator.grid:get(x, y, layer)
     return cell and { class = getmetatable(cell), rotation = cell.rotation, props = cell.props }
 end
 
-function Editor:_restore(x, y, state)
+function Editor:_restore(x, y, state, layer)
     local sim = self.simulator
-    local old = sim.grid:get(x, y)
+    local old = sim.grid:get(x, y, layer)
 
     if old then sim:discard(old) end
-    sim.grid:set(x, y, state and state.class:new({ rotation = state.rotation, props = state.props }))
+    sim.grid:set(x, y, state and state.class:new({ rotation = state.rotation, props = state.props }), layer)
 end
 
 function Editor:_record(undo)
@@ -261,8 +262,13 @@ function Editor:_resizeGrid(width, height)
 end
 
 function Editor:_askBorder()
+    local classes = {}
+    for _, class in ipairs(self.registry:list()) do
+        if not class.tile then classes[#classes + 1] = class end
+    end
+
     self.prompt.cellPicker:open({
-        classes = self.registry:list(),
+        classes = classes,
         current = self.simulator.grid.border,
         onPick = function(class) self:_setBorder(class) end
     })
@@ -289,16 +295,28 @@ end
 
 function Editor:_pick(gx, gy)
     local grid = self.simulator.grid
-    local cell = grid:bounds(gx, gy) and grid:get(gx, gy)
-    if not cell then return end
+    local cell = grid:top(gx, gy)
+    if not cell then return self:_pickTile(gx, gy) end
 
     self:select(getmetatable(cell))
     self.targetRotation = self.targetRotation + (cell.rotation - self.targetRotation + 2) % 4 - 2
     self.properties:load(getmetatable(cell), cell.props)
 end
 
+function Editor:_pickTile(gx, gy)
+    local slot = self.markers:placeableAt(gx, gy)
+    if not slot then return end
+
+    for _, class in ipairs(self.registry:list()) do
+        if class.tile == slot.kind then
+            self:select(class)
+            self.properties:load(class, { color = utils.indexOf(hues, Markers.hue(slot)) })
+        end
+    end
+end
+
 function Editor:_edit(gx, gy)
-    local cell = self.simulator.grid:get(gx, gy)
+    local cell = self.simulator.grid:top(gx, gy)
     local class = cell and getmetatable(cell)
     local fields = class and Properties.specs(class.properties, cell.props)
     if not (fields and #fields > 0) then return false end
@@ -335,13 +353,18 @@ function Editor:setTool(id)
     Events.emit("editor:tool", self, id)
 end
 
-function Editor:setCell(x, y, state)
-    local before = self:_capture(x, y)
-    if not self.simulator.grid:bounds(x, y) or same(before, state) then return false end
+function Editor:setCell(x, y, state, layer)
+    local grid = self.simulator.grid
+    if not grid:bounds(x, y) then return false end
 
-    self:_restore(x, y, state)
-    self:_record(function() self:_restore(x, y, before) end)
-    Events.emit("editor:cell", self, x, y, state, before)
+    local top = grid:top(x, y)
+    layer = state and state.class.layer or layer or top and top.layer
+    local before = self:_capture(x, y, layer)
+    if same(before, state) then return false end
+
+    self:_restore(x, y, state, layer)
+    self:_record(function() self:_restore(x, y, before, layer) end)
+    Events.emit("editor:cell", self, x, y, state, before, layer)
     return true
 end
 
@@ -421,7 +444,7 @@ function Editor:update(dt)
     self.pauseMenu:update(dt)
     self.toolbar:update(dt, self.selected)
     self.panel:update(dt)
-    self.properties:update(dt, self.toolId == "brush" and self.selected or nil)
+    self.properties:update(dt, self.tool:profile())
 
     if math.abs(self.targetRotation - self.visualRotation) < 0.001 then
         self.visualRotation = self.targetRotation

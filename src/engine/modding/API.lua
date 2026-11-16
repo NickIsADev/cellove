@@ -100,6 +100,7 @@ function API.new(mods, mod)
         codecs = {},
         categories = {},
         cells = {},
+        effects = {},
         hotkeys = {},
         splash = {},
         logos = {},
@@ -296,6 +297,14 @@ function API.new(mods, mod)
         table.insert(mod.cells, class)
     end
 
+    ---Registers an effect defined in code instead of the effects folder. Its texture name gets the mod prefix.
+    ---@param effect table effect built from BaseEffect
+    ---@example
+    ---api.effects.add(api.require("Frost"))
+    function api.effects.add(effect)
+        table.insert(mod.effects, effect)
+    end
+
     ---Adds a rebindable hotkey to the hotkeys menu, ID gets the mod prefix. Check it with `api.hotkeys.pressed` or `api.hotkeys.down`.
     ---@param spec ModHotkey
     ---@example
@@ -399,7 +408,7 @@ function API.new(mods, mod)
         local kind = key(spec.id)
         local buttons = editor.marker.buttons
 
-        table.insert(buttons, before(buttons, "divider"), {
+        table.insert(buttons, before(buttons, "shapes"), {
             kind = "icon",
             id = kind,
             folder = "markers",

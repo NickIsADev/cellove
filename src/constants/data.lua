@@ -76,6 +76,7 @@ return {
             [708] = "label"
         },
         label = "?",
+        layers = { foreground = 0, overlay = 1 },
         held = { property = "stored", id = 1, rotation = 2 },
         placeables = {
             { id = "placeable", color = hues.white },

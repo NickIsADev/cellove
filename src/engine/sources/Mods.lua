@@ -90,6 +90,7 @@ function Mods:_start(mod, found)
     if self.byId[mod.id] then return end
 
     mod.cells = {}
+    mod.effects = {}
     mod.exports = {}
     self.byId[mod.id] = mod
 

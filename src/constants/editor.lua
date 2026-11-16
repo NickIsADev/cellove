@@ -126,6 +126,14 @@ return {
                     texture = "brush_increase",
                     title = "Larger",
                     description = "Increases the brush size."
+                },
+                { kind = "separator", id = "split" },
+                {
+                    kind = "icon",
+                    id = "erase",
+                    texture = "eraser",
+                    title = "Eraser",
+                    description = "Erases the top cell, marker or placeable instead of painting."
                 }
             }
         },
@@ -223,8 +231,8 @@ return {
         },
         marker = {
             default = "arrow",
-            color = 0xFFFFFF,
             buttons = markers.buttons,
+            profile = { label = "Color" },
             prompt = {
                 title = "Text Label",
                 message = "Enter the text to display.",

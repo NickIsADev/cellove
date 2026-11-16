@@ -45,6 +45,7 @@ return {
         metadata = "mod.lua",
         main = "main.lua",
         cells = "cells",
+        effects = "effects",
         textures = "textures",
         puzzles = "puzzles",
         fields = { "name", "description", "author", "version", "minVersion" },

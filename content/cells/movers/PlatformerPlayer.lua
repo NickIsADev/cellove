@@ -68,7 +68,7 @@ end
 
 function PlatformerPlayer:draw(renderer, ...)
     Player.draw(self, renderer, ...)
-    renderer:drawTag(self.props.jump, ...)
+    if self.props.jump > 0 then renderer:drawTag(self.props.jump, ...) end
 end
 
 return PlatformerPlayer

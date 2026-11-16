@@ -1,3 +1,5 @@
+local constants = require("src/constants")
+
 local calc = {}
 
 function calc.lerp(start, goal, t)
@@ -29,6 +31,10 @@ end
 
 function calc.inside(x, y, left, top, width, height)
     return x >= left and x <= left + width and y >= top and y <= top + height
+end
+
+function calc.flip(rotation, axis)
+    return (rotation * 2 + constants.flip.shift[axis]) % 4
 end
 
 return calc

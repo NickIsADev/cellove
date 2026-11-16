@@ -4,6 +4,7 @@ return {
         pull = 0,
         grab = 0,
         generate = 1,
+        gravity = 1,
         strength = 1,
         weight = -1
     },
@@ -16,6 +17,7 @@ return {
 
     registry = {
         base = { path = "content/cells", namespace = "cellove" },
+        effects = "content/effects",
         pattern = "^[a-z0-9_]+$",
         categories = {
             {
@@ -193,6 +195,28 @@ return {
                 id = "infectious",
                 title = "Infectious",
                 icon = "life"
+            },
+            {
+                id = "effects",
+                title = "Effect Givers",
+                icon = "freezer"
+            },
+            {
+                id = "keys",
+                title = "Keys",
+                icon = "key",
+                parent = "pushables"
+            },
+            {
+                id = "collectables",
+                title = "Collectables",
+                icon = "coin"
+            },
+            {
+                id = "puzzles",
+                title = "Puzzles",
+                icon = "puzzle",
+                folder = "ui"
             },
             {
                 id = "misc",

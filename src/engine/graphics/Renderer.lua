@@ -15,9 +15,11 @@ local flat = constants.renderer.flat
 local clear = constants.renderer.clear
 local tag = constants.renderer.tag
 local tile = constants.grid.tile
+local layers, main = constants.grid.layers, constants.grid.layer
 local colors = constants.ui.colors
 local stride = 6
 local weak = { __mode = "k" }
+local none = {}
 
 local names = setmetatable({}, {
     __index = function(cache, kind)
@@ -64,7 +66,7 @@ Renderer.__index = Renderer
 function Renderer.new(data)
     local self = setmetatable({}, Renderer)
     self.texturePacks = data.texturePacks
-    self.particles = Particles.new()
+    self.particles = Particles.new(function(name, folder) return (self:_sprite(name, folder)) end)
     self.shadows = true
     self.animated = true
     self.queue = { n = 0 }
@@ -112,8 +114,8 @@ function Renderer:_textures(folder)
     })
 end
 
-function Renderer:_sprite(name)
-    local texture = self.textures.cells[name]
+function Renderer:_sprite(name, folder)
+    local texture = self.textures[folder or "cells"][name]
     return texture, self.sizes[texture]
 end
 
@@ -183,13 +185,15 @@ function Renderer:_queue(list, cell, x, y, progress, dying)
         size = 1 + fade * blast.grow
     end
 
+    if cell.spark then self.particles:spark(cell) end
+
     push(list, cell, x, y, cell.rotation - (cell.turn or 0) * (1 - progress), size, fade)
 end
 
-function Renderer:_collect(simulator, progress)
+function Renderer:_collect(simulator, progress, layer)
     local queue, rest, tail = self.queue, self.rest, self.tail
     local grid, camera, hidden = simulator.grid, self.camera, self.hidden
-    local cells, width = grid.cells, grid.width
+    local cells, width = grid.stacks[layer], grid.width
     queue.n, rest.n, tail.n = 0, 0, 0
 
     local margin = simulator.maxSubticks
@@ -200,7 +204,7 @@ function Renderer:_collect(simulator, progress)
     local minY = math.max(1, math.floor((camera.y - halfHeight) / tile) + 1 - margin)
     local maxY = math.min(grid.height, math.floor((camera.y + halfHeight) / tile) + 1 + margin)
 
-    for _, cell in ipairs(simulator.dying) do
+    for _, cell in ipairs(layer == main and simulator.dying or none) do
         local visible = cell.x >= minX and cell.x <= maxX and cell.y >= minY and cell.y <= maxY
         if visible then self:_queue(cell.born and tail or queue, cell, cell.x, cell.y, progress, true) end
     end
@@ -217,6 +221,33 @@ function Renderer:_collect(simulator, progress)
     append(queue, tail)
 end
 
+function Renderer:_drawEffects(cell, x, y, size, offset)
+    if offset ~= 0 then return end
+
+    for effect, value in pairs(cell.effects) do
+        effect:draw(self, value, x, y, size, offset)
+    end
+end
+
+function Renderer:_drawCell(cell, x, y, angle, size, offset)
+    local effects, tint = cell.effects, offset == 0 and cell.tint and cell:tint()
+
+    for effect, value in pairs(effects or none) do
+        tint = offset == 0 and effect:tint(value) or tint
+    end
+
+    if tint then
+        local r, g, b, a = love.graphics.getColor()
+
+        love.graphics.setColor(utils.fromHex(tint, a))
+        cell:draw(self, x, y, angle, size, offset)
+        love.graphics.setColor(r, g, b, a)
+    else
+        cell:draw(self, x, y, angle, size, offset)
+    end
+    if effects then self:_drawEffects(cell, x, y, size, offset) end
+end
+
 function Renderer:_drawCells(offset)
     local queue = self.queue
 
@@ -224,12 +255,12 @@ function Renderer:_drawCells(offset)
         local cell, x, y, angle, size, fade = queue[i], queue[i + 1], queue[i + 2], queue[i + 3], queue[i + 4], queue[i + 5]
 
         if fade == 0 then
-            cell:draw(self, x, y, angle, size, offset)
+            self:_drawCell(cell, x, y, angle, size, offset)
         else
             local r, g, b, a = love.graphics.getColor()
 
             love.graphics.setColor(r, g, b, a * (1 - fade))
-            cell:draw(self, x, y, angle, size, offset)
+            self:_drawCell(cell, x, y, angle, size, offset)
             love.graphics.setColor(r, g, b, a)
         end
     end
@@ -312,18 +343,26 @@ end
 function Renderer:_drawLayer(simulator, progress)
     local profile, start = self.profile, love.timer.getTime()
 
-    self:_collect(simulator, progress)
-    profile.collect = (love.timer.getTime() - start) * 1000
+    profile.collect = 0
 
-    if self.shadows and self.camera.zoom >= self.far then
-        love.graphics.setShader(self.shadowShader)
-        love.graphics.setColor(utils.fromHex(0x000000, shadow.alpha))
-        self:_drawCells(shadow.offset)
-        love.graphics.setShader()
-        love.graphics.setColor(utils.fromHex(colors.white))
+    for _, layer in ipairs(layers) do
+        local collected = love.timer.getTime()
+
+        self:_collect(simulator, progress, layer)
+        profile.collect = profile.collect + (love.timer.getTime() - collected) * 1000
+
+        if layer == main then
+            if self.shadows and self.camera.zoom >= self.far then
+                love.graphics.setShader(self.shadowShader)
+                love.graphics.setColor(utils.fromHex(0x000000, shadow.alpha))
+                self:_drawCells(shadow.distance * tile)
+                love.graphics.setShader()
+                love.graphics.setColor(utils.fromHex(colors.white))
+            end
+            self:_drawBorder(simulator.grid)
+        end
+        self:_drawCells(0)
     end
-    self:_drawBorder(simulator.grid)
-    self:_drawCells(0)
     profile.layer = (love.timer.getTime() - start) * 1000
 end
 
@@ -353,7 +392,11 @@ function Renderer:_drawFlat(grid)
         local data, last = map.data, map.last
 
         for i = 1, width * height do
-            local cell = grid.cells[i]
+            local cell
+            for k = #grid.order, 1, -1 do
+                cell = grid.order[k][i]
+                if cell then break end
+            end
             local tint = cell and self:_tint(getmetatable(cell).texture) or clear
 
             if last[i] ~= tint then
@@ -457,8 +500,8 @@ function Renderer:dominant(name)
     return color
 end
 
-function Renderer:drawSprite(name, x, y, angle, scale, offset)
-    local texture, size = self:_sprite(name)
+function Renderer:drawSprite(name, x, y, angle, scale, offset, folder)
+    local texture, size = self:_sprite(name, folder)
     local factor = size.scale * scale
 
     love.graphics.draw(texture, (x - 0.5) * tile + offset, (y - 0.5) * tile + offset,
@@ -472,31 +515,44 @@ function Renderer:drawCell(name, x, y, size)
     love.graphics.draw(texture, x + size / 2, y + size / 2, 0, scale, scale, info.x, info.y)
 end
 
-function Renderer:drawTag(text, x, y, _, scale, offset)
-    if offset ~= 0 then return end
-
+function Renderer:_print(text, x, y, scale, corner)
     text = tostring(text)
     local size = math.max(1, math.floor(tag.font * self.camera.zoom + 0.5))
     local font = self:font(size)
     local unit = scale * tag.font / size
     local previousFont = love.graphics.getFont()
     local r, g, b, a = love.graphics.getColor()
-    local margin, shadow = tag.margin * scale, tag.shadow.offset * unit
-    local right, bottom = (x - 0.5 + scale / 2) * tile - margin, (y - 0.5 + scale / 2) * tile - margin
-    local width, height = font:getWidth(text), font:getBaseline()
+    local shadow = tag.shadow.offset * scale
+    local width, height = corner and font:getWidth(text) or 0, corner and font:getBaseline() or 0
 
     love.graphics.setFont(font)
     love.graphics.setColor(utils.fromHex(0x000000, tag.shadow.alpha * a))
-    love.graphics.print(text, right + shadow, bottom + shadow, 0, unit, unit, width, height)
+    love.graphics.print(text, x + shadow, y + shadow, 0, unit, unit, width, height)
     love.graphics.setColor(r, g, b, a)
-    love.graphics.print(text, right, bottom, 0, unit, unit, width, height)
+    love.graphics.print(text, x, y, 0, unit, unit, width, height)
     love.graphics.setFont(previousFont)
+end
+
+function Renderer:drawTag(text, x, y, _, scale, offset)
+    if offset ~= 0 then return end
+
+    local margin = tag.margin * scale
+    self:_print(text, (x - 0.5 + scale / 2) * tile - margin, (y - 0.5 + scale / 2) * tile - margin, scale, true)
+end
+
+function Renderer:drawCount(text, x, y, _, scale, offset)
+    if offset ~= 0 then return end
+
+    self:_print(text, (x - 0.5 + tag.count.x * scale) * tile, (y - 0.5 + tag.count.y * scale) * tile, scale)
 end
 
 function Renderer:drawStored(content, x, y, turn, scale, offset)
     if offset ~= 0 then return end
 
     self:drawSprite(content.class.texture, x, y, content.rotation + turn, scale, 0)
+    for effect, value in pairs(content.effects or none) do
+        effect:draw(self, value, x, y, scale, 0)
+    end
 end
 
 function Renderer:drawGhost(name, gx, gy, rotation, alpha)
@@ -510,13 +566,27 @@ function Renderer:drawGhost(name, gx, gy, rotation, alpha)
     love.graphics.setColor(utils.fromHex(colors.white))
 end
 
+function Renderer:drawSlot(x, y, color, alpha)
+    local texture = self.textures.ui.placeable
+    local scale = self.sizes[texture].scale
+
+    love.graphics.push()
+    self.camera:apply()
+
+    love.graphics.setColor(utils.fromHex(color, alpha))
+    love.graphics.draw(texture, (x - 1) * tile, (y - 1) * tile, 0, scale, scale)
+
+    love.graphics.pop()
+    love.graphics.setColor(utils.fromHex(colors.white))
+end
+
 function Renderer:drawGhosts(cells, ox, oy, alpha)
     love.graphics.push()
     self.camera:apply()
 
     love.graphics.setColor(utils.fromHex(colors.white, alpha))
     for _, cell in ipairs(cells) do
-        self:drawSprite(cell.class.texture, cell.x + ox, cell.y + oy, cell.rotation, 1, 0)
+        self:drawSprite(cell.class:preview(cell.props), cell.x + ox, cell.y + oy, cell.rotation, 1, 0)
     end
 
     love.graphics.pop()
@@ -589,8 +659,11 @@ function Renderer:loadTextures()
     self.textures = {
         cells = self:_textures("cells"),
         ui = self:_textures("ui"),
-        markers = self:_textures("markers")
+        markers = self:_textures("markers"),
+        effects = self:_textures("effects"),
+        particles = self:_textures("particles")
     }
+    self.particles.systems = {}
 
     local background = self.textures.ui.background
     local width, height = background:getDimensions()

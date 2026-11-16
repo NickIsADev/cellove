@@ -16,7 +16,7 @@ end
 
 function BaseRPS:update()
     self:neighbors(1, function(cell, x, y)
-        if not cell or cell.name == self.beats then self:_spawn(x, y) end
+        if not cell or cell.name == self.beats and cell:transformable() then self:_spawn(x, y) end
     end)
 end
 

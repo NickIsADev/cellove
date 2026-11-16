@@ -12,6 +12,7 @@ local types = {
         input = "stepper",
         valid = function(property)
             return property.min >= 0 and property.min <= property.default and property.default <= property.max
+                and (not property.swatches or property.max - property.min + 1 == #property.swatches)
         end,
         clean = function(property, value)
             return utils.clamp(value, property.min, property.max)
@@ -108,10 +109,11 @@ end
 function Properties.specs(properties, props)
     local specs = {}
     for _, property in ipairs(properties) do
-        local input = types[type(property.default)].input
+        local input = property.swatches and "palette" or types[type(property.default)].input
         if input then
             specs[#specs + 1] = {
                 kind = input,
+                swatches = property.swatches,
                 key = property.id,
                 label = property.title,
                 min = property.min,

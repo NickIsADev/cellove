@@ -29,7 +29,10 @@ function Driller:force(dx, dy, action)
 end
 
 function Driller:drill()
-    return self:swap(0, 0, self:_aim())
+    local dx, dy = self:_aim()
+    local target = self.grid:get(self.x + dx, self.y + dy)
+
+    return not (target and target:guarded("tunnel")) and self:swap(0, 0, dx, dy)
 end
 
 function Driller:update()

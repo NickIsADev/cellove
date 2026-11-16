@@ -6,7 +6,8 @@ mods/mymod/
 ├─ main.lua     runs when the mod loads
 ├─ icon.png     shown in the mod selection menu
 ├─ textures/    textures, loaded with the mod
-└─ cells/       one .lua file per cell
+├─ cells/       one .lua file per cell
+└─ effects/     one .lua file per effect
 ```
 
 > [!NOTE]
@@ -65,11 +66,12 @@ Put your textures in a `textures/` folder in the mod. It is laid out like a text
 mods/mymod/textures/cells/mymod/thing.png
 ```
 
-Markers use a `markers` folder instead of `cells`, and icons go in `ui`.
+Markers use a `markers` folder instead of `cells`, effects use `effects`, and icons go in `ui`.
 
 ```
 mods/mymod/textures/
 ├─ ui/icon.png
+├─ effects/mymod/frost.png
 └─ cells/mymod/thing.png
 ```
 

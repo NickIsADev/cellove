@@ -1,5 +1,6 @@
 local Widget = require("src/ui/abstract/Widget")
 local IconButton = require("src/ui/widgets/IconButton")
+local Palette = require("src/ui/widgets/Palette")
 local Stepper = require("src/ui/widgets/Stepper")
 local CellSelect = require("src/ui/widgets/CellSelect")
 local TextField = require("src/ui/widgets/TextField")
@@ -15,6 +16,7 @@ local colors = constants.ui.colors
 local kinds = {
     stepper = Stepper,
     toggle = Toggle,
+    palette = Palette,
     cell = CellSelect,
     field = TextField
 }
@@ -156,6 +158,7 @@ function Prompt:open(options)
             max = field.max,
             limit = field.limit,
             options = field.options,
+            swatches = field.swatches,
             picker = self.cellPicker,
             value = field.value,
             focused = false

@@ -15,7 +15,7 @@ function BaseScissor:_split(target, name)
     local split = constants.scissors[name]
     local facing = constants.directions[(self.rotation + split.side) % 4]
     local turn = self.rotates and split.turn or 0
-    local clone = class:new({ rotation = (rotation or target.rotation) + turn, props = props })
+    local clone = class:new({ rotation = (rotation or target.rotation) + turn, props = props, effects = target:kept() })
 
     clone.updated, clone.ran = target.updated, target.ran
     self.simulator.movement:release(self.x, self.y, facing[1], facing[2], clone)
@@ -25,7 +25,7 @@ function BaseScissor:update()
     local facing = constants.directions[self.rotation]
     local target = self.grid:get(self.x + facing[1], self.y + facing[2])
 
-    if self:nudge() or not (target and target:transformable()) then return end
+    if self:nudge() or not (target and target:transformable() and not target:guarded("scissor")) then return end
 
     target.simulator, target.born = self.simulator, true
     target:kill()

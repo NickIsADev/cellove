@@ -2,7 +2,7 @@ local Button = require("src/ui/widgets/Button")
 local IconButton = require("src/ui/widgets/IconButton")
 local Label = require("src/ui/widgets/Label")
 local Separator = require("src/ui/widgets/Separator")
-local Swatch = require("src/ui/widgets/Swatch")
+local Palette = require("src/ui/widgets/Palette")
 local Stepper = require("src/ui/widgets/Stepper")
 local TextField = require("src/ui/widgets/TextField")
 local Toggle = require("src/ui/widgets/Toggle")
@@ -61,6 +61,16 @@ local factories = {
             width = spec.width
         })
     end,
+    palette = function(renderer, spec)
+        return Palette.new({
+            renderer = renderer,
+            key = spec.key,
+            label = spec.label,
+            swatches = spec.swatches,
+            value = spec.value,
+            width = spec.width
+        })
+    end,
     toggle = function(renderer, spec)
         return Toggle.new({
             renderer = renderer,
@@ -79,15 +89,6 @@ local factories = {
             value = spec.value,
             width = spec.width,
             focused = false
-        })
-    end,
-    swatch = function(renderer, spec)
-        return Swatch.new({
-            renderer = renderer,
-            id = spec.id,
-            title = spec.title,
-            description = spec.description,
-            height = size
         })
     end
 }

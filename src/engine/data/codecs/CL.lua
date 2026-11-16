@@ -4,6 +4,7 @@ local utils = require("src/utils")
 
 local config = constants.contraptions
 local limits = constants.grid.limits
+local layers, main = constants.grid.layers, constants.grid.layer
 local base = constants.registry.base.namespace
 local kinds, codes = config.kinds, {}
 for code, kind in ipairs(kinds) do
@@ -23,12 +24,67 @@ local function expand(id)
     return id:find(":") and id or base .. ":" .. id
 end
 
+local function runLengths(cells, code, index)
+    local runs, i = {}, 1
+    while i <= #cells do
+        local entry = cells[i]
+        local start, size = index(entry), 1
+        while cells[i + size] and code(cells[i + size]) == code(entry) and index(cells[i + size]) == start + size do
+            size = size + 1
+        end
+
+        runs[#runs + 1] = { entry = entry, start = start, size = size }
+        i = i + size
+    end
+    return runs
+end
+
+local function writeRuns(parts, runs, code)
+    local last = 0
+    for _, run in ipairs(runs) do
+        parts[#parts + 1] = utils.packVarint(run.start - last)
+        if run.size > 1 then
+            parts[#parts + 1] = utils.packVarint(code(run.entry) * 2 + 1)
+            parts[#parts + 1] = utils.packVarint(run.size - 2)
+        else
+            parts[#parts + 1] = utils.packVarint(code(run.entry) * 2)
+        end
+        last = run.start + run.size
+    end
+end
+
+local function writeProps(parts, cells, index)
+    local tuned = {}
+    for _, entry in ipairs(cells) do
+        if Properties.custom(entry) then tuned[#tuned + 1] = entry end
+    end
+
+    parts[#parts + 1] = utils.packVarint(#tuned)
+    local at = 0
+    for _, entry in ipairs(tuned) do
+        local properties = entry.class.properties
+        parts[#parts + 1] = utils.packVarint(index(entry) - at)
+        parts[#parts + 1] = utils.packVarint(#properties)
+        at = index(entry)
+
+        for _, property in ipairs(properties) do
+            parts[#parts + 1] = Properties.pack(property, Properties.value(entry.props, property))
+        end
+    end
+    return #tuned
+end
+
 local function serialize(data, default)
-    local cells = {}
+    local cells, stacks = {}, {}
     for _, entry in ipairs(data.cells) do
+        local layer = entry.class.layer
+        stacks[layer] = stacks[layer] or {}
+        table.insert(stacks[layer], entry)
         cells[#cells + 1] = entry
     end
-    table.sort(cells, byPosition)
+    for _, stack in pairs(stacks) do
+        table.sort(stack, byPosition)
+    end
 
     local palette, slots, counts = {}, {}, {}
     for _, entry in ipairs(cells) do
@@ -53,25 +109,7 @@ local function serialize(data, default)
         parts[#parts + 1] = utils.packString(shorten(id))
     end
 
-    local last, i = 0, 1
-    while i <= #cells do
-        local entry = cells[i]
-        local start, run = index(entry), 1
-        while cells[i + run] and code(cells[i + run]) == code(entry) and index(cells[i + run]) == start + run do
-            run = run + 1
-        end
-
-        parts[#parts + 1] = utils.packVarint(start - last)
-        if run > 1 then
-            parts[#parts + 1] = utils.packVarint(code(entry) * 2 + 1)
-            parts[#parts + 1] = utils.packVarint(run - 2)
-        else
-            parts[#parts + 1] = utils.packVarint(code(entry) * 2)
-        end
-
-        last = start + run
-        i = i + run
-    end
+    writeRuns(parts, runLengths(stacks[main] or {}, code, index), code)
 
     local markers = {}
     for _, marker in ipairs(data.markers or {}) do
@@ -107,25 +145,21 @@ local function serialize(data, default)
         end
     end
 
-    local tuned = {}
-    for _, entry in ipairs(cells) do
-        if Properties.custom(entry) then tuned[#tuned + 1] = entry end
+    local props = {}
+    if writeProps(props, stacks[main] or {}, index) > 0 then
+        parts[#parts + 1] = utils.packVarint(data.width * data.height + 1)
+        parts[#parts + 1] = table.concat(props)
     end
 
-    if #tuned > 0 then
-        parts[#parts + 1] = utils.packVarint(data.width * data.height + 1)
-        parts[#parts + 1] = utils.packVarint(#tuned)
+    for slot, layer in ipairs(layers) do
+        if layer ~= main and stacks[layer] then
+            local runs = runLengths(stacks[layer], code, index)
 
-        local at = 0
-        for _, entry in ipairs(tuned) do
-            local properties = entry.class.properties
-            parts[#parts + 1] = utils.packVarint(index(entry) - at)
-            parts[#parts + 1] = utils.packVarint(#properties)
-            at = index(entry)
-
-            for _, property in ipairs(properties) do
-                parts[#parts + 1] = Properties.pack(property, Properties.value(entry.props, property))
-            end
+            parts[#parts + 1] = utils.packVarint(data.width * data.height + 3)
+            parts[#parts + 1] = utils.packVarint(slot - 1)
+            parts[#parts + 1] = utils.packVarint(#runs)
+            writeRuns(parts, runs, code)
+            writeProps(parts, stacks[layer], index)
         end
     end
 
@@ -230,6 +264,59 @@ local function parseBorder(payload, position, registry)
     return registry.cells[expand(id)], position
 end
 
+local function parseRun(payload, position, gap, context, cells, byIndex)
+    local tag, run = nil, 1
+
+    tag, position = utils.unpackVarint(payload, position)
+    if not tag then return end
+
+    if tag % 2 == 1 then
+        local extra
+        extra, position = utils.unpackVarint(payload, position)
+        if not extra then return end
+        run = extra + 2
+    end
+
+    local index = context.index + gap
+    if index + run > context.total then return end
+
+    local code = math.floor(tag / 2)
+    local class, rotation = context.palette[math.floor(code / 4) + 1], code % 4
+    if class then
+        for at = index, index + run - 1 do
+            local cell = {
+                class = class,
+                rotation = rotation,
+                x = at % context.width + 1,
+                y = math.floor(at / context.width) + 1
+            }
+            cells[#cells + 1] = cell
+            byIndex[at] = cell
+        end
+    end
+    context.index = index + run
+    return position
+end
+
+local function parseLayer(payload, position, context, cells, partial, registry)
+    local slot, count
+    slot, position = utils.unpackVarint(payload, position)
+    if not slot or not layers[slot + 1] then return end
+    count, position = utils.unpackVarint(payload, position)
+    if not count then return end
+
+    local byIndex, inner = {}, { index = 0, total = context.total, width = context.width, palette = context.palette }
+    for _ = 1, count do
+        local gap
+        gap, position = utils.unpackVarint(payload, position)
+        if not gap then return end
+
+        position = parseRun(payload, position, gap, inner, cells, byIndex)
+        if not position then return end
+    end
+    return parseProps(payload, position, byIndex, partial, registry)
+end
+
 local function parse(payload, registry)
     local width, position = utils.unpackVarint(payload, 1)
     if not width then return end
@@ -255,9 +342,11 @@ local function parse(payload, registry)
         if not palette[i] and not utils.has(missing, namespace) then missing[#missing + 1] = namespace end
     end
 
-    local cells, markers, border, byIndex, index, total = {}, {}, nil, {}, 0, width * height
+    local total = width * height
+    local cells, markers, border, byIndex = {}, {}, nil, {}
+    local context = { index = 0, total = total, width = width, palette = palette }
     while position <= #payload do
-        local gap, tag, run = nil, nil, 1
+        local gap
 
         gap, position = utils.unpackVarint(payload, position)
         if not gap then return end
@@ -271,35 +360,12 @@ local function parse(payload, registry)
         elseif gap == total + 2 then
             border, position = parseBorder(payload, position, registry)
             if not position then return end
+        elseif gap == total + 3 then
+            position = parseLayer(payload, position, context, cells, #missing > 0, registry)
+            if not position then return end
         else
-            tag, position = utils.unpackVarint(payload, position)
-            if not tag then return end
-
-            if tag % 2 == 1 then
-                local extra
-                extra, position = utils.unpackVarint(payload, position)
-                if not extra then return end
-                run = extra + 2
-            end
-
-            index = index + gap
-            if index + run > total then return end
-
-            local code = math.floor(tag / 2)
-            local class, rotation = palette[math.floor(code / 4) + 1], code % 4
-            if class then
-                for at = index, index + run - 1 do
-                    local cell = {
-                        class = class,
-                        rotation = rotation,
-                        x = at % width + 1,
-                        y = math.floor(at / width) + 1
-                    }
-                    cells[#cells + 1] = cell
-                    byIndex[at] = cell
-                end
-            end
-            index = index + run
+            position = parseRun(payload, position, gap, context, cells, byIndex)
+            if not position then return end
         end
     end
     return {

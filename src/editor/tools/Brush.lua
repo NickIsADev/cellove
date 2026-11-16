@@ -4,6 +4,8 @@ local utils = require("src/utils")
 
 local config = constants.editor.brush
 local ghost = constants.editor.ghost
+local hues = constants.markers.hues
+local colors = constants.ui.colors
 
 local function footprint(size, shape)
     local low, high = -math.floor((size - 1) / 2), math.floor(size / 2)
@@ -31,16 +33,40 @@ function Brush.new(editor)
     return self
 end
 
+function Brush:_wipe(x, y)
+    local editor = self.editor
+    local grid, markers = editor.simulator.grid, editor.markers
+    local top = grid:top(x, y)
+
+    if top then
+        editor:setCell(x, y, nil, top.layer)
+    elseif markers:at(x, y) then
+        editor:setMarker(x, y)
+    elseif markers:placeableAt(x, y) then
+        editor:setPlaceable(x, y, false)
+    elseif markers:boxAt(x, y) then
+        editor:removeArea(markers:boxAt(x, y))
+    end
+end
+
 function Brush:_paint(gx, gy)
     local editor = self.editor
+    local class = editor.selected
     local state = not self.erasing and {
-        class = editor.selected,
+        class = class,
         rotation = editor.targetRotation % 4,
-        props = editor.properties:values(editor.selected)
+        props = editor.properties:values(class)
     } or nil
 
     for _, point in ipairs(self.points) do
-        editor:setCell(gx + point[1], gy + point[2], state)
+        local x, y = gx + point[1], gy + point[2]
+        if self.erase then
+            self:_wipe(x, y)
+        elseif class and class.tile then
+            editor:setPlaceable(x, y, state and hues[state.props.color])
+        else
+            editor:setCell(x, y, state)
+        end
     end
 end
 
@@ -75,6 +101,8 @@ function Brush:click(id)
         self:_resize(-1)
     elseif id == "increase" then
         self:_resize(1)
+    elseif id == "erase" then
+        self.erase = not self.erase
     elseif id == "shape" then
         self:_set(self.size, self.shape == "square" and "circle" or "square")
     end
@@ -85,8 +113,17 @@ function Brush:wheel(amount)
     return true
 end
 
+function Brush:profile()
+    if not self.erase then return self.editor.selected end
+end
+
+function Brush:leave()
+    self.erase = false
+end
+
 function Brush:reset()
     self:_set(config.default.size, config.default.shape)
+    self:leave()
 end
 
 function Brush:refresh()
@@ -95,14 +132,16 @@ function Brush:refresh()
     self.byId.decrease.enabled = self.size > config.size.min
     self.byId.increase.enabled = self.size < config.size.max
     self.byId.size.text = tostring(self.size)
+    self.byId.erase.tint = self.erase and colors.accent or colors.white
 end
 
 function Brush:press(gx, gy, button)
-    if button == 1 and not self.editor.selected then return false end
+    if button == 1 and not (self.erase or self.editor.selected) then return false end
 
-    self.erasing = button == 2
+    self.erasing = button == 2 or self.erase
     self.x, self.y = gx, gy
-    if not self:_stock(gx, gy) then self:_paint(gx, gy) end
+    local class = self.editor.selected
+    if self.erase or class and class.tile or not self:_stock(gx, gy) then self:_paint(gx, gy) end
     return true
 end
 
@@ -112,12 +151,20 @@ end
 
 function Brush:draw(gx, gy)
     local editor = self.editor
-    if not (gx and editor.selected) then return end
+    local class = editor.selected
+    if not gx or not (self.erase or class) then return end
 
+    local props = class and editor.properties:values(class)
     for _, point in ipairs(self.points) do
         local x, y = gx + point[1], gy + point[2]
         if editor.simulator.grid:bounds(x, y) then
-            editor.renderer:drawGhost(editor.selected.texture, x, y, editor.visualRotation, ghost)
+            if self.erase then
+                editor.renderer:drawBox(x, y, x, y, colors.danger)
+            elseif class.tile then
+                editor.renderer:drawSlot(x, y, hues[props.color], ghost)
+            else
+                editor.renderer:drawGhost(class:preview(props), x, y, editor.visualRotation, ghost)
+            end
         end
     end
 end

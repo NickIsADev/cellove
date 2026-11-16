@@ -6,8 +6,8 @@ Puzzle.__index = Puzzle
 
 function Puzzle.new(data)
     local self = setmetatable({}, Puzzle)
-    local subticks, rear, sweeps = data.registry:subticks()
-    self.simulator = Simulator.new({ subticks = subticks, rear = rear, sweeps = sweeps })
+    local subticks, rear, sweeps, effects = data.registry:subticks()
+    self.simulator = Simulator.new({ subticks = subticks, rear = rear, sweeps = sweeps, effects = effects })
     self.markers = Markers.new()
 
     data.settings:listen("tickSpeed", function(tickSpeed)
@@ -25,6 +25,23 @@ function Puzzle:_count(tag)
         if cell and cell[tag] then count = count + 1 end
     end
     return count
+end
+
+function Puzzle:_triggered(outcome)
+    local grid, groups = self.simulator.grid, {}
+
+    for index = 1, grid.width * grid.height do
+        local cell = grid.cells[index]
+        if cell and cell.outcome == outcome then
+            local group = cell:group()
+            groups[group] = groups[group] ~= false and cell:lit()
+        end
+    end
+
+    for _, lit in pairs(groups) do
+        if lit then return true end
+    end
+    return false
 end
 
 function Puzzle:load(data)
@@ -87,11 +104,12 @@ function Puzzle:failed()
     return self.simulator:started() and (
         self:_count("friendly") < initial.friendly
         or initial.player > 0 and self:_count("player") == 0 and self:remaining() > 0
+        or self:_triggered("lose")
     )
 end
 
 function Puzzle:solved()
-    return self.simulator:started() and self:remaining() == 0
+    return self.simulator:started() and (self:remaining() == 0 or self:_triggered("win"))
 end
 
 return Puzzle

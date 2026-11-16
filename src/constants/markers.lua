@@ -46,24 +46,11 @@ local buttons = {
         title = "Box",
         description = "Drag to outline an area with a box."
     },
-    {
-        kind = "icon",
-        id = "placeable",
-        folder = "ui",
-        texture = "puzzle",
-        title = "Placeable",
-        description = "Paint tiles where cells can be moved in puzzles. Cells only move between tiles of the same color."
-    },
-    { kind = "separator", id = "colors" }
 }
 
-for _, preset in ipairs(presets) do
-    buttons[#buttons + 1] = {
-        kind = "swatch",
-        id = preset.id,
-        title = preset.title,
-        description = "Colors labels, boxes and placeables " .. preset.title:lower() .. "."
-    }
+local hues = {}
+for index, preset in ipairs(presets) do
+    hues[index] = preset.color
 end
 
 return {
@@ -89,8 +76,9 @@ return {
             "box",
             "placeable"
         },
-        colored = { label = true, box = true, placeable = true },
+        colored = { label = true, box = true },
         presets = presets,
+        hues = hues,
         buttons = buttons
     }
 }

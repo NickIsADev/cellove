@@ -25,6 +25,9 @@ end
 function BaseTool:refresh()
 end
 
+function BaseTool:profile()
+end
+
 function BaseTool:press(gx, gy, button)
 end
 

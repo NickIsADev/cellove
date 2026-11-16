@@ -4,6 +4,7 @@ local constants = require("src/constants")
 local utils = require("src/utils")
 
 local config = constants.editor.selection
+local layers = constants.grid.layers
 local files = constants.contraptions
 local ghost = constants.editor.ghost
 local fixed = constants.markers.fixed
@@ -121,15 +122,17 @@ function Selector:_capture()
 
     for y = area.y1, area.y2 do
         for x = area.x1, area.x2 do
-            local cell = editor.simulator.grid:get(x, y)
-            if cell then
-                data.cells[#data.cells + 1] = {
-                    class = getmetatable(cell),
-                    rotation = cell.rotation,
-                    props = cell.props,
-                    x = x - area.x1 + 1,
-                    y = y - area.y1 + 1
-                }
+            for _, layer in ipairs(layers) do
+                local cell = editor.simulator.grid:get(x, y, layer)
+                if cell then
+                    data.cells[#data.cells + 1] = {
+                        class = getmetatable(cell),
+                        rotation = cell.rotation,
+                        props = cell.props,
+                        x = x - area.x1 + 1,
+                        y = y - area.y1 + 1
+                    }
+                end
             end
         end
     end
@@ -147,7 +150,9 @@ function Selector:_clear()
 
     for y = area.y1, area.y2 do
         for x = area.x1, area.x2 do
-            editor:setCell(x, y, nil)
+            for _, layer in ipairs(layers) do
+                editor:setCell(x, y, nil, layer)
+            end
         end
     end
     local items = editor.markers.items
@@ -207,7 +212,9 @@ function Selector:_count()
         cache = { area = area, version = grid.version, total = 0 }
         for y = area.y1, area.y2 do
             for x = area.x1, area.x2 do
-                if grid:get(x, y) then cache.total = cache.total + 1 end
+                for _, layer in ipairs(layers) do
+                    if grid:get(x, y, layer) then cache.total = cache.total + 1 end
+                end
             end
         end
         self.counted = cache

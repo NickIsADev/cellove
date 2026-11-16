@@ -7,6 +7,7 @@ local Enemy = setmetatable({
     description = "Explodes when pushed into, taking the cell that pushed it along.",
     faces = {},
     hostile = true,
+    destroys = true,
     categories = { "enemies" }
 }, { __index = BaseCell })
 Enemy.__index = Enemy

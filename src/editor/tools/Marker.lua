@@ -7,8 +7,14 @@ local config = constants.editor.marker
 local ghost = constants.editor.ghost
 local colors = constants.ui.colors
 local fixed = constants.markers.fixed
-local presets = constants.markers.presets
+local hues = constants.markers.hues
 local colored = constants.markers.colored
+
+local profile = {
+    properties = {
+        { id = "color", title = config.profile.label, default = 1, min = 1, max = #hues, swatches = hues }
+    }
+}
 
 local Marker = setmetatable({}, { __index = BaseTool })
 Marker.__index = Marker
@@ -16,11 +22,12 @@ Marker.__index = Marker
 function Marker.new(editor)
     local self = setmetatable({}, Marker)
     self:setup(editor, config.buttons)
-    for _, preset in ipairs(presets) do
-        self.byId[preset.id].color = preset.color
-    end
     self:reset()
     return self
+end
+
+function Marker:_hue()
+    return hues[self.editor.properties:values(profile).color]
 end
 
 function Marker:_label(gx, gy)
@@ -40,7 +47,7 @@ function Marker:_label(gx, gy)
                 y = gy,
                 rotation = editor.targetRotation % 4,
                 text = text,
-                color = self.color
+                color = self:_hue()
             })
             editor:commit()
         end
@@ -57,16 +64,14 @@ function Marker:_stretch(gx, gy)
         y = math.min(self.anchor[2], y),
         width = math.abs(self.anchor[1] - x) + 1,
         height = math.abs(self.anchor[2] - y) + 1,
-        color = self.color
+        color = self:_hue()
     }
 end
 
 function Marker:_paint(gx, gy)
     local editor = self.editor
 
-    if self.kind == "placeable" then
-        editor:setPlaceable(gx, gy, not self.erasing and self.color)
-    elseif self.erasing then
+    if self.erasing then
         editor:setMarker(gx, gy)
     else
         editor:setMarker(gx, gy, {
@@ -79,7 +84,7 @@ function Marker:_paint(gx, gy)
 end
 
 function Marker:reset()
-    self.kind, self.color = config.default, config.color
+    self.kind = config.default
     self:leave()
 end
 
@@ -88,9 +93,14 @@ function Marker:leave()
 end
 
 function Marker:click(id)
-    local hue = self.byId[id].color
+    self.kind = id
+end
 
-    if hue then self.color = hue else self.kind = id end
+function Marker:profile()
+    if not colored[self.kind] then return end
+
+    profile.title = self.byId[self.kind].title
+    return profile
 end
 
 function Marker:refresh()
@@ -99,12 +109,6 @@ function Marker:refresh()
     for id, button in pairs(self.byId) do
         button.tint = id == self.kind and colors.accent or colors.white
         button.rotation = fixed[id] and 0 or turn
-    end
-    for _, preset in ipairs(presets) do
-        local swatch = self.byId[preset.id]
-
-        swatch.selected = preset.color == self.color
-        swatch.enabled = colored[self.kind]
     end
 end
 
@@ -152,7 +156,7 @@ function Marker:draw(gx, gy)
     if not (gx and editor.simulator.grid:bounds(gx, gy)) then return end
 
     if self.kind == "label" or Markers.areas[self.kind] then
-        editor.renderer:drawBox(gx, gy, gx, gy, self.kind == "placeable" and self.color or colors.white)
+        editor.renderer:drawBox(gx, gy, gx, gy, colors.white)
     else
         editor.renderer:drawMarkers({
             {

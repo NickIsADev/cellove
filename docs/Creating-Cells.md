@@ -8,6 +8,7 @@ Every `.lua` file in a mod's `cells` folder is registered as a cell. Folders nam
 - [Subticks](#subticks)
 - [Common patterns](#common-patterns)
 - [Inheriting](#inheriting)
+- [Layers](#layers)
 - [Talking to other cells](#talking-to-other-cells)
 
 ## A minimal cell
@@ -80,7 +81,7 @@ properties = {
 
 | type of `default` | input | requires |
 | --- | --- | --- |
-| `number` | stepper | `min` and `max`. `min` is at least 0 and `default` is between them |
+| `number` | stepper | `min` and `max`. `min` is at least 0 and `default` is between them. Add `swatches`, a list of hex colors, to pick by color swatch instead. The value is the 1-based position in the list |
 | `boolean` | toggle | nothing |
 | `string` | text field | `limit`, the maximum length |
 | `table` | none | an empty table as `default`. holds a cell as `{ class, rotation, props }`, like Storage does |
@@ -99,6 +100,11 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 
 | subtick | cells |
 | --- | --- |
+| `thawer` | thawers |
+| `freezer` | freezers |
+| `effectGiver` | effect givers |
+| `effectRemover` | perpetual stoppers |
+| `goo` | where goo freezes its cells |
 | `pipe` | pipes |
 | `trueGear` | true gears |
 | `dumpster` | dumpsters, cross dumpsters |
@@ -106,6 +112,7 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | `superMirror`, `mirror`, `curvedMirror` | super mirrors, mirrors, curved mirrors |
 | `cyclerCW`, `cyclerCCW` | clockwise cyclers, counter-clockwise cyclers (paracyclers use both) |
 | `memoryGenerator`, `generator`, `memoryReplicator`, `maker` | memory generators, generators, memory replicators, makers |
+| `perpetual` | where perpetual rotations and flips are applied |
 | `superRotator`, `rotator`, `spin` | super rotators, rotators, the spin of rotator movers |
 | `flipGear` | flip gears |
 | `gearCW`, `gearCCW`, `gear180`, `gearRNG` | clockwise gears, counter-clockwise gears, 180 gears, random gears |
@@ -122,9 +129,12 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | `nudger` | nudgers, CelLoves |
 | `player` | players |
 | `fearful` | fearful enemies, fearful allies |
+| `gravity` | where gravity pulls its cells, one direction per pass |
 | `gate` | gates |
+| `coinExtractor` | coin extractors |
 | `spread`, `decay` | life, split into spreading and dying |
 | `settlestorage` | settlestorages |
+| `compel` | where compelled cells die, and goo wears off |
 
 ## Common patterns
 
@@ -200,6 +210,10 @@ end
 ```
 
 Call the parent's method directly, like `Mover.update` above, to keep its behavior and add to it. Everything you don't override, like `subtick` and `drive`, comes from the parent.
+
+## Layers
+
+A cell sits on the foreground unless its class sets `layer`. Put a cell on the `"overlay"` layer to let it sit on top of another cell, and implement [`bars`](BaseCell#basecellbarsdx-dy-action-mover) and [`eats`](BaseCell#basecelleatsdx-dy-action-mover) to decide what can enter its tile. See [Layers](Layers).
 
 ## Talking to other cells
 

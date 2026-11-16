@@ -41,7 +41,6 @@ return {
         button = { height = 40, font = 16 },
         label = { font = 16, shadow = { offset = 2, alpha = 0.6 } },
         separator = { width = 2, alpha = 0.3 },
-        swatch = { size = 28 },
         shine = {
             speed = 0.6,
             width = 0.3,
@@ -114,6 +113,14 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 screen)
             size = 24,
             on = { texture = "checkmark", tint = "accent" },
             off = { texture = "x", tint = "white" }
+        },
+        palette = {
+            height = 40,
+            font = 16,
+            label = 72,
+            size = 24,
+            gap = 6,
+            grow = 4
         },
         cellSelect = {
             height = 40,

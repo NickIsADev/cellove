@@ -18,7 +18,7 @@ function Constructor:bump(dx, dy, pusher)
     local class, props, rotation = pusher:generated()
     if not class then return end
 
-    local clone = class:new({ rotation = rotation or pusher.rotation, props = props })
+    local clone = class:new({ rotation = rotation or pusher.rotation, props = props, effects = pusher:kept() })
     local facing = constants.directions[self.rotation]
 
     self.simulator.movement:defer(function()
