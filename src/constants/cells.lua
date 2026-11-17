@@ -84,6 +84,12 @@ return {
                 icon = "diverger"
             },
             {
+                id = "forkers",
+                title = "Forkers",
+                icon = "forker",
+                parent = "divergers"
+            },
+            {
                 id = "displacers",
                 title = "Displacers",
                 icon = "displacer",
