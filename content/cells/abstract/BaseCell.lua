@@ -327,12 +327,12 @@ function BaseCell:preview(props)
     return self.texture
 end
 
-function BaseCell:look()
+function BaseCell:sprite()
     return self:preview(self.props)
 end
 
 function BaseCell:draw(renderer, x, y, angle, scale, offset)
-    renderer:drawSprite(self:look(), x, y, angle, scale, offset)
+    renderer:drawSprite(self:sprite(), x, y, angle, scale, offset)
 end
 
 return BaseCell

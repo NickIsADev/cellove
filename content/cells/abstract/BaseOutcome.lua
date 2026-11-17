@@ -40,7 +40,7 @@ function BaseOutcome:preview(props)
     return props.on and self.texture .. "_on" or self.texture
 end
 
-function BaseOutcome:look()
+function BaseOutcome:sprite()
     return self.enabled and self.texture .. "_on" or self.texture
 end
 

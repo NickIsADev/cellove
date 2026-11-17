@@ -31,7 +31,7 @@ function Switch:preview(props)
     return props.on and self.texture .. "_on" or self.texture
 end
 
-function Switch:look()
+function Switch:sprite()
     return Switches.on(self.grid, self.props.id) and self.texture .. "_on" or self.texture
 end
 

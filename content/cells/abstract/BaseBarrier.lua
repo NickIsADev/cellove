@@ -16,7 +16,7 @@ function BaseBarrier:bars(dx, dy, action, mover)
     return self:_shut(mover)
 end
 
-function BaseBarrier:look()
+function BaseBarrier:sprite()
     return (self:_shut() == self.solid and self or self.paired).texture
 end
 

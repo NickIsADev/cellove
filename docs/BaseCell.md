@@ -99,7 +99,7 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | [`divert`](#basecelldivertdx-dy-reverse) | nothing | bends the path of a move passing through |
 | [`jump`](#basecelljumpdx-dy-x-y) | nothing | moves the path of a move passing through somewhere else |
 | [`preview`](#basecellpreviewprops) | `self.texture` | name of the texture a cell with these properties looks like |
-| [`look`](#basecelllook) | `self:preview(self.props)` | name of the texture `draw` uses |
+| [`sprite`](#basecellsprite) | `self:preview(self.props)` | name of the texture `draw` uses |
 | [`draw`](#basecelldrawrenderer-x-y-angle-scale-offset) | default sprite | draws the cell |
 
 ### `BaseCell:update(subtick, direction)`
@@ -195,7 +195,7 @@ Called when the tile is clicked while the simulation has started. [Layers](Layer
 
 ### `BaseCell:preview(props)`
 
-Optional. Returns the texture name for a cell with the given `props`. The editor calls it on the class, before any cell exists, for the placement preview. [`look`](#basecelllook) uses it for placed cells, so a cell whose sprite only depends on its properties only needs this one.
+Optional. Returns the texture name for a cell with the given `props`. The editor calls it on the class, before any cell exists, for the placement preview. [`sprite`](#basecellsprite) uses it for placed cells, so a cell whose sprite only depends on its properties only needs this one.
 
 ```lua
 function Gem:preview(props)
@@ -203,12 +203,12 @@ function Gem:preview(props)
 end
 ```
 
-### `BaseCell:look()`
+### `BaseCell:sprite()`
 
 Optional. Returns the texture name to draw, so a cell can change its sprite without overriding `draw`. Override it for sprites that depend on the cell's state, and `preview` for the look it starts with. The library icon always uses `self.texture`.
 
 ```lua
-function Lamp:look()
+function Lamp:sprite()
     return self.lit and self.texture .. "_on" or self.texture
 end
 ```
