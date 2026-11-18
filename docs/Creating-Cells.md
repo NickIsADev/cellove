@@ -108,6 +108,8 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | `pipe` | pipes |
 | `trueGear` | true gears |
 | `dumpster` | dumpsters, cross dumpsters |
+| `shifter` | shifters |
+| `transformer` | transformers, transmutators |
 | `midas` | midas |
 | `superMirror`, `mirror`, `curvedMirror` | super mirrors, mirrors, curved mirrors |
 | `cyclerCW`, `cyclerCCW` | clockwise cyclers, counter-clockwise cyclers (paracyclers use both) |

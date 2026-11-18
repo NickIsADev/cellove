@@ -668,7 +668,7 @@ function Movement:generate(x, y, dx, dy, options)
     end
 
     local back = self:_route(x, y, sx, sy, true)
-    local source = back and grid:get(back.x, back.y)
+    local source = back and (options.cell or grid:get(back.x, back.y))
     local front = self:_route(x, y, dx, dy)
     if not (source and source:generatable() and front) then return false end
     if grid:barred(front.x, front.y, front.dx, front.dy, "generate", source) then return false end

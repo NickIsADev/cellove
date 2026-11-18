@@ -90,6 +90,23 @@ return {
                 parent = "divergers"
             },
             {
+                id = "shifters",
+                title = "Shifters",
+                icon = "shifter",
+                parent = "generators"
+            },
+            {
+                id = "transformers",
+                title = "Transformers",
+                icon = "transformer"
+            },
+            {
+                id = "transmutators",
+                title = "Transmutators",
+                icon = "transmutator",
+                parent = "transformers"
+            },
+            {
                 id = "displacers",
                 title = "Displacers",
                 icon = "displacer",
