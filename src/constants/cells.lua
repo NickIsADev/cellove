@@ -107,6 +107,18 @@ return {
                 parent = "transformers"
             },
             {
+                id = "worms",
+                title = "Worms",
+                icon = "worm",
+                parent = "transformers"
+            },
+            {
+                id = "timewarpers",
+                title = "Timewarpers",
+                icon = "timewarper",
+                parent = "transformers"
+            },
+            {
                 id = "displacers",
                 title = "Displacers",
                 icon = "displacer",

@@ -108,6 +108,8 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | `pipe` | pipes |
 | `trueGear` | true gears |
 | `dumpster` | dumpsters, cross dumpsters |
+| `superTimewarper`, `timewarper` | super timewarpers, timewarpers |
+| `worm` | worms |
 | `shifter` | shifters |
 | `transformer` | transformers, transmutators |
 | `midas` | midas |
