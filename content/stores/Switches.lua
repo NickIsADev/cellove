@@ -1,21 +1,20 @@
 local Switches = {}
 
-local function build(grid)
+function Switches.build(snapshot)
     local on = {}
 
-    for index = 1, grid.width * grid.height do
-        local cell = grid.cells[index]
-        if cell and cell.switch and cell.props.on then on[cell.props.id] = true end
+    for _, entry in ipairs(snapshot.cells) do
+        if entry.class.switch and entry.props.on then on[entry.props.id] = true end
     end
     return on
 end
 
 function Switches.on(grid, id)
-    return grid.simulator:store("switches", build)[id] == true
+    return grid.simulator:store(Switches)[id] == true
 end
 
 function Switches.flip(grid, id)
-    local on = grid.simulator:store("switches", build)
+    local on = grid.simulator:store(Switches)
 
     on[id] = not on[id] or nil
     grid:invalidate()

@@ -1,15 +1,15 @@
 local Keys = {}
 
-local function build()
+function Keys.build()
     return {}
 end
 
 function Keys.held(grid, color)
-    return grid.simulator:store("keys", build)[color] == true
+    return grid.simulator:store(Keys)[color] == true
 end
 
 function Keys.collect(grid, color)
-    grid.simulator:store("keys", build)[color] = true
+    grid.simulator:store(Keys)[color] = true
     grid:invalidate()
 end
 

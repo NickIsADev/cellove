@@ -304,21 +304,19 @@ function Simulator:click(x, y, button)
     return false
 end
 
-function Simulator:store(name, build)
-    local store = self.stores[name]
-    if store and (self:started() or store.version == self.grid.version) then return store.data end
+function Simulator:store(store)
+    local cache = self.stores[store]
+    if cache and (self:started() or cache.version == self.grid.version) then return cache.data end
 
-    store = { build = build, data = build(self.grid), version = self.grid.version }
-    self.stores[name] = store
-    return store.data
+    cache = { data = store.build(self:snapshot()), version = self.grid.version }
+    self.stores[store] = cache
+    return cache.data
 end
 
 function Simulator:save()
     if self.time.subtick ~= 0 then return end
     self.grid:save()
-    for _, store in pairs(self.stores) do
-        store.data = store.build(self.grid)
-    end
+    self.stores = {}
 end
 
 function Simulator:snapshot()
