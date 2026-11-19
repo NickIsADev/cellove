@@ -470,7 +470,8 @@ return {
             icon = 40,
             add = 24,
             pad = 12,
-            font = { title = 16, category = 12 }
+            font = { title = 16, category = 12 },
+            dot = { gap = 8, nudge = -1, radius = 2, segments = 16 }
         },
         sort = {
             width = 200,

@@ -48,8 +48,8 @@ local function categoryLine(class)
         parts[#parts + 1] = #children > 0 and titles[root] .. " > " .. table.concat(children, ", ") or titles[root]
     end
 
-    lines[class] = table.concat(parts, " | ")
-    return lines[class]
+    lines[class] = parts
+    return parts
 end
 
 local sorts = {}
@@ -391,6 +391,20 @@ function CellBrowser:_choose(class)
     self:_pick(class)
 end
 
+function CellBrowser:_drawCategories(font, parts, x, y)
+    local dot = config.row.dot
+    local cy = y + font:getHeight() / 2
+
+    for index, part in ipairs(parts) do
+        if index > 1 then
+            love.graphics.circle("fill", x + dot.gap + dot.nudge, cy, dot.radius, dot.segments)
+            x = x + dot.gap * 2
+        end
+        love.graphics.print(part, x, y)
+        x = x + font:getWidth(part)
+    end
+end
+
 function CellBrowser:_drawCell(class, x, y, width, height)
     local row = config.row
     local texture = self.renderer.textures.cells[class.texture]
@@ -410,7 +424,7 @@ function CellBrowser:_drawCell(class, x, y, width, height)
     love.graphics.print(class.title, textX, textY)
     love.graphics.setFont(categoryFont)
     love.graphics.setColor(utils.fromHex(colors.white, 0.5))
-    love.graphics.print(categoryLine(class), textX, textY + titleFont:getHeight())
+    self:_drawCategories(categoryFont, categoryLine(class), textX, textY + titleFont:getHeight())
     self:_drawExtras(class, x, y, width, height)
 end
 
