@@ -8,11 +8,15 @@ local SwivelEnemy = setmetatable({
 }, { __index = Enemy })
 SwivelEnemy.__index = SwivelEnemy
 
-function SwivelEnemy:absorb()
-    if self.rotation > 0 then
-        self:rotate(-1, true)
+function SwivelEnemy:health()
+    return self.rotation + 1
+end
+
+function SwivelEnemy:hit(damage)
+    if damage > self.rotation then
+        Enemy.hit(self, damage)
     else
-        self:kill(true)
+        self:rotate(-damage, true)
     end
 end
 

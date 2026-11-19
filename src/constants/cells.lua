@@ -9,6 +9,15 @@ return {
         weight = -1
     },
 
+    sniper = {
+        crossings = 5
+    },
+
+    sentry = {
+        crossings = 5,
+        warning = 4
+    },
+
     scissors = {
         left = { side = -1, turn = 1 },
         right = { side = 1, turn = -1 },
@@ -20,6 +29,41 @@ return {
         effects = "content/effects",
         pattern = "^[a-z0-9_]+$",
         categories = {
+            {
+                id = "basic",
+                title = "Basic",
+                icon = "pushable"
+            },
+            {
+                id = "walls",
+                title = "Walls",
+                icon = "wall",
+                parent = "basic"
+            },
+            {
+                id = "pushables",
+                title = "Pushables",
+                icon = "pushable",
+                parent = "basic"
+            },
+            {
+                id = "weights",
+                title = "Weights",
+                icon = "weight",
+                parent = "basic"
+            },
+            {
+                id = "sticky",
+                title = "Sticky",
+                icon = "slime",
+                parent = "basic"
+            },
+            {
+                id = "input",
+                title = "Input",
+                icon = "inputgate",
+                parent = "basic"
+            },
             {
                 id = "movers",
                 title = "Movers",
@@ -38,21 +82,39 @@ return {
                 parent = "movers"
             },
             {
-                id = "scissors",
-                title = "Scissors",
-                icon = "scissor",
-                parent = "movers"
-            },
-            {
                 id = "drillers",
                 title = "Drillers",
                 icon = "driller",
                 parent = "movers"
             },
             {
+                id = "slicers",
+                title = "Slicers",
+                icon = "cutter",
+                parent = "movers"
+            },
+            {
+                id = "scissors",
+                title = "Scissors",
+                icon = "scissor",
+                parent = "movers"
+            },
+            {
+                id = "missiles",
+                title = "Missiles",
+                icon = "missile",
+                parent = "movers"
+            },
+            {
                 id = "players",
                 title = "Players",
                 icon = "player",
+                parent = "movers"
+            },
+            {
+                id = "othermovers",
+                title = "Other",
+                icon = "nudger",
                 parent = "movers"
             },
             {
@@ -67,6 +129,99 @@ return {
                 parent = "generators"
             },
             {
+                id = "shifters",
+                title = "Shifters",
+                icon = "shifter",
+                parent = "generators"
+            },
+            {
+                id = "gates",
+                title = "Gates",
+                icon = "orgate",
+                parent = "generators"
+            },
+            {
+                id = "builders",
+                title = "Builders",
+                icon = "constructor",
+                parent = "generators"
+            },
+            {
+                id = "replicators",
+                title = "Replicators",
+                icon = "memoryreplicator",
+                parent = "generators"
+            },
+            {
+                id = "rotators",
+                title = "Rotators",
+                icon = "rotator_cw"
+            },
+            {
+                id = "redirectors",
+                title = "Redirectors",
+                icon = "redirector",
+                parent = "rotators"
+            },
+            {
+                id = "gears",
+                title = "Gears",
+                icon = "gear_cw",
+                parent = "rotators"
+            },
+            {
+                id = "flippers",
+                title = "Flippers",
+                icon = "perpetualflipper",
+                parent = "rotators"
+            },
+            {
+                id = "otherrotators",
+                title = "Other",
+                icon = "transmitter",
+                parent = "rotators"
+            },
+            {
+                id = "forces",
+                title = "Forces",
+                icon = "repulsor"
+            },
+            {
+                id = "repulsors",
+                title = "Repulsors",
+                icon = "repulsor",
+                parent = "forces"
+            },
+            {
+                id = "impulsors",
+                title = "Impulsors",
+                icon = "impulsor",
+                parent = "forces"
+            },
+            {
+                id = "mirrors",
+                title = "Mirrors",
+                icon = "mirror",
+                parent = "forces"
+            },
+            {
+                id = "cyclers",
+                title = "Cyclers",
+                icon = "cycler_cw",
+                parent = "forces"
+            },
+            {
+                id = "otherforces",
+                title = "Other",
+                icon = "magnet",
+                parent = "forces"
+            },
+            {
+                id = "divergers",
+                title = "Divergers",
+                icon = "diverger"
+            },
+            {
                 id = "pipes",
                 title = "Pipes",
                 icon = "pipe",
@@ -79,21 +234,51 @@ return {
                 parent = "divergers"
             },
             {
-                id = "divergers",
-                title = "Divergers",
-                icon = "diverger"
-            },
-            {
                 id = "forkers",
                 title = "Forkers",
                 icon = "forker",
                 parent = "divergers"
             },
             {
-                id = "shifters",
-                title = "Shifters",
-                icon = "shifter",
-                parent = "generators"
+                id = "displacers",
+                title = "Displacers",
+                icon = "displacer",
+                parent = "divergers"
+            },
+            {
+                id = "wraps",
+                title = "Wraps",
+                icon = "wrap",
+                parent = "divergers"
+            },
+            {
+                id = "destroyers",
+                title = "Destroyers",
+                icon = "trash"
+            },
+            {
+                id = "trashes",
+                title = "Trashes",
+                icon = "trash",
+                parent = "destroyers"
+            },
+            {
+                id = "enemies",
+                title = "Enemies",
+                icon = "enemy",
+                parent = "destroyers"
+            },
+            {
+                id = "sentries",
+                title = "Sentries",
+                icon = "sentry",
+                parent = "destroyers"
+            },
+            {
+                id = "allies",
+                title = "Allies",
+                icon = "ally",
+                parent = "destroyers"
             },
             {
                 id = "transformers",
@@ -119,144 +304,62 @@ return {
                 parent = "transformers"
             },
             {
-                id = "displacers",
-                title = "Displacers",
-                icon = "displacer",
-                parent = "divergers"
-            },
-            {
-                id = "wraps",
-                title = "Wraps",
-                icon = "wrap",
-                parent = "divergers"
-            },
-            {
-                id = "mirrors",
-                title = "Mirrors",
-                icon = "mirror",
-                parent = "forces"
-            },
-            {
-                id = "cyclers",
-                title = "Cyclers",
-                icon = "cycler_cw",
-                parent = "forces"
-            },
-            {
-                id = "redirectors",
-                title = "Redirectors",
-                icon = "redirector",
-                parent = "rotators"
-            },
-            {
-                id = "gears",
-                title = "Gears",
-                icon = "gear_cw",
-                parent = "rotators"
-            },
-            {
-                id = "rotators",
-                title = "Rotators",
-                icon = "rotator_cw"
-            },
-            {
-                id = "gates",
-                title = "Gates",
-                icon = "andgate",
-                parent = "generators"
-            },
-            {
-                id = "forces",
-                title = "Forces",
-                icon = "bias"
-            },
-            {
-                id = "repulsors",
-                title = "Repulsors",
-                icon = "repulsor",
-                parent = "forces"
-            },
-            {
-                id = "impulsors",
-                title = "Impulsors",
-                icon = "impulsor",
-                parent = "forces"
-            },
-            {
-                id = "walls",
-                title = "Walls",
-                icon = "wall"
-            },
-            {
-                id = "pushables",
-                title = "Pushables",
-                icon = "pushable"
-            },
-            {
-                id = "destroyers",
-                title = "Destroyers",
-                icon = "trash"
-            },
-            {
-                id = "trashes",
-                title = "Trashes",
-                icon = "trash",
-                parent = "destroyers"
-            },
-            {
-                id = "enemies",
-                title = "Enemies",
-                icon = "enemy",
-                parent = "destroyers"
-            },
-            {
-                id = "allies",
-                title = "Allies",
-                icon = "ally",
-                parent = "destroyers"
-            },
-            {
-                id = "storage",
-                title = "Storage",
-                icon = "storage"
-            },
-            {
                 id = "midases",
                 title = "Midases",
                 icon = "midas",
-                parent = "storage"
+                parent = "transformers"
+            },
+            {
+                id = "misc",
+                title = "Miscellaneous",
+                icon = "ungeneratable"
+            },
+            {
+                id = "generation",
+                title = "Generation",
+                icon = "ungeneratable",
+                parent = "misc"
             },
             {
                 id = "infectious",
                 title = "Infectious",
-                icon = "life"
+                icon = "life",
+                parent = "misc"
             },
             {
                 id = "effects",
                 title = "Effect Givers",
-                icon = "freezer"
+                icon = "freezer",
+                parent = "misc"
             },
             {
-                id = "keys",
-                title = "Keys",
+                id = "unlocking",
+                title = "Unlocking",
                 icon = "key",
-                parent = "pushables"
+                parent = "misc"
+            },
+            {
+                id = "storage",
+                title = "Storage",
+                icon = "storage",
+                parent = "misc"
             },
             {
                 id = "collectables",
                 title = "Collectables",
-                icon = "coin"
+                icon = "coin",
+                parent = "misc"
+            },
+            {
+                id = "truecells",
+                title = "True Cells",
+                icon = "truegear_cw",
+                parent = "misc"
             },
             {
                 id = "puzzles",
                 title = "Puzzles",
                 icon = "puzzle",
-                folder = "ui"
-            },
-            {
-                id = "misc",
-                title = "Miscellaneous",
-                icon = "base",
                 folder = "ui"
             }
         }

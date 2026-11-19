@@ -4,7 +4,8 @@ local TrashDiodeDiverger = setmetatable({
     name = "trashdiodediverger",
     k3 = 300,
     title = "Trash Diode Diverger",
-    description = "Diode Diverger that deletes any cell entering its front."
+    description = "Diode Diverger that deletes any cell entering its front.",
+    categories = { "divergers", "trashes" }
 }, { __index = DiodeDiverger })
 TrashDiodeDiverger.__index = TrashDiodeDiverger
 

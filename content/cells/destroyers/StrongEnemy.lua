@@ -8,7 +8,13 @@ local StrongEnemy = setmetatable({
 }, { __index = Enemy })
 StrongEnemy.__index = StrongEnemy
 
-function StrongEnemy:absorb()
+function StrongEnemy:health()
+    return 2
+end
+
+function StrongEnemy:hit(damage)
+    if damage > 1 then return Enemy.hit(self, damage) end
+
     local cell = Enemy:new({ rotation = self.rotation })
     cell.path, cell.own, cell.turn = self.path, self.own, self.turn
 

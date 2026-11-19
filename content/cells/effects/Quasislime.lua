@@ -6,6 +6,7 @@ local Quasislime = setmetatable({
     k3 = 648,
     title = "Quasislime",
     description = "Makes the cell in front of it sticky like Slime.",
+    categories = { "sticky", "effects" },
     faces = { 0 },
     outputs = { 0 },
     gives = { Sticky }

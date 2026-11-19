@@ -6,6 +6,7 @@ local Hemislime = setmetatable({
     k3 = 788,
     title = "Hemislime",
     description = "Makes the cells in front of and to the left of it stick to each other, so they move together when pushed.",
+    categories = { "sticky", "effects" },
     faces = { 0, 3 },
     outputs = { 0, 3 },
     gives = { Sticky }

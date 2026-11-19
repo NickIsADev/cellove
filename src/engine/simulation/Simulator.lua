@@ -28,6 +28,7 @@ function Simulator.new(data)
     self.movement = Movement.new({ simulator = self })
     self.interval = data.interval or constants.simulator.interval
     self.profile = { sim = 0, post = 0, memory = 0, moves = 0 }
+    self.cursor = { x = 0, y = 0 }
     self:_rewind()
     return self
 end
@@ -37,6 +38,7 @@ function Simulator:_rewind()
     self.timer = 0
     self.dying = {}
     self.stores = {}
+    self.drag = nil
     self.movement.queue = {}
     self.time = {
         tick = 0,
@@ -125,6 +127,7 @@ end
 function Simulator:_input()
     local first, held = self.pressed, {}
     self.pressed = nil
+    self.action, self.fired = self.fired, nil
     if first then held[first] = true end
 
     for _, control in ipairs(constants.simulator.controls) do
@@ -225,6 +228,7 @@ function Simulator:press(key)
     for _, control in ipairs(constants.simulator.controls) do
         if utils.indexOf(control.keys, key) then self.pressed = control.direction end
     end
+    if utils.indexOf(constants.simulator.fire, key) then self.fired = true end
 end
 
 function Simulator:focus()
@@ -294,6 +298,7 @@ function Simulator:click(x, y, button)
     local grid = self.grid
     if not (self:started() and grid:bounds(x, y)) then return false end
 
+    self:aim(x, y)
     for i = #grid.order, 1, -1 do
         local cell = grid.order[i][(y - 1) * grid.width + x]
         if cell then
@@ -302,6 +307,14 @@ function Simulator:click(x, y, button)
         end
     end
     return false
+end
+
+function Simulator:aim(x, y)
+    self.cursor.x, self.cursor.y = x, y
+end
+
+function Simulator:drop()
+    self.drag = nil
 end
 
 function Simulator:store(store)

@@ -9,7 +9,6 @@ local BasePipe = setmetatable({
     directional = true,
     pipe = true,
     outputs = { 0, 1, 2, 3 },
-    fixed = true,
     stockable = false,
     rotates = true,
     _entry = BaseDiverger._entry,

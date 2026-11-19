@@ -33,6 +33,7 @@ function Toolbar.new(data)
     self.registry = data.registry
     self.settings = data.settings
     self.fresh = data.fresh
+    self.props = data.props
     self.on = data.on
     self.tooltip = Tooltip.new(data.renderer)
     self.items = {}
@@ -215,8 +216,12 @@ function Toolbar:_track()
     drag.index = (self.page - 1) * perPage + slot
 end
 
+function Toolbar:_texture(class)
+    return self.renderer.textures.cells[class:preview(self.props(class))]
+end
+
 function Toolbar:_drawSlot(slot, rotation)
-    local texture = self.renderer.textures.cells[slot.class.texture]
+    local texture = self:_texture(slot.class)
     local tw, th = texture:getDimensions()
     local hover = self.hover[slot.class] or 0
     local scale = config.slot / tw * (1 + config.hover.growth * hover)
@@ -239,7 +244,7 @@ end
 
 function Toolbar:_drawInfo(rotation)
     local textures = self.renderer.textures
-    local texture = self.selected and textures.cells[self.selected.texture] or textures.ui.base
+    local texture = self.selected and self:_texture(self.selected) or textures.ui.base
 
     self:_icon(texture, love.graphics.getWidth() - config.pad - config.slot, self:_rowY(), rotation, self.selected and 1 or 0.5)
 end
@@ -253,12 +258,12 @@ function Toolbar:_drawRecent(rotation)
     for _, slot in ipairs(box.slots) do
         local alpha = slot.class == self.selected and 1 or slot.class == hovered and 0.75 or 0.5
 
-        self:_icon(self.renderer.textures.cells[slot.class.texture], slot.x, slot.drawY, rotation, alpha, slot.grow)
+        self:_icon(self:_texture(slot.class), slot.x, slot.drawY, rotation, alpha, slot.grow)
     end
 end
 
 function Toolbar:_drawCard(class, state, rotation)
-    local texture = self.renderer.textures.cells[class.texture]
+    local texture = self:_texture(class)
     local tw, th = texture:getDimensions()
     local scale = config.slot / tw * (1 + config.hover.growth)
     local center = config.slot / 2

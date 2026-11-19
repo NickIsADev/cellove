@@ -11,6 +11,7 @@ local CollectableKey = setmetatable({
     title = "Collectable Key",
     description = "Unlocks Collectable Key Doors of its color when a cell moves into it.",
     categories = { "collectables" },
+    hollow = true,
     properties = {
         { id = "color", title = "Color", default = 1, min = 1, max = #colors, swatches = colors }
     }

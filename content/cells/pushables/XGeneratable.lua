@@ -8,6 +8,7 @@ local XGeneratable = setmetatable({
     k3 = 644,
     title = "X-Generatable",
     description = "A Monogeneratable with adjustable layers. Each generation removes one, then it turns into an Ungeneratable.",
+    categories = { "generation" },
     properties = {
         { id = "layers", title = "Layers", default = 2, min = 1, max = 99 }
     }

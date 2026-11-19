@@ -8,6 +8,7 @@ local ConvertConstructor = setmetatable({
     k3 = 1088,
     title = "Convert Constructor",
     description = "Like a Constructor that only outputs whatever it contains.",
+    categories = { "walls", "builders" },
     fit = stored.memory,
     fixed = true,
     anchored = true

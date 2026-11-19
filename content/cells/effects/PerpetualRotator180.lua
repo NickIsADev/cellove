@@ -5,6 +5,7 @@ local PerpetualRotator180 = setmetatable({
     k3 = 524,
     title = "Perpetual Rotator (180)",
     description = "Makes adjacent cells rotate 180 degrees every tick, even after moving away.",
+    categories = { "rotators", "effects" },
     value = "half"
 }, { __index = BasePerpetual })
 PerpetualRotator180.__index = PerpetualRotator180

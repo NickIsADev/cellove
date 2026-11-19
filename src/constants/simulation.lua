@@ -72,7 +72,9 @@ return {
             "thruster",
             "mover",
             "nudger",
+            "sentry",
             "player",
+            "drag",
             "fearful",
             "gravity",
             "gate",
@@ -102,6 +104,7 @@ return {
             { direction = 3, keys = { "w", "up" } },
             { direction = 1, keys = { "s", "down" } }
         },
+        fire = { "z", "return", "kpenter" },
         hops = 100,
         flushes = 5,
         interval = 0.2

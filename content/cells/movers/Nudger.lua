@@ -5,7 +5,7 @@ local Nudger = setmetatable({
     k3 = 114,
     title = "Nudger",
     description = "Moves forward into empty space. Cannot push or pull.",
-    categories = { "movers" },
+    categories = { "othermovers" },
     subtick = { "nudger" },
     drive = { push = true, pull = true, grab = true },
     directional = true

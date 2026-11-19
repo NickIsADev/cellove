@@ -5,6 +5,7 @@ local WirelessTransmitter = setmetatable({
     k3 = 583,
     title = "Wireless Transmitter",
     description = "Transmits to all other Wireless Transmitters with the same ID.",
+    categories = { "otherrotators", "effects" },
     properties = {
         { id = "channel", title = "ID", default = 0, min = 0, max = 99 }
     }

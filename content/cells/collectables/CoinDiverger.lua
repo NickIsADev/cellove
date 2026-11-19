@@ -6,7 +6,7 @@ local CoinDiverger = setmetatable({
     k3 = 224,
     title = "Coin Diverger",
     description = "Acts like a Cross Diverger to cells with enough coins, acts like a Wall otherwise. Also subtracts that amount of coins from the cell when they pass through.",
-    categories = { "collectables" },
+    categories = { "divergers", "collectables" },
     fixed = true,
     properties = {
         { id = "cost", title = "Coins", default = 1, min = 1, max = 999 }

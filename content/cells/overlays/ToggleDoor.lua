@@ -5,6 +5,7 @@ local ToggleDoor = setmetatable({
     k3 = 706,
     title = "Toggle Door",
     description = "Blocks every cell except a Toggle Key, which turns it into a Toggle Gate.",
+    categories = { "walls", "unlocking" },
     pair = "togglegate"
 }, { __index = BaseToggle })
 ToggleDoor.__index = ToggleDoor

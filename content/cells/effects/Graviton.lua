@@ -7,7 +7,7 @@ local Graviton = setmetatable({
     k3 = 424,
     title = "Graviton",
     description = "Nudger, but when it hits a cell it will gravitize it and disappear.",
-    categories = { "effects" }
+    categories = { "othermovers", "effects" }
 }, { __index = Nudger })
 Graviton.__index = Graviton
 

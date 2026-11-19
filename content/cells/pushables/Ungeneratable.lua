@@ -4,7 +4,8 @@ local Ungeneratable = setmetatable({
     name = "ungeneratable",
     k3 = 20,
     title = "Ungeneratable",
-    description = "A Pushable that cannot be generated. Generators only push when they try."
+    description = "A Pushable that cannot be generated. Generators only push when they try.",
+    categories = { "generation" }
 }, { __index = Pushable })
 Ungeneratable.__index = Ungeneratable
 

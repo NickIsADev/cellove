@@ -4,7 +4,8 @@ local Transmitter = setmetatable({
     name = "transmitter",
     k3 = 105,
     title = "Transmitter",
-    description = "When rotated, flipped, or given an effect such as protection, it applies the effects to it's neighbors aswell."
+    description = "When rotated, flipped, or given an effect such as protection, it applies the effects to it's neighbors aswell.",
+    categories = { "otherrotators", "effects" }
 }, { __index = BaseTransmitter })
 Transmitter.__index = Transmitter
 

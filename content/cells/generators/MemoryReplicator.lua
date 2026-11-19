@@ -5,6 +5,7 @@ local MemoryReplicator = setmetatable({
     k3 = 341,
     title = "Memory Replicator",
     description = "Replicator equivalent of Memory Generator.",
+    categories = { "replicators" },
     subtick = { "memoryReplicator" },
     source = 0
 }, { __index = MemoryGenerator })

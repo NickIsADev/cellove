@@ -1,3 +1,4 @@
+local Audio = require("src/engine/audio/Audio")
 local Properties = require("src/engine/registry/Properties")
 local constants = require("src/constants")
 
@@ -115,6 +116,22 @@ end
 function BaseCell:bump(dx, dy, pusher)
 end
 
+function BaseCell:side()
+    return self.team or self.hostile and "hostile" or self.friendly and "friendly" or nil
+end
+
+function BaseCell:health()
+    return 1
+end
+
+function BaseCell:breakable()
+    return not (self.fixed or self:guarded("protect"))
+end
+
+function BaseCell:hit(damage)
+    if self:breakable() then self.grid.simulator.movement:destroy(self, true) end
+end
+
 function BaseCell:swapped(dx, dy)
 end
 
@@ -129,7 +146,7 @@ function BaseCell:generatable()
 end
 
 function BaseCell:transformable()
-    return not (self.fixed or self:guarded("protect"))
+    return self:breakable()
 end
 
 function BaseCell:moved()
@@ -303,6 +320,13 @@ end
 function BaseCell:generate(direction, options)
     local facing = constants.directions[direction or self.rotation]
     return self.simulator.movement:generate(self.x, self.y, facing[1], facing[2], options)
+end
+
+function BaseCell:fire(class, direction)
+    direction = direction or self.rotation
+    local facing = constants.directions[direction]
+    Audio.play("shoot")
+    return self.simulator.movement:fire(self.x, self.y, facing[1], facing[2], class:new({ rotation = direction }))
 end
 
 function BaseCell:repel(direction, force, row)

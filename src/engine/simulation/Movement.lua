@@ -140,6 +140,7 @@ function Movement:_spawn(clone, front, origin)
     else
         table.insert(self.simulator.dying, clone)
     end
+    return clone
 end
 
 function Movement:_step(x, y, dx, dy, reverse, moved)
@@ -688,9 +689,7 @@ function Movement:generate(x, y, dx, dy, options)
     clone:rotate(turn, true, true)
     clone.updated = source.updated
     clone.ran = source.ran
-    self:_spawn(clone, front, origin)
-
-    return true
+    return true, self:_spawn(clone, front, origin), back.turn + front.turn
 end
 
 function Movement:clear(x, y, dx, dy)
@@ -705,6 +704,26 @@ function Movement:clear(x, y, dx, dy)
     local chain = self:_line(front.x, front.y, front.dx, front.dy, constants.force.generate)
     self.probes[probe], self.dry = nil, dry
     return chain ~= nil
+end
+
+function Movement:fire(x, y, dx, dy, cell)
+    local front = self:look(x, y, dx, dy)
+    if not front then return false end
+
+    local occupant = self.grid:get(front.x, front.y)
+    if occupant and not occupant:eats(front.dx, front.dy, "push", cell) then
+        if not (cell.struck and occupant:breakable()) then return false end
+
+        cell.grid, cell.x, cell.y = self.grid, front.x, front.y
+        local damage = math.min(cell:health(), occupant:health())
+        occupant:hit(damage)
+        self:flush()
+        if not cell:struck(damage) or self.grid:get(front.x, front.y) then return true end
+    end
+
+    cell:rotate(front.turn, true, true)
+    self:_spawn(cell, front, { x, y })
+    return true
 end
 
 function Movement:release(x, y, dx, dy, cell, mode)

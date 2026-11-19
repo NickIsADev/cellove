@@ -5,6 +5,7 @@ local InputDoor = setmetatable({
     k3 = 916,
     title = "Input Door",
     description = "Blocks every cell. Click it while the simulation is running to turn it into an Input Gate.",
+    categories = { "input", "walls" },
     pair = "inputgate"
 }, { __index = BaseInput })
 InputDoor.__index = InputDoor

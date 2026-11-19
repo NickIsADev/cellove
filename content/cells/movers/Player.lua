@@ -8,6 +8,7 @@ local Player = setmetatable({
     description = "Moves with the arrow keys or WASD while the simulation runs, pushing whatever is in front of it. A puzzle is failed if every Player is destroyed, unless all Enemies are defeated at the same time.",
     faces = {},
     player = true,
+    team = "friendly",
     fragile = false,
     categories = { "players" },
     subtick = { "player" },

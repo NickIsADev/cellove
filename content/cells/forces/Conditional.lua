@@ -7,7 +7,7 @@ local Conditional = setmetatable({
     title = "Conditional",
     description = "The weight of this cell depends on its rotation. (0-3, increases clockwise)",
     faces = {},
-    categories = { "forces" }
+    categories = { "weights" }
 }, { __index = BaseCell })
 Conditional.__index = Conditional
 

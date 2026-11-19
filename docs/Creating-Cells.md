@@ -130,8 +130,10 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | `grabber` | grabbers, heavers |
 | `thruster` | thrusters, skewers |
 | `mover` | movers, birds, the push of rotator movers |
-| `nudger` | nudgers, CelLoves |
+| `nudger` | nudgers, missiles, CelLoves |
+| `sentry` | sentries and turrets |
 | `player` | players |
+| `drag` | input pushables and input sliders |
 | `fearful` | fearful enemies, fearful allies |
 | `gravity` | where gravity pulls its cells, one direction per pass |
 | `gate` | gates |

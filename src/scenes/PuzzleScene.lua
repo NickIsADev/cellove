@@ -265,9 +265,11 @@ end
 function PuzzleScene:mousemoved(x, y)
     self.pauseMenu:mousemoved(x, y)
     self.renderer.camera:drag(x, y)
+    self.simulator:aim(self.renderer.camera:screenToGrid(x, y))
 end
 
 function PuzzleScene:mousereleased(x, y, button)
+    if button == 1 then self.simulator:drop() end
     if button == 3 then self.renderer.camera:release() end
     local held = self.puzzle.held
     if button ~= 1 or not held then return end

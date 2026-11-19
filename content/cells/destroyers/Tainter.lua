@@ -4,7 +4,8 @@ local Tainter = setmetatable({
     name = "tainter",
     k3 = 176,
     title = "Tainter",
-    description = "Deletes any cell that moves into it, then spreads into the tile that cell came from."
+    description = "Deletes any cell that moves into it, then spreads into the tile that cell came from.",
+    categories = { "trashes", "infectious" }
 }, { __index = Trash })
 Tainter.__index = Tainter
 

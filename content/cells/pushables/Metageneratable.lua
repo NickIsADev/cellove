@@ -7,7 +7,7 @@ local Metageneratable = setmetatable({
     title = "Metageneratable",
     description = "A Pushable that stores the first cell that moves into it. Each generation removes one, then it generates the stored cell.",
     faces = {},
-    categories = { "pushables", "storage" },
+    categories = { "generation", "storage" },
     properties = {
         BaseHolder.properties[1],
         { id = "generations", title = "Generations", default = 1, min = 1, max = 99 }

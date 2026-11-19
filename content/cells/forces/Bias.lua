@@ -6,7 +6,7 @@ local Bias = setmetatable({
     k3 = 42,
     title = "Bias",
     description = "Adds to any force going its direction and subtracts from any force going against it.",
-    categories = { "forces" }
+    categories = { "weights" }
 }, { __index = BaseCell })
 Bias.__index = Bias
 

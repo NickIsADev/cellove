@@ -7,7 +7,8 @@ local Coin = setmetatable({
     k3 = 223,
     title = "Coin",
     description = "Adds 1 to a cell's coin count.",
-    categories = { "collectables" }
+    categories = { "collectables" },
+    hollow = true
 }, { __index = BaseCell })
 Coin.__index = Coin
 

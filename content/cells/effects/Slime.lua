@@ -6,6 +6,7 @@ local Slime = setmetatable({
     k3 = 252,
     title = "Slime",
     description = "Makes adjacent cells stick to each other, so they move together when pushed.",
+    categories = { "sticky", "effects" },
     gives = { Sticky }
 }, { __index = BaseEffectGiver })
 Slime.__index = Slime

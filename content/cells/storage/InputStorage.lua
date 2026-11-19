@@ -5,6 +5,7 @@ local InputStorage = setmetatable({
     k3 = 918,
     title = "Input Storage",
     description = "Can be clicked to turn it into the cell inside of it. Does not absorb cells like a normal Storage.",
+    categories = { "input", "storage" },
     faces = {}
 }, { __index = BaseHolder })
 InputStorage.__index = InputStorage

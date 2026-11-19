@@ -77,6 +77,7 @@ function Editor.new(data)
         registry = data.registry,
         settings = data.settings,
         fresh = self.fresh,
+        props = function(class) return self.properties:values(class) end,
         on = {
             cell = function(class) self:select(self.selected ~= class and class or nil) end,
             pick = function(class) self:select(class) end,
@@ -530,6 +531,7 @@ function Editor:mousemoved(x, y)
     self.panel:mousemoved(x, y)
     self.properties:mousemoved(x, y)
     self.renderer.camera:drag(x, y)
+    self.simulator:aim(self.renderer.camera:screenToGrid(x, y))
 
     if self.drag then self.tool:move(self.renderer.camera:screenToGrid(x, y)) end
 end
@@ -543,6 +545,7 @@ function Editor:mousereleased(x, y, button)
     self.panel:mousereleased(x, y, button)
     self.properties:mousereleased(x, y, button)
 
+    if button == 1 then self.simulator:drop() end
     if button == 3 then
         local camera = self.renderer.camera
         local grip = camera:release()

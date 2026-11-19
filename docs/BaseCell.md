@@ -35,12 +35,14 @@ Set these in the table you pass to `setmetatable`.
 | `skew` | `number` | `0` | where [`grab`](#basecellgrabdx-dy) drags cells from: `0` the sides, `1` the front diagonals, `-1` the back diagonals |
 | `hostile` | `boolean` | `false` | counts as an enemy. a puzzle is solved when none remain |
 | `friendly` | `boolean` | `false` | counts as an ally. a puzzle is failed when fewer remain than there were at the start |
+| `team` | `string` | | `"hostile"` or `"friendly"`: the side sentries and seekers take for this cell. defaults to `"hostile"` for `hostile` cells and `"friendly"` for `friendly` ones. unlike those flags it does not affect puzzles |
 | `player` | `boolean` | `false` | counts as a player. a puzzle is failed when none remain, unless no enemies do either |
 | `layer` | `string` | `"foreground"` | the [layer](Layers) the cell lives on: `"background"`, `"foreground"` or `"overlay"` |
 | `tile` | `string` | | the marker kind this library item paints instead of placing a cell, like `"placeable"`. Such an item is never put on the grid, so it has no behavior |
 | `pair` | `string` | | the name of the cell [`alternate`](#basecellalternate) turns this one into, like a door's gate |
 | `outcome` | `string` | | `"win"` or `"lose"`. a puzzle is won (or lost) when every foreground cell sharing a [`group`](#basecellgroup) is [`lit`](#basecelllit), for any group |
 | `fixed` | `boolean` | | cannot be pushed, swapped or transformed |
+| `hollow` | `boolean` | | sentries and seekers see through it as if the tile were empty, like a coin |
 | `destroys` | `boolean` | | cells moving into it are destroyed unless protected by an effect |
 | `freezes` | `boolean` | | keeps updating while frozen, like freezers do |
 | `anchored` | `boolean` | | cannot be rotated |
@@ -93,6 +95,10 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | [`bump`](#basecellbumpdx-dy-pusher) | nothing | called when a repulsor pushes this cell and it eats the push |
 | [`swapped`](#basecellswappeddx-dy) | nothing | called after a swap carried this cell to the other cell's place |
 | [`pushed`](#basecellpusheddx-dy) | nothing | called after a push moved this cell |
+| [`side`](#basecellside) | the `team` | which side sentries and seekers see this cell on |
+| [`health`](#basecellhealth) | `1` | how much damage the cell takes to destroy |
+| [`breakable`](#basecellbreakable) | not `fixed` or protected | whether collisions and explosions can destroy the cell |
+| [`hit`](#basecellhitdamage) | destroys a breakable cell | called when a collision or an explosion damages this cell |
 | [`generatable`](#basecellgeneratable) | `true` | whether generators can copy the cell |
 | [`generated`](#basecellgenerated) | the same class and props | what a generator's copy of the cell becomes |
 | [`force`](#basecellforcedx-dy-action) | `0` | force added to a push or pull |
@@ -295,6 +301,50 @@ function Glider:pushed(dx, dy)
 end
 ```
 
+### `BaseCell:side()`
+
+Which side sentries and seekers see this cell on. A cell only targets cells on the other side. Default is the `team`, or `"hostile"` for `hostile` cells and `"friendly"` for `friendly` ones.
+
+**Returns** `"hostile"`, `"friendly"` or `nil` for a neutral cell
+
+```lua
+-- a spy is only friendly until it disguises
+function Spy:side()
+    local mask = self.props.disguise.class
+    return mask and mask:side() or "friendly"
+end
+```
+
+### `BaseCell:health()`
+
+How much damage the cell takes to destroy. Missiles and enemies compare it when they collide: both take the lower of the two healths as damage. Default `1`.
+
+**Returns** `number`, where `math.huge` can only be destroyed by infinite damage
+
+```lua
+function Strong:health()
+    return 2
+end
+```
+
+### `BaseCell:breakable()`
+
+Whether collisions and explosions can destroy the cell. Default is not `fixed` and not protected.
+
+### `BaseCell:hit(damage)`
+
+Called when a collision or an explosion damages this cell. Default destroys the cell if it is [`breakable`](#basecellbreakable). Enemies override it to take the damage the way they do when pushed into.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `damage` | `number` | how much damage was dealt. an explosion deals `1` |
+
+```lua
+function Strong:hit(damage)
+    if damage > 1 then self:kill(true) else self:become(Weak) end
+end
+```
+
 ### `BaseCell:generatable()`
 
 Whether generators can copy the cell. Default `true`.
@@ -411,6 +461,7 @@ Call these from your own methods, usually from `update`. Where `dx` and `dy` are
 | [`nudge`](#basecellnudgedx-dy) | moves the cell one tile without pushing |
 | [`swap`](#basecellswapax-ay-bx-by) | swaps the cells at two offsets from this one |
 | [`generate`](#basecellgeneratedirection-options) | copies the cell behind this one into the tile in front |
+| [`fire`](#basecellfireclass-direction) | puts a new cell into the tile in front, if it is empty or eats the cell |
 | [`repel`](#basecellrepeldirection-force-row) | pushes the cell in front of this one away without moving this cell |
 | [`rotate`](#basecellrotateamount-forced) | rotates the cell |
 | [`rotateNeighbors`](#basecellrotateneighborsamount-predicate) | rotates the four adjacent cells |
@@ -536,11 +587,28 @@ Copies the cell behind this one into the tile in front, pushing out what is ther
 | `direction` | `number?` | direction to generate in. defaults to the facing direction |
 | `options` | `table?` | extra options for the generation |
 
-**Returns** `boolean`
+**Returns** `boolean`, then the new cell and the turn that diverters applied to it. Both are nil when nothing was copied.
 
 ```lua
 function Copier:update(_, direction)
     self:generate(direction)
+end
+```
+
+### `BaseCell:fire(class, direction)`
+
+Puts a new cell of `class` into the tile in front of this one without pushing anything, and plays the shoot sound. A cell that eats it takes it in. A breakable cell collides with it if the new cell has `struck`, like a missile, and nothing happens otherwise.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `class` | `table` | class of the new cell, facing `direction` |
+| `direction` | `number?` | direction to fire in. defaults to the facing direction |
+
+**Returns** `boolean`
+
+```lua
+function Gun:update()
+    self:fire(Bullet)
 end
 ```
 

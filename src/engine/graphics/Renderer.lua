@@ -549,7 +549,7 @@ end
 function Renderer:drawStored(content, x, y, turn, scale, offset)
     if offset ~= 0 then return end
 
-    self:drawSprite(content.class.texture, x, y, content.rotation + turn, scale, 0)
+    self:drawSprite(content.class:preview(content.props or none), x, y, content.rotation + turn, scale, 0)
     for effect, value in pairs(content.effects or none) do
         effect:draw(self, value, x, y, scale, 0)
     end

@@ -6,7 +6,7 @@ local Magnet = setmetatable({
     k3 = 156,
     title = "Magnet",
     description = "Pushes away magnets facing the opposite way next to it and pulls in magnets facing the same way from two tiles away, in front of and behind itself.",
-    categories = { "forces" },
+    categories = { "otherforces" },
     subtick = { "magnetX", "magnetY" },
     sweep = { x = 1, y = -1 },
     magnet = true
