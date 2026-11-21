@@ -23,7 +23,7 @@ function BaseDiverger:divert(dx, dy, reverse)
     if not bend then return end
 
     local nx, ny = utils.turn(dx, dy, bend)
-    local halt = reverse and self.halts and self.halts[entry]
+    local halt = self.solid or reverse and self.halts and self.halts[entry]
     return nx, ny, self.rotates and bend or 0, halt
 end
 

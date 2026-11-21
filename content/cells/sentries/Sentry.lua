@@ -9,7 +9,7 @@ local Sentry = setmetatable({
     categories = { "sentries" },
     subtick = { "sentry" },
     properties = {
-        { id = "range", title = "Range", default = 0, min = 0, max = 99 }
+        { id = "range", title = "Range", default = 0, min = 0, max = 99, names = { [0] = "0 (inf)" } }
     },
     missile = Missile
 }, { __index = BaseWeapon })

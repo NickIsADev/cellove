@@ -222,7 +222,7 @@ end
 function BaseCell:divert(dx, dy, reverse, mover)
 end
 
-function BaseCell:passed(mover)
+function BaseCell:passed(mover, dx, dy)
 end
 
 function BaseCell:rotated(amount, wide)
@@ -231,7 +231,7 @@ end
 function BaseCell:relay(action, wide)
 end
 
-function BaseCell:jump(dx, dy, x, y)
+function BaseCell:jump(dx, dy, x, y, reverse)
 end
 
 function BaseCell:nudge(dx, dy)

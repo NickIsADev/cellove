@@ -1,5 +1,6 @@
 local ToolPanel = require("src/editor/panels/ToolPanel")
 local Properties = require("src/engine/registry/Properties")
+local Dropdown = require("src/ui/widgets/Dropdown")
 local Panel = require("src/ui/Panel")
 local constants = require("src/constants")
 local utils = require("src/utils")
@@ -30,7 +31,7 @@ function PropertyPanel:_inputs(class)
     if not class then return {} end
 
     if not self.inputs[class] then
-        self.inputs[class] = ToolPanel.build(self.renderer, Properties.specs(class.properties))
+        self.inputs[class] = ToolPanel.build(self.renderer, Properties.specs(class.properties, nil, class))
     end
     return self.inputs[class]
 end
@@ -49,14 +50,15 @@ function PropertyPanel:_layout()
     local title = config.pad + titleFont:getHeight()
     local start = title + config.gap * 2 + separator.width
     local height = start + config.gap * (#self.widgets - 1) + config.pad
-    local label = 0
+    local label, extra = 0, 0
 
     for _, widget in ipairs(self.widgets) do
         height = height + widget.height
+        extra = math.max(extra, widget.extra or 0)
         label = math.max(label, labelFont:getWidth(widget.label) + config.label.gap)
     end
 
-    box.width = math.max(label + config.control, Panel.headingWidth(titleFont, self.class.title, self.class.texture)) + config.pad * 2
+    box.width = math.max(label + config.control + extra, Panel.headingWidth(titleFont, self.class.title, self.class.texture)) + config.pad * 2
     box.height = height
     box.x = love.graphics.getWidth() - config.margin - box.width
     box.y = love.graphics.getHeight() - toolbar.height - config.margin - height
@@ -84,8 +86,8 @@ function PropertyPanel:load(class, props)
 end
 
 function PropertyPanel:contains(x, y)
-    local box = self.box
-    return #self.widgets > 0 and utils.inside(x, y, box.x, box.y, box.width, box.height)
+    local box, open = self.box, Dropdown.owner(self.widgets)
+    return #self.widgets > 0 and (utils.inside(x, y, box.x, box.y, box.width, box.height) or open ~= nil and open.menu:contains(x, y))
 end
 
 function PropertyPanel:typing()
@@ -111,6 +113,12 @@ function PropertyPanel:update(dt, class)
 end
 
 function PropertyPanel:mousepressed(x, y, button)
+    local open = Dropdown.owner(self.widgets)
+    if open then
+        open:mousepressed(x, y, button)
+        return true
+    end
+
     for _, widget in ipairs(self.widgets) do
         widget:mousepressed(x, y, button)
     end
@@ -161,6 +169,9 @@ function PropertyPanel:draw()
 
     for _, widget in ipairs(self.widgets) do
         widget:draw()
+    end
+    for _, widget in ipairs(self.widgets) do
+        if widget.drawMenu then widget:drawMenu() end
     end
 
     love.graphics.setFont(previousFont)

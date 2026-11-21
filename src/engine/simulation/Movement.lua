@@ -154,6 +154,15 @@ function Movement:_spawn(clone, front, origin)
     return clone
 end
 
+function Movement:_slips(x, y, dx, dy)
+    local grid = self.grid
+    if not grid:bounds(x, y) then return false end
+
+    local before = grid:bounds(x + dy, y + dx) and grid:get(x + dy, y + dx)
+    local after = grid:bounds(x - dy, y - dx) and grid:get(x - dy, y - dx)
+    return before and before.slick or after and after.slick or false
+end
+
 function Movement:_step(x, y, dx, dy, reverse, moved)
     local grid = self.grid
     local via, turn = none, 0
@@ -165,16 +174,17 @@ function Movement:_step(x, y, dx, dy, reverse, moved)
         local cell = grid:get(x, y)
         local free = cell and not (moved and moved[cell])
         local nx, ny, spin, halt, jx, jy
-        if free and cell.lookup.jump then jx, jy = cell:jump(dx, dy, x, y) end
+        if free and cell.lookup.jump then jx, jy, nx, ny, spin = cell:jump(dx, dy, x, y, reverse) end
 
-        if jx then nx, ny, spin = dx, dy, 0
-        elseif free and cell.lookup.divert then nx, ny, spin, halt = cell:divert(dx, dy, reverse, mover) end
+        if jx then nx, ny, spin = nx or dx, ny or dy, spin or 0
+        elseif free and cell.lookup.divert then nx, ny, spin, halt = cell:divert(dx, dy, reverse, mover)
+        elseif not cell and self:_slips(x, y, dx, dy) then nx, ny, spin = dx, dy, 0 end
 
         if halt then dx, dy, nx, turn = nx, ny, nil, turn + spin end
         if not nx then return x, y, dx, dy, reverse and -turn or turn, via, cell, halt end
 
         if via == none then via = {} end
-        table.insert(via, reverse and 1 or #via + 1, { x, y })
+        table.insert(via, reverse and 1 or #via + 1, { x, y, dx, dy })
         if jx then x, y = jx, jy end
         dx, dy, turn = nx, ny, turn + spin
     end
@@ -428,7 +438,7 @@ function Movement:_shift(chain, silent)
 
         for _, point in ipairs(move.via) do
             local via = grid:get(point[1], point[2])
-            if via then via:passed(cell) end
+            if via then via:passed(cell, point[3], point[4]) end
         end
 
         local consumed = move.cover and not self:_absorb(move.cover, cell, move.dx, move.dy, move.action)

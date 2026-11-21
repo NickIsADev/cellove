@@ -1,6 +1,8 @@
 local Enemy = require("content/cells/destroyers/Enemy")
 local constants = require("src/constants")
 
+local crossings, warning = 5, 4
+
 local function hit(cell)
     if cell then cell:hit() end
 end
@@ -33,7 +35,7 @@ end
 
 function BaseWeapon:_incoming(cell, distance, dx, dy)
     local facing = constants.directions[cell.rotation]
-    return cell.unsmart and distance <= constants.sentry.warning and facing[1] == -dx and facing[2] == -dy
+    return cell.unsmart and distance <= warning and facing[1] == -dx and facing[2] == -dy
 end
 
 function BaseWeapon:_scan(direction, limit)
@@ -53,7 +55,7 @@ end
 
 function BaseWeapon:_target(range, shots)
     local nearest, aim = math.huge
-    local limit = range > 0 and range or constants.sentry.crossings * self.grid.width * self.grid.height
+    local limit = range > 0 and range or crossings * self.grid.width * self.grid.height
 
     for direction = 0, 3 do
         local cell, distance, dx, dy = self:_scan(direction, limit)

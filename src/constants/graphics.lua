@@ -34,7 +34,8 @@ return {
                     x = 0,
                     y = 0,
                     pivot = 0.5,
-                    margin = 0
+                    margin = 0,
+                    align = "center"
                 },
                 count = {
                     x = -0.2,

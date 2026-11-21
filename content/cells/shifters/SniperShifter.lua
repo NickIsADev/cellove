@@ -2,7 +2,7 @@ local Shifter = require("content/cells/shifters/Shifter")
 local constants = require("src/constants")
 local utils = require("src/utils")
 
-local limit = constants.sniper.crossings
+local limit = 5
 
 local SniperShifter = setmetatable({
     name = "snipershifter",

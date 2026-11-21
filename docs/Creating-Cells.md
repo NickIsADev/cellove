@@ -81,7 +81,7 @@ properties = {
 
 | type of `default` | input | requires |
 | --- | --- | --- |
-| `number` | stepper | `min` and `max`. `min` is at least 0 and `default` is between them. Add `swatches`, a list of hex colors, to pick by color swatch instead. The value is the 1-based position in the list |
+| `number` | stepper | `min` and `max`. `min` is at least 0 and `default` is between them. Add `swatches`, a list of hex colors, to pick by color swatch instead. The value is the 1-based position in the list. Add `names`, a table from value to text, to show a name instead of the number, like `{ [0] = "Off" }`. When every value from `min` to `max` has a name, the input becomes a dropdown, so use it for modes so nobody has to know what the numbers mean. Add `icons = true` to show each option's `preview` texture in the dropdown |
 | `boolean` | toggle | nothing |
 | `string` | text field | `limit`, the maximum length |
 | `table` | none | an empty table as `default`. holds a cell as `{ class, rotation, props }`, like Storage does |

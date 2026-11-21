@@ -3,6 +3,7 @@ local IconButton = require("src/ui/widgets/IconButton")
 local Label = require("src/ui/widgets/Label")
 local Separator = require("src/ui/widgets/Separator")
 local Palette = require("src/ui/widgets/Palette")
+local Select = require("src/ui/widgets/Select")
 local Stepper = require("src/ui/widgets/Stepper")
 local TextField = require("src/ui/widgets/TextField")
 local Toggle = require("src/ui/widgets/Toggle")
@@ -57,6 +58,20 @@ local factories = {
             label = spec.label,
             min = spec.min,
             max = spec.max,
+            names = spec.names,
+            value = spec.value,
+            width = spec.width
+        })
+    end,
+    select = function(renderer, spec)
+        return Select.new({
+            renderer = renderer,
+            key = spec.key,
+            label = spec.label,
+            min = spec.min,
+            max = spec.max,
+            names = spec.names,
+            preview = spec.preview,
             value = spec.value,
             width = spec.width
         })

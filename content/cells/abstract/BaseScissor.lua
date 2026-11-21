@@ -1,6 +1,12 @@
 local Nudger = require("content/cells/movers/Nudger")
 local constants = require("src/constants")
 
+local splits = {
+    left = { side = -1, turn = 1 },
+    right = { side = 1, turn = -1 },
+    back = { side = 2, turn = 0 }
+}
+
 local BaseScissor = setmetatable({
     categories = { "scissors" },
     splits = { "left", "right" },
@@ -12,7 +18,7 @@ function BaseScissor:_split(target, name)
     local class, props, rotation = target:generated()
     if not class then return end
 
-    local split = constants.scissors[name]
+    local split = splits[name]
     local facing = constants.directions[(self.rotation + split.side) % 4]
     local turn = self.rotates and split.turn or 0
     local clone = class:new({ rotation = (rotation or target.rotation) + turn, props = props, effects = target:kept() })

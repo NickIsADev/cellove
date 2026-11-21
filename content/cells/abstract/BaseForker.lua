@@ -9,6 +9,10 @@ local BaseForker = setmetatable({
 }, { __index = BaseDiverger })
 BaseForker.__index = BaseForker
 
+function BaseForker:_copies()
+    return 1
+end
+
 function BaseForker:eats(dx, dy, action)
     return not action and self.forks[self:_entry(dx, dy)] ~= nil
 end
@@ -19,15 +23,18 @@ function BaseForker:absorb(cell, dx, dy)
 
     local x, y, movement = self.x, self.y, self.simulator.movement
     local effects, rotation, updated, ran = cell:kept(), cell.rotation, cell.updated, cell.ran
+    local forks, copies = self.forks[self:_entry(dx, dy)], self:_copies()
 
     movement:defer(function()
-        for _, bend in ipairs(self.forks[self:_entry(dx, dy)]) do
-            local clone = class:new({ rotation = rotation, props = props, effects = effects })
-            clone:rotate(self.rotates and bend or 0, true, true)
-            clone.updated, clone.ran = updated, ran
+        for _ = 1, copies do
+            for _, bend in ipairs(forks) do
+                local clone = class:new({ rotation = rotation, props = props, effects = effects })
+                clone:rotate(self.rotates and bend or 0, true, true)
+                clone.updated, clone.ran = updated, ran
 
-            local nx, ny = utils.turn(dx, dy, bend)
-            movement:release(x, y, nx, ny, clone)
+                local nx, ny = utils.turn(dx, dy, bend)
+                movement:release(x, y, nx, ny, clone)
+            end
         end
     end)
 end

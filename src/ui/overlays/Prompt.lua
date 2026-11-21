@@ -1,7 +1,9 @@
 local Widget = require("src/ui/abstract/Widget")
 local IconButton = require("src/ui/widgets/IconButton")
 local Palette = require("src/ui/widgets/Palette")
+local Select = require("src/ui/widgets/Select")
 local Stepper = require("src/ui/widgets/Stepper")
+local Dropdown = require("src/ui/widgets/Dropdown")
 local CellSelect = require("src/ui/widgets/CellSelect")
 local TextField = require("src/ui/widgets/TextField")
 local Toggle = require("src/ui/widgets/Toggle")
@@ -15,6 +17,7 @@ local colors = constants.ui.colors
 
 local kinds = {
     stepper = Stepper,
+    select = Select,
     toggle = Toggle,
     palette = Palette,
     cell = CellSelect,
@@ -156,6 +159,8 @@ function Prompt:open(options)
             label = field.label,
             min = field.min,
             max = field.max,
+            names = field.names,
+            preview = field.preview,
             limit = field.limit,
             options = field.options,
             swatches = field.swatches,
@@ -195,6 +200,12 @@ function Prompt:mousepressed(x, y, button)
 
     self:_layout()
     if button ~= 1 then return true end
+
+    local open = Dropdown.owner(self.inputs)
+    if open then
+        open:mousepressed(x, y, button)
+        return true
+    end
 
     local hit = false
     for _, input in ipairs(self.inputs) do
@@ -276,6 +287,9 @@ function Prompt:draw()
     for _, input in ipairs(self.inputs) do input:draw() end
     self.cancelButton:draw()
     self.confirmButton:draw()
+    for _, input in ipairs(self.inputs) do
+        if input.drawMenu then input:drawMenu() end
+    end
     self.cellPicker:draw()
 
     love.graphics.setFont(previousFont)

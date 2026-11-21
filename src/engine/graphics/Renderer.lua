@@ -94,7 +94,10 @@ function Renderer:_path(folder, file)
 end
 
 function Renderer:_image(folder, name)
-    return self:_path(folder, name .. ".png") or self:_path(config.missing.folder, config.missing.name .. ".png")
+    local path = self:_path(folder, name .. ".png")
+    if not path then self.missing[folder .. "/" .. name] = true end
+
+    return path or self:_path(config.missing.folder, config.missing.name .. ".png")
 end
 
 function Renderer:_textures(folder)
@@ -525,13 +528,14 @@ function Renderer:_print(text, x, y, scale, anchor)
     local shadow = tag.shadow.offset * scale
     local margin = anchor.margin * scale
     local px, py = (x - 0.5 + anchor.x * scale) * tile - margin, (y - 0.5 + anchor.y * scale) * tile - margin
-    local width, height = font:getWidth(text) * anchor.pivot, font:getBaseline() * anchor.pivot
+    local width, lines = font:getWrap(text, math.huge)
+    local pivotX, pivotY = width * anchor.pivot, (font:getBaseline() + (#lines - 1) * font:getHeight()) * anchor.pivot
 
     love.graphics.setFont(font)
     love.graphics.setColor(utils.fromHex(0x000000, tag.shadow.alpha * a))
-    love.graphics.print(text, px + shadow, py + shadow, 0, unit, unit, width, height)
+    love.graphics.printf(text, px + shadow, py + shadow, width, anchor.align, 0, unit, unit, pivotX, pivotY)
     love.graphics.setColor(r, g, b, a)
-    love.graphics.print(text, px, py, 0, unit, unit, width, height)
+    love.graphics.printf(text, px, py, width, anchor.align, 0, unit, unit, pivotX, pivotY)
     love.graphics.setFont(previousFont)
 end
 
@@ -654,8 +658,17 @@ function Renderer:drawMarkers(markers, alpha, ox, oy)
     love.graphics.setColor(utils.fromHex(colors.white))
 end
 
+function Renderer:missingTextures()
+    local names = {}
+    for name in pairs(self.missing) do names[#names + 1] = name end
+
+    table.sort(names)
+    return names
+end
+
 function Renderer:loadTextures()
     self.sizes = setmetatable({}, weak)
+    self.missing = {}
     self.fonts = {}
     self.textures = {
         cells = self:_textures("cells"),

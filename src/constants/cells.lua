@@ -11,25 +11,12 @@ return {
     },
 
     adjustable = {
-        amount = { id = "amount", title = "Amount", default = 1, min = 1, max = 999999 },
-        count = { id = "count", title = "Count", default = 0, min = 0, max = 999999 },
-        numerator = { id = "numerator", title = "Numerator", default = 0, min = 0, max = 999999 },
-        denominator = { id = "denominator", title = "Denominator", default = 1, min = 1, max = 999999 }
-    },
-
-    sniper = {
-        crossings = 5
-    },
-
-    sentry = {
-        crossings = 5,
-        warning = 4
-    },
-
-    scissors = {
-        left = { side = -1, turn = 1 },
-        right = { side = 1, turn = -1 },
-        back = { side = 2, turn = 0 }
+        amount = { id = "amount", title = "Amount", default = 1, min = 1, max = 99 },
+        count = { id = "count", title = "Count", default = 0, min = 0, max = 99 },
+        run = { id = "run", title = "Run", default = 1, min = 0, max = 99 },
+        rise = { id = "rise", title = "Rise", default = 0, min = 0, max = 99 },
+        numerator = { id = "numerator", title = "Numerator", default = 0, min = 0, max = 99 },
+        denominator = { id = "denominator", title = "Denominator", default = 1, min = 1, max = 99 }
     },
 
     registry = {
@@ -257,6 +244,24 @@ return {
                 id = "forkers",
                 title = "Forkers",
                 icon = "forker",
+                parent = "divergers"
+            },
+            {
+                id = "spooners",
+                title = "Spooners",
+                icon = "spooner",
+                parent = "divergers"
+            },
+            {
+                id = "slopes",
+                title = "Slopes",
+                icon = "slope",
+                parent = "divergers"
+            },
+            {
+                id = "paraboles",
+                title = "Paraboles",
+                icon = "parabole",
                 parent = "divergers"
             },
             {

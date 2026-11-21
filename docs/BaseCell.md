@@ -43,6 +43,7 @@ Set these in the table you pass to `setmetatable`.
 | `outcome` | `string` | | `"win"` or `"lose"`. a puzzle is won (or lost) when every foreground cell sharing a [`group`](#basecellgroup) is [`lit`](#basecelllit), for any group |
 | `fixed` | `boolean` | | cannot be pushed, swapped or transformed |
 | `hollow` | `boolean` | | sentries and seekers see through it as if the tile were empty, like a coin |
+| `slick` | `boolean` | | empty tiles next to it, across the direction of a move, are slipped past instead of landed on, like ice |
 | `destroys` | `boolean` | | cells moving into it are destroyed unless protected by an effect |
 | `freezes` | `boolean` | | keeps updating while frozen, like freezers do |
 | `anchored` | `boolean` | | cannot be rotated |
@@ -110,7 +111,8 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | [`chained`](#basecellchainedaction-dx-dy-anchor) | nothing | called when a push, pull or grab reaches the cell, even if it fails |
 | [`clinging`](#basecellclingingdx-dy) | the cell's stickiest effect | what the cell sticks to on one side |
 | [`divert`](#basecelldivertdx-dy-reverse) | nothing | bends the path of a move passing through |
-| [`jump`](#basecelljumpdx-dy-x-y) | nothing | moves the path of a move passing through somewhere else |
+| [`jump`](#basecelljumpdx-dy-x-y-reverse) | nothing | moves the path of a move passing through somewhere else |
+| [`passed`](#basecellpassedmover-dx-dy) | nothing | called when a cell has moved through it |
 | [`preview`](#basecellpreviewprops) | `self.texture` | name of the texture a cell with these properties looks like |
 | [`sprite`](#basecellsprite) | `self:preview(self.props)` | name of the texture `draw` uses |
 | [`draw`](#basecelldrawrenderer-x-y-angle-scale-offset) | default sprite | draws the cell |
@@ -514,7 +516,17 @@ function Bender:divert(dx, dy)
 end
 ```
 
-### `BaseCell:jump(dx, dy, x, y)`
+### `BaseCell:passed(mover, dx, dy)`
+
+Called after a cell has moved through this one, as with a diverger. Does nothing by default.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `mover` | `BaseCell` | the cell that moved through |
+| `dx` | `number` | horizontal direction it was travelling when it entered |
+| `dy` | `number` | vertical direction it was travelling when it entered |
+
+### `BaseCell:jump(dx, dy, x, y, reverse)`
 
 Called when a push, pull or generation passes through the cell. Return a position to continue the path from, or nothing to let it pass straight through. Does nothing by default.
 
@@ -524,8 +536,9 @@ Called when a push, pull or generation passes through the cell. Return a positio
 | `dy` | `number` | vertical direction the path is travelling |
 | `x` | `number` | horizontal position the path reached |
 | `y` | `number` | vertical position the path reached |
+| `reverse` | `boolean` | whether the path is being traced backwards, as when pulling |
 
-**Returns** the new `x` and `y`.
+**Returns** the new `x` and `y`, then optionally a new `dx` and `dy` to travel in and how many clockwise quarter turns to rotate the moved cell by. They default to the current direction and no rotation.
 
 ```lua
 -- sends every path to the left edge of its row

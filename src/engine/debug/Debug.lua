@@ -44,6 +44,18 @@ local function modLines(mods)
     return #lines > 0 and lines or { text.none }
 end
 
+local function textureLines(renderer, texturePacks)
+    local lines, missing = texturePacks:stack(), renderer:missingTextures()
+    local limit = config.missing.limit
+
+    for index = 1, math.min(#missing, limit) do
+        lines[#lines + 1] = string.format(text.missing, missing[index])
+    end
+    if #missing > limit then lines[#lines + 1] = string.format(text.more, #missing - limit) end
+    if #missing == 0 then lines[#lines + 1] = string.format(text.missing, text.none) end
+    return lines
+end
+
 local function write(message, color, x, y)
     love.graphics.setColor(utils.fromHex(color))
     love.graphics.print(message, x, y)
@@ -183,7 +195,7 @@ function Debug:_collect(manager)
             }
         },
         { side = "right", title = text.titles.mods, lines = modLines(self.mods) },
-        { side = "right", title = text.titles.packs, lines = self.texturePacks:stack() },
+        { side = "right", title = text.titles.textures, lines = textureLines(self.renderer, self.texturePacks) },
         {
             side = "left",
             title = text.titles.events,

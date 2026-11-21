@@ -87,6 +87,15 @@ local types = {
     }
 }
 
+local function named(property)
+    if not property.names then return false end
+
+    for value = property.min, property.max do
+        if not property.names[value] then return false end
+    end
+    return true
+end
+
 function Properties.valid(property)
     local kind = types[type(property.default)]
     return kind and kind.valid(property)
@@ -106,10 +115,10 @@ function Properties.custom(entry)
     end
 end
 
-function Properties.specs(properties, props)
+function Properties.specs(properties, props, class)
     local specs = {}
     for _, property in ipairs(properties) do
-        local input = property.swatches and "palette" or types[type(property.default)].input
+        local input = property.swatches and "palette" or named(property) and "select" or types[type(property.default)].input
         if input then
             specs[#specs + 1] = {
                 kind = input,
@@ -118,6 +127,8 @@ function Properties.specs(properties, props)
                 label = property.title,
                 min = property.min,
                 max = property.max,
+                names = property.names,
+                preview = property.icons and function(value) return class:preview({ [property.id] = value }) end,
                 limit = property.limit,
                 value = Properties.value(props, property)
             }

@@ -1,4 +1,5 @@
 local IconButton = require("src/ui/widgets/IconButton")
+local Dropdown = require("src/ui/widgets/Dropdown")
 local ScrollList = require("src/ui/widgets/ScrollList")
 local TextField = require("src/ui/widgets/TextField")
 local Panel = require("src/ui/Panel")
@@ -150,8 +151,6 @@ function CellBrowser:setup(data)
     self.onPick = data.onPick
     self.tooltip = Tooltip.new(data.renderer)
     self.active = false
-    self.menu = false
-    self.menuT = 0
     self.box = {}
     self.sort = config.sorts[1].id
     self.all = {}
@@ -177,10 +176,13 @@ function CellBrowser:setup(data)
         emptyFont = config.category.font,
         drawRow = function(...) self:_drawCell(...) end
     })
-    self.sorts = ScrollList.new({
+    self.dropdown = Dropdown.new({
         renderer = data.renderer,
-        rowHeight = config.sort.height,
-        drawRow = function(...) self:_drawSort(...) end
+        items = config.sorts,
+        onPick = function(item)
+            self.sort = item.id
+            self:_refresh()
+        end
     })
 
     self.tools = { self.filter }
@@ -209,9 +211,7 @@ function CellBrowser:_layout()
     self.categories:place(box.x + pad, bodyY, config.sidebar, bodyHeight)
     self.cells:place(listX, bodyY, box.x + box.width - pad - listX, bodyHeight)
 
-    local sort = config.sort
-    self.sorts:place(self.filter.x + filter - sort.width, self.filter.y + filter + gap - (1 - self.menuT) * sort.slide,
-        sort.width, #config.sorts * sort.height + constants.ui.list.pad * 2)
+    self.dropdown:place(self.filter.x + filter - constants.ui.dropdown.width, self.filter.y + filter + gap)
 end
 
 function CellBrowser:_load(classes)
@@ -266,9 +266,7 @@ function CellBrowser:_load(classes)
         if #root.children > 0 and own.count > 0 then root.own = own end
     end
 
-    for index, sort in ipairs(config.sorts) do
-        if sort.id == self.sort then self.sorts:setItems(config.sorts, index) end
-    end
+    self.dropdown:select(self.sort)
     self:_setCategory(self.entries.all)
 end
 
@@ -325,7 +323,7 @@ function CellBrowser:_typed()
 end
 
 function CellBrowser:_openSorts()
-    self.menu = true
+    self.dropdown:show()
 end
 
 function CellBrowser:_tool(x, y)
@@ -367,14 +365,6 @@ function CellBrowser:_drawCategory(category, x, y, width, height, hover, selecte
     love.graphics.setFont(countFont)
     love.graphics.setColor(utils.fromHex(colors.white, style.count.alpha))
     love.graphics.print(count, x + width - style.inset - countWidth, y + (height - countFont:getHeight()) / 2)
-end
-
-function CellBrowser:_drawSort(sort, x, y, width, height, _, selected)
-    local font = self.renderer:font(config.sort.font)
-
-    love.graphics.setFont(font)
-    love.graphics.setColor(utils.fromHex(colors.white, (selected and 1 or 0.7) * self.sorts.fade))
-    love.graphics.print(sort.title, x + config.sort.inset, y + (height - font:getHeight()) / 2)
 end
 
 function CellBrowser:_shines()
@@ -430,7 +420,7 @@ end
 
 function CellBrowser:_drawTooltip()
     local mx, my = love.mouse.getPosition()
-    local index = not self.menu and self.cells:rowAt(mx, my)
+    local index = not self.dropdown.shown and self.cells:rowAt(mx, my)
 
     if index then self.tooltip:draw(self:_describe(self.cells.items[index], index, mx, my)) end
     for _, tool in ipairs(self.tools) do tool:drawTooltip(self.tooltip) end
@@ -452,8 +442,7 @@ end
 
 function CellBrowser:open(classes)
     self.active = true
-    self.menu = false
-    self.menuT = 0
+    self.dropdown:hide()
     self.search:set("")
     self.keyRepeat = love.keyboard.hasKeyRepeat()
     love.keyboard.setKeyRepeat(true)
@@ -472,16 +461,12 @@ end
 function CellBrowser:update(dt)
     if not self.active then return end
 
-    self.menuT = utils.lerp(self.menuT, self.menu and 1 or 0, math.min(1, config.sort.speed * dt))
-    if math.abs(self.menuT - (self.menu and 1 or 0)) < 0.01 then self.menuT = self.menu and 1 or 0 end
-    self.sorts.fade = self.menuT
-
     self:_layout()
     self.search:update(dt)
     for _, tool in ipairs(self.tools) do tool:update(dt) end
-    self.categories:update(dt, not self.menu)
-    self.cells:update(dt, not self.menu)
-    self.sorts:update(dt, self.menu)
+    self.categories:update(dt, not self.dropdown.shown)
+    self.cells:update(dt, not self.dropdown.shown)
+    self.dropdown:update(dt)
 end
 
 function CellBrowser:mousepressed(x, y, button)
@@ -490,15 +475,8 @@ function CellBrowser:mousepressed(x, y, button)
     if button ~= 1 then return true end
 
     local box = self.box
-    if self.menu then
-        local index = self.sorts:rowAt(x, y)
-        if index then
-            Audio.play("click")
-            self.sort = config.sorts[index].id
-            self.sorts:select(index)
-            self:_refresh()
-        end
-        self.menu = false
+    if self.dropdown.shown then
+        self.dropdown:mousepressed(x, y)
     elseif not utils.inside(x, y, box.x, box.y, box.width, box.height) then
         self:close()
     else
@@ -575,7 +553,7 @@ function CellBrowser:draw()
     for _, tool in ipairs(self.tools) do tool:draw() end
     self.categories:draw()
     self.cells:draw()
-    if self.menuT > 0 then self.sorts:draw() end
+    self.dropdown:draw()
     self:_drawTooltip()
 
     love.graphics.setFont(previousFont)

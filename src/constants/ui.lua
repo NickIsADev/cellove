@@ -130,6 +130,26 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 screen)
             pad = 8,
             fill = 0.08,
             outline = 0.2
+        },
+        select = {
+            height = 40,
+            font = 16,
+            label = 72,
+            pad = 12,
+            gap = 4,
+            icon = 28,
+            fill = 0.08,
+            outline = 0.2
+        },
+        dropdown = {
+            width = 200,
+            height = 40,
+            font = 16,
+            inset = 12,
+            icon = 28,
+            gap = 10,
+            slide = 10,
+            speed = 20
         }
     },
 

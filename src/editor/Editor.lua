@@ -319,7 +319,7 @@ end
 function Editor:_edit(gx, gy)
     local cell = self.simulator.grid:top(gx, gy)
     local class = cell and getmetatable(cell)
-    local fields = class and Properties.specs(class.properties, cell.props)
+    local fields = class and Properties.specs(class.properties, cell.props, class)
     if not (fields and #fields > 0) then return false end
 
     self.prompt:open({

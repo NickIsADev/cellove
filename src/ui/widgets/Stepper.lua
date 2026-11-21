@@ -18,6 +18,8 @@ function Stepper.new(data)
     self.labelWidth = config.label
     self.min, self.max = data.min, data.max
     self.value = utils.clamp(data.value, data.min, data.max)
+    self.names = data.names
+    self.valueWidth = config.value
     self.dragging = false
     self.trackX, self.trackWidth = 0, 0
     self.minus = IconButton.new({
@@ -32,6 +34,12 @@ function Stepper.new(data)
         texture = "add",
         size = config.height
     })
+
+    local font = data.renderer:font(config.font)
+    for _, name in pairs(self.names or {}) do
+        self.valueWidth = math.max(self.valueWidth, font:getWidth(name) + config.gap * 2)
+    end
+    self.extra = self.valueWidth - config.value
     return self
 end
 
@@ -65,7 +73,7 @@ function Stepper:place(x, y, width)
 
     local size = config.height
     local minusX = x + self.labelWidth
-    local plusX = x + width - config.value - config.gap - size
+    local plusX = x + width - self.valueWidth - config.gap - size
 
     self.minus:place(minusX, y)
     self.plus:place(plusX, y)
@@ -116,7 +124,7 @@ function Stepper:draw()
     local centerY = self.y + self.height / 2
     local t = (self.value - self.min) / (self.max - self.min)
     local handle = config.handle
-    local value = tostring(self.value)
+    local value = self.names and self.names[self.value] or tostring(self.value)
 
     love.graphics.setFont(font)
     love.graphics.setColor(utils.fromHex(colors.white, 0.8))
@@ -130,7 +138,7 @@ function Stepper:draw()
     Panel.fill(self.trackX + self.trackWidth * t - handle.width / 2, centerY - handle.height / 2, handle.width, handle.height, colors.white, 1)
 
     love.graphics.setColor(utils.fromHex(colors.white))
-    love.graphics.print(value, self.x + self.width - config.value + (config.value - font:getWidth(value)) / 2, centerY - font:getHeight() / 2)
+    love.graphics.print(value, self.x + self.width - self.valueWidth + (self.valueWidth - font:getWidth(value)) / 2, centerY - font:getHeight() / 2)
 
     love.graphics.setFont(previousFont)
     love.graphics.setColor(utils.fromHex(colors.white))

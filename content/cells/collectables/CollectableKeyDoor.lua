@@ -1,9 +1,8 @@
 local BaseCell = require("content/cells/abstract/BaseCell")
 local Audio = require("src/engine/audio/Audio")
 local Keys = require("content/stores/Keys")
-local constants = require("src/constants")
 
-local colors, names = constants.keys.colors, constants.keys.names
+local colors, names = Keys.colors, Keys.names
 
 local CollectableKeyDoor = setmetatable({
     name = "collectablekeydoor",
