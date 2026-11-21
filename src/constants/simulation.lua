@@ -54,6 +54,7 @@ return {
             "gearCCW",
             "gear180",
             "gearRNG",
+            "orbiter",
             "superRedirector",
             "redirector",
             "inertia",

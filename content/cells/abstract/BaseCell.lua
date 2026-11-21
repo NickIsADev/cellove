@@ -37,7 +37,8 @@ local BaseCell = {
     player = false,
     subtick = {},
     outputs = { 0 },
-    properties = {}
+    properties = {},
+    guards = {}
 }
 BaseCell.__index = BaseCell
 
@@ -67,6 +68,13 @@ function BaseCell:_side(dx, dy)
     return facing[1] * dy - facing[2] * dx
 end
 
+function BaseCell:_face(dx, dy)
+    local along, across = self:_alignment(dx, dy), self:_side(dx, dy)
+    if along ~= 0 and across ~= 0 then return "corner" end
+    if along ~= 0 then return along > 0 and "back" or "front" end
+    return across < 0 and "right" or "left"
+end
+
 function BaseCell:_aim(dx, dy)
     local facing = constants.directions[self.rotation]
     return dx or facing[1], dy or facing[2]
@@ -83,6 +91,18 @@ function BaseCell:strength(dx, dy, action, actor)
         force = force + effect:force(value, dx, dy, action, actor)
     end
     return force
+end
+
+function BaseCell:resist(force)
+    return force
+end
+
+function BaseCell:imaginary(dx, dy)
+    return 0
+end
+
+function BaseCell:settled(total)
+    return true
 end
 
 function BaseCell:driven(dx, dy, action)
@@ -135,7 +155,10 @@ end
 function BaseCell:swapped(dx, dy)
 end
 
-function BaseCell:pushed(dx, dy)
+function BaseCell:pushed(dx, dy, action)
+end
+
+function BaseCell:chained(action, dx, dy, anchor)
 end
 
 function BaseCell:click(button)
@@ -174,7 +197,7 @@ function BaseCell:contents(rotation)
     return { class = getmetatable(self), rotation = rotation or self.rotation, props = self.props, effects = self:kept() }
 end
 
-function BaseCell:clinging()
+function BaseCell:clinging(dx, dy)
     local cling
 
     for effect in pairs(self.effects or none) do
@@ -184,6 +207,8 @@ function BaseCell:clinging()
 end
 
 function BaseCell:guarded(guard)
+    if self.guards[guard] then return true end
+
     for effect in pairs(self.effects or none) do
         if effect.guards[guard] then return true end
     end

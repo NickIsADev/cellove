@@ -46,7 +46,7 @@ function BaseTransformer:_build(scout, turn)
 end
 
 function BaseTransformer:_movable(cell, scout)
-    return cell:pushable(scout.dx, scout.dy) and not cell:guarded("pull")
+    return cell:pushable(scout.dx, scout.dy, nil, "pull") and not cell:guarded("pull")
 end
 
 function BaseTransformer:_withdraw(scout)
@@ -59,7 +59,7 @@ function BaseTransformer:_withdraw(scout)
     if not target then return true end
 
     local dx, dy = -behind.dx, -behind.dy
-    if target:pushable(dx, dy) and not target:guarded("pull") and movement:pull(behind.x, behind.y, dx, dy, constants.force.strength) then return true end
+    if target:pushable(dx, dy, nil, "pull") and not target:guarded("pull") and movement:pull(behind.x, behind.y, dx, dy, constants.force.strength) then return true end
 
     if cell then grid:set(scout.x, scout.y, cell) end
     return false

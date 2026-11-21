@@ -6,7 +6,15 @@ return {
         generate = 1,
         gravity = 1,
         strength = 1,
+        unit = 1,
         weight = -1
+    },
+
+    adjustable = {
+        amount = { id = "amount", title = "Amount", default = 1, min = 1, max = 999999 },
+        count = { id = "count", title = "Count", default = 0, min = 0, max = 999999 },
+        numerator = { id = "numerator", title = "Numerator", default = 0, min = 0, max = 999999 },
+        denominator = { id = "denominator", title = "Denominator", default = 1, min = 1, max = 999999 }
     },
 
     sniper = {
@@ -47,6 +55,12 @@ return {
                 parent = "basic"
             },
             {
+                id = "oppositions",
+                title = "Oppositions",
+                icon = "unpushable",
+                parent = "basic"
+            },
+            {
                 id = "weights",
                 title = "Weights",
                 icon = "weight",
@@ -59,9 +73,15 @@ return {
                 parent = "basic"
             },
             {
+                id = "extensions",
+                title = "Extensions",
+                icon = "pushextension",
+                parent = "basic"
+            },
+            {
                 id = "input",
                 title = "Input",
-                icon = "inputgate",
+                icon = "inputpushable",
                 parent = "basic"
             },
             {

@@ -120,6 +120,7 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | `superRotator`, `rotator`, `spin` | super rotators, rotators, the spin of rotator movers |
 | `flipGear` | flip gears |
 | `gearCW`, `gearCCW`, `gear180`, `gearRNG` | clockwise gears, counter-clockwise gears, 180 gears, random gears |
+| `orbiter` | sawblade orbiters |
 | `superRedirector`, `redirector` | super redirectors, redirectors |
 | `inertia` | inertia |
 | `vacuum`, `superImpulsor`, `impulsor` | vacuums, super impulsors, impulsors |

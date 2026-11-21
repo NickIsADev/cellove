@@ -23,8 +23,26 @@ return {
         },
         tag = {
             font = 8,
-            margin = 4,
-            count = { x = -0.2, y = -0.1375 },
+            anchors = {
+                corner = {
+                    x = 0.5,
+                    y = 0.5,
+                    pivot = 1,
+                    margin = 4
+                },
+                center = {
+                    x = 0,
+                    y = 0,
+                    pivot = 0.5,
+                    margin = 0
+                },
+                count = {
+                    x = -0.2,
+                    y = -0.1375,
+                    pivot = 0,
+                    margin = 0
+                }
+            },
             shadow = { offset = 1, alpha = 1 }
         },
         stored = {

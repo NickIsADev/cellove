@@ -78,7 +78,7 @@ function Grid:barred(x, y, dx, dy, action, mover)
     local index = self:_index(x, y)
     for _, stack in ipairs(self.layered) do
         local cell = stack[index]
-        if cell and cell:bars(dx, dy, action, mover) then return true end
+        if cell and cell:bars(dx, dy, action, mover) then return cell end
     end
     return false
 end

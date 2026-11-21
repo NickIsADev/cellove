@@ -515,7 +515,7 @@ function Renderer:drawCell(name, x, y, size)
     love.graphics.draw(texture, x + size / 2, y + size / 2, 0, scale, scale, info.x, info.y)
 end
 
-function Renderer:_print(text, x, y, scale, corner)
+function Renderer:_print(text, x, y, scale, anchor)
     text = tostring(text)
     local size = math.max(1, math.floor(tag.font * self.camera.zoom + 0.5))
     local font = self:font(size)
@@ -523,27 +523,28 @@ function Renderer:_print(text, x, y, scale, corner)
     local previousFont = love.graphics.getFont()
     local r, g, b, a = love.graphics.getColor()
     local shadow = tag.shadow.offset * scale
-    local width, height = corner and font:getWidth(text) or 0, corner and font:getBaseline() or 0
+    local margin = anchor.margin * scale
+    local px, py = (x - 0.5 + anchor.x * scale) * tile - margin, (y - 0.5 + anchor.y * scale) * tile - margin
+    local width, height = font:getWidth(text) * anchor.pivot, font:getBaseline() * anchor.pivot
 
     love.graphics.setFont(font)
     love.graphics.setColor(utils.fromHex(0x000000, tag.shadow.alpha * a))
-    love.graphics.print(text, x + shadow, y + shadow, 0, unit, unit, width, height)
+    love.graphics.print(text, px + shadow, py + shadow, 0, unit, unit, width, height)
     love.graphics.setColor(r, g, b, a)
-    love.graphics.print(text, x, y, 0, unit, unit, width, height)
+    love.graphics.print(text, px, py, 0, unit, unit, width, height)
     love.graphics.setFont(previousFont)
 end
 
 function Renderer:drawTag(text, x, y, _, scale, offset)
-    if offset ~= 0 then return end
+    if offset == 0 then self:_print(text, x, y, scale, tag.anchors.corner) end
+end
 
-    local margin = tag.margin * scale
-    self:_print(text, (x - 0.5 + scale / 2) * tile - margin, (y - 0.5 + scale / 2) * tile - margin, scale, true)
+function Renderer:drawLabel(text, x, y, _, scale, offset)
+    if offset == 0 then self:_print(text, x, y, scale, tag.anchors.center) end
 end
 
 function Renderer:drawCount(text, x, y, _, scale, offset)
-    if offset ~= 0 then return end
-
-    self:_print(text, (x - 0.5 + tag.count.x * scale) * tile, (y - 0.5 + tag.count.y * scale) * tile, scale)
+    if offset == 0 then self:_print(text, x, y, scale, tag.anchors.count) end
 end
 
 function Renderer:drawStored(content, x, y, turn, scale, offset)

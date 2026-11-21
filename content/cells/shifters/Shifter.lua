@@ -14,7 +14,7 @@ Shifter.__index = Shifter
 
 function Shifter:_shiftable(scout)
     local cell = scout and scout.cell
-    return cell and cell:pushable(-scout.dx, -scout.dy) and not cell:guarded("pull")
+    return cell and cell:pushable(-scout.dx, -scout.dy, nil, "pull") and not cell:guarded("pull")
 end
 
 function Shifter:_emit(facing, scout)

@@ -5,7 +5,11 @@ local none = {}
 local sides = { 1, -1 }
 
 local function movable(cell, action, dx, dy, bare)
-    return cell:pushable(dx, dy, bare) and not cell:guarded(action)
+    return cell:pushable(dx, dy, bare, action) and not cell:guarded(action)
+end
+
+local function apply(cell, force, dx, dy, action)
+    return cell:resist(force + cell:strength(dx, dy, action), dx, dy, action)
 end
 
 local function swappable(cell, dx, dy)
@@ -13,16 +17,16 @@ local function swappable(cell, dx, dy)
 end
 
 local function devours(eater, mover, dx, dy, action)
-    return eater:eats(dx, dy, action, mover) and not (eater.destroys and mover and mover:guarded("protect"))
+    return eater:eats(dx, dy, action, mover) and not (eater.destroys and mover and mover:guarded("protect", -dx, -dy))
 end
 
 local function rewind(grid, x, y, dx, dy)
     local cell = grid:get(x, y)
-    local effect = cell and cell:clinging()
+    local effect = cell and cell:clinging(dx, dy)
 
     while effect do
         local other = grid:get(x + dx, y + dy)
-        if not (other and other:clinging() == effect) then break end
+        if not (other and other:clinging(-dx, -dy) == effect) then break end
         x, y, cell = x + dx, y + dy, other
     end
     return x, y, cell
@@ -68,6 +72,7 @@ function Movement.new(data)
     self.dead = {}
     self.probes = {}
     self.queue = {}
+    self.anchor = {}
     self.moves = 0
     return self
 end
@@ -95,8 +100,14 @@ function Movement:_seal(chain, first)
     end
 end
 
+function Movement:_barred(x, y, dx, dy, action, mover)
+    local barrier = self.grid:barred(x, y, dx, dy, action, mover)
+    if barrier then self:_bump(barrier, dx, dy, mover) end
+    return barrier
+end
+
 function Movement:_open(x, y, dx, dy, action, mover)
-    if self.grid:barred(x, y, dx, dy, action, mover) then return false end
+    if self:_barred(x, y, dx, dy, action, mover) then return false end
 
     local cell = self.grid:get(x, y)
     if cell then return devours(cell, mover, dx, dy, action) end
@@ -186,6 +197,26 @@ function Movement:_bump(cell, dx, dy, pusher)
     cell:bump(dx, dy, pusher)
 end
 
+function Movement:_touch(cell, action, dx, dy)
+    if self.dry then return end
+
+    cell.simulator = self.simulator
+    cell:chained(action, dx, dy, self.anchor)
+end
+
+function Movement:_post(run, ...)
+    local outer = self.after
+    self.after = {}
+    local result = run(self, ...)
+    local queued = self.after
+    self.after = outer
+
+    for _, action in ipairs(queued) do
+        action(result)
+    end
+    return result
+end
+
 function Movement:_walk(x, y, dx, dy, force, chain, bare)
     local grid, dead = self.grid, self.dead
     local width, version = grid.width, grid.version
@@ -202,7 +233,7 @@ function Movement:_walk(x, y, dx, dy, force, chain, bare)
         if not (cell or grid:bounds(x, y)) then return self:_seal(chain, first) end
 
         local last = chain[#chain]
-        if last and grid:barred(x, y, dx, dy, "push", last.cell) then return self:_seal(chain, first) end
+        if last and self:_barred(x, y, dx, dy, "push", last.cell) then return self:_seal(chain, first) end
         if not cell or devours(cell, last and last.cell, dx, dy) then return chain end
         if cell.walked == stamp then return cell == chain[1].cell and chain or nil end
 
@@ -210,7 +241,9 @@ function Movement:_walk(x, y, dx, dy, force, chain, bare)
         if not pushable then self:_bump(cell, dx, dy, last and last.cell) end
         if not pushable or dead[key(width, x, y, dx, dy)] == version then return self:_seal(chain, first) end
 
-        force = force + cell:strength(dx, dy, "push")
+        self:_touch(cell, "push", dx, dy)
+
+        force = apply(cell, force, dx, dy, "push")
         if force <= 0 then return end
 
         local nx, ny, ndx, ndy, turn, via, target = self:_step(x, y, dx, dy)
@@ -219,7 +252,7 @@ function Movement:_walk(x, y, dx, dy, force, chain, bare)
         cell.walked = stamp
 
         local move = self:_take()
-        move.cell, move.x, move.y, move.dx, move.dy, move.pushed = cell, nx, ny, ndx, ndy, true
+        move.cell, move.x, move.y, move.dx, move.dy, move.pushed = cell, nx, ny, ndx, ndy, "push"
         move.ox, move.oy, move.turn, move.via = dx, dy, turn, via
         chain[#chain + 1] = move
 
@@ -232,11 +265,11 @@ function Movement:_cling(chain, force)
 
     for _, move in ipairs(chain) do
         local cell = move.cell
-        local sticky = cell:clinging()
-
         for _, side in ipairs(sides) do
-            local other = sticky and grid:get(cell.x - side * move.oy, cell.y + side * move.ox)
-            local stuck = other and other:clinging() == sticky and other.walked ~= self.stamp
+            local sx, sy = -side * move.oy, side * move.ox
+            local sticky = cell:clinging(sx, sy)
+            local other = sticky and grid:get(cell.x + sx, cell.y + sy)
+            local stuck = other and other:clinging(-sx, -sy) == sticky and other.walked ~= self.stamp
 
             if stuck and not self:_walk(other.x, other.y, move.ox, move.oy, force, chain) then return end
         end
@@ -244,9 +277,22 @@ function Movement:_cling(chain, force)
     return chain
 end
 
+function Movement:_settle(chain)
+    local total = 0
+    for _, move in ipairs(chain) do
+        if move.pushed then total = total + move.cell:imaginary(move.ox, move.oy) end
+    end
+
+    for _, move in ipairs(chain) do
+        if move.pushed and not move.cell:settled(total) then return end
+    end
+    return chain
+end
+
 function Movement:_line(x, y, dx, dy, force, chain, bare)
     chain = self:_walk(x, y, dx, dy, force, chain, bare)
-    return chain and self:_cling(chain, force)
+    chain = chain and self:_cling(chain, force)
+    return chain and self:_settle(chain)
 end
 
 function Movement:_carry(cell, x, y, dx, dy, action)
@@ -313,7 +359,9 @@ function Movement:_trail(chain, x, y, dx, dy, force, row)
         local ox, oy = -walk.dx, -walk.dy
         if not movable(cell, "pull", ox, oy) then return true end
 
-        force = force + cell:strength(ox, oy, "pull")
+        self:_touch(cell, "pull", ox, oy)
+
+        force = apply(cell, force, ox, oy, "pull")
         if force <= 0 then
             self:_spoil(chain, size + 1, cell, walk.turn)
             return false
@@ -331,7 +379,7 @@ function Movement:_trail(chain, x, y, dx, dy, force, row)
         end
 
         local entry = self:_take()
-        entry.cell, entry.x, entry.y, entry.dx, entry.dy = cell, forward.x, forward.y, forward.dx, forward.dy
+        entry.cell, entry.x, entry.y, entry.dx, entry.dy, entry.pushed = cell, forward.x, forward.y, forward.dx, forward.dy, "pull"
         entry.ox, entry.oy, entry.turn, entry.via = ox, oy, forward.turn, forward.via
         chain[#chain + 1] = entry
         taken[slot(width, forward.x, forward.y)] = true
@@ -373,7 +421,10 @@ function Movement:_shift(chain, silent)
         if own then cell.leg = subtick end
 
         if move.turn ~= 0 then cell:rotate(move.turn, nil, true) end
-        if move.pushed then cell:pushed(move.ox, move.oy) end
+        if move.pushed then
+            cell.simulator = self.simulator
+            cell:pushed(move.ox, move.oy, move.pushed)
+        end
 
         for _, point in ipairs(move.via) do
             local via = grid:get(point[1], point[2])
@@ -443,13 +494,16 @@ function Movement:slice(x, y, dx, dy)
     end
 end
 
-function Movement:push(x, y, dx, dy, force)
+function Movement:_pushChain(x, y, dx, dy, force)
     local pusher
     x, y, pusher = rewind(self.grid, x, y, -dx, -dy)
     if not pusher or pusher:guarded("push") then return false end
 
     force = (force or constants.force.push) + pusher:strength(dx, dy, "push", true)
     if force <= 0 then return false end
+
+    local anchor = self.anchor
+    anchor.x, anchor.y, anchor.dx, anchor.dy, anchor.extended = x, y, dx, dy, nil
 
     self.top = 0
     local move = self:_route(x, y, dx, dy)
@@ -464,7 +518,7 @@ function Movement:push(x, y, dx, dy, force)
     return true
 end
 
-function Movement:_pull(x, y, dx, dy, force, passive, row)
+function Movement:_pullChain(x, y, dx, dy, force, passive, row)
     local puller
     x, y, puller = rewind(self.grid, x, y, dx, dy)
     if not puller or puller:guarded("pull") then return false end
@@ -489,6 +543,8 @@ function Movement:_pull(x, y, dx, dy, force, passive, row)
         puller:rotate(-move.turn, true, true)
         return false
     end
+
+    if not self:_settle(chain) then return false end
 
     if not passive then self:_drive(chain, "pull") end
     self:_shift(chain, passive)
@@ -559,10 +615,12 @@ function Movement:_flanks(chain, x, y, dx, dy, force, skew)
             local move = self:_route(walk.x, walk.y, fx, fy)
             if not (move and movable(cell, "grab", fx, fy) and self:_open(move.x, move.y, move.dx, move.dy, nil, cell)) then break end
 
-            force = force + cell:strength(fx, fy, "grab")
+            self:_touch(cell, "grab", fx, fy)
+
+            force = apply(cell, force, fx, fy, "grab")
             if force <= 0 then return false end
 
-            move.cell = cell
+            move.cell, move.pushed = cell, "grab"
             seen[cell] = true
             chain[#chain + 1] = move
             cx, cy, sx, sy = walk.x, walk.y, walk.dx, walk.dy
@@ -571,7 +629,7 @@ function Movement:_flanks(chain, x, y, dx, dy, force, skew)
     return true
 end
 
-function Movement:grab(x, y, dx, dy, skew)
+function Movement:_grabChain(x, y, dx, dy, skew)
     local grabber = self.grid:get(x, y)
     if not grabber or grabber:guarded("grab") then return false end
 
@@ -586,19 +644,39 @@ function Movement:grab(x, y, dx, dy, skew)
     local chain = { move }
     if force <= 0 or not self:_flanks(chain, x, y, dx, dy, force, skew) then return false end
 
+    if not self:_settle(chain) then return false end
+
     self:_drive(chain, "grab")
     self:_shift(chain)
     return true
 end
 
-function Movement:flank(x, y, dx, dy, skew)
+function Movement:_flankChain(x, y, dx, dy, skew)
     self.top = 0
     local chain = {}
     if not self:_flanks(chain, x, y, dx, dy, constants.force.strength, skew) then return false end
 
+    if not self:_settle(chain) then return false end
+
     self:_drive(chain, "grab")
     self:_shift(chain, true)
     return true
+end
+
+function Movement:push(x, y, dx, dy, force)
+    return self:_post(self._pushChain, x, y, dx, dy, force)
+end
+
+function Movement:_pull(x, y, dx, dy, force, passive, row)
+    return self:_post(self._pullChain, x, y, dx, dy, force, passive, row)
+end
+
+function Movement:grab(x, y, dx, dy, skew)
+    return self:_post(self._grabChain, x, y, dx, dy, skew)
+end
+
+function Movement:flank(x, y, dx, dy, skew)
+    return self:_post(self._flankChain, x, y, dx, dy, skew)
 end
 
 function Movement:swap(ax, ay, bx, by, heading)
@@ -794,6 +872,11 @@ function Movement:transform(x, y, dx, dy, cell)
     cell:rotate(front.turn, true, true)
     self:place(front.x, front.y, cell)
     return true
+end
+
+function Movement:post(action)
+    local queued = self.after
+    if queued then queued[#queued + 1] = action end
 end
 
 function Movement:defer(action)

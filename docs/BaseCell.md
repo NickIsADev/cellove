@@ -46,6 +46,7 @@ Set these in the table you pass to `setmetatable`.
 | `destroys` | `boolean` | | cells moving into it are destroyed unless protected by an effect |
 | `freezes` | `boolean` | | keeps updating while frozen, like freezers do |
 | `anchored` | `boolean` | | cannot be rotated |
+| `guards` | `table` | `{}` | actions the cell refuses, like `{ push = true }`. checked by [`guarded`](#basecellguardedguard-dx-dy). guards come from effects too |
 | `faces` | `table` | `outputs` | directions relative to rotation that flip gears mirror, in the same format as `outputs`. `{}` keeps the rotation when flipped |
 | `twin` | `string` | | the name of the cell this one becomes when flipped by a flip gear, such as a clockwise gear's counter-clockwise twin. cells that look the same mirrored don't need one |
 
@@ -85,16 +86,16 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | method | default | description |
 | --- | --- | --- |
 | [`update`](#basecellupdatesubtick-direction) | nothing | runs during the cell's subticks |
-| [`pushable`](#basecellpushabledx-dy-bare) | `true` | whether the cell can be pushed |
+| [`pushable`](#basecellpushabledx-dy-bare-action) | `true` | whether the cell can be pushed |
 | [`eats`](#basecelleatsdx-dy-action-mover) | `false` | whether cells moving into this one are deleted |
 | [`bars`](#basecellbarsdx-dy-action-mover) | `false` | whether this cell stops cells from moving onto its tile, for [layered](Layers) cells |
 | [`click`](#basecellclickbutton) | `false` | called when the tile is clicked while the simulation runs |
 | [`tint`](#basecelltint) | nothing | color the sprite is drawn in |
 | [`group`](#basecellgroup) and [`lit`](#basecelllit) | | what an `outcome` cell reports |
 | [`absorb`](#basecellabsorbcell-dx-dy-action) | nothing | called after this cell eats a cell |
-| [`bump`](#basecellbumpdx-dy-pusher) | nothing | called when a repulsor pushes this cell and it eats the push |
+| [`bump`](#basecellbumpdx-dy-pusher) | nothing | called when a push runs into this cell and it blocks or eats it |
 | [`swapped`](#basecellswappeddx-dy) | nothing | called after a swap carried this cell to the other cell's place |
-| [`pushed`](#basecellpusheddx-dy) | nothing | called after a push moved this cell |
+| [`pushed`](#basecellpusheddx-dy-action) | nothing | called after a push, pull or grab moved this cell |
 | [`side`](#basecellside) | the `team` | which side sentries and seekers see this cell on |
 | [`health`](#basecellhealth) | `1` | how much damage the cell takes to destroy |
 | [`breakable`](#basecellbreakable) | not `fixed` or protected | whether collisions and explosions can destroy the cell |
@@ -102,6 +103,12 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | [`generatable`](#basecellgeneratable) | `true` | whether generators can copy the cell |
 | [`generated`](#basecellgenerated) | the same class and props | what a generator's copy of the cell becomes |
 | [`force`](#basecellforcedx-dy-action) | `0` | force added to a push or pull |
+| [`resist`](#basecellresistforce-dx-dy) | the same force | changes the force that is left after this cell |
+| [`imaginary`](#basecellimaginarydx-dy) | `0` | imaginary force this cell adds to the line it moves in |
+| [`settled`](#basecellsettledtotal) | `true` | whether the line is allowed to move for its imaginary force |
+| [`guarded`](#basecellguardedguard-dx-dy) | whether `guards` has the action | whether the cell refuses an action |
+| [`chained`](#basecellchainedaction-dx-dy-anchor) | nothing | called when a push, pull or grab reaches the cell, even if it fails |
+| [`clinging`](#basecellclingingdx-dy) | the cell's stickiest effect | what the cell sticks to on one side |
 | [`divert`](#basecelldivertdx-dy-reverse) | nothing | bends the path of a move passing through |
 | [`jump`](#basecelljumpdx-dy-x-y) | nothing | moves the path of a move passing through somewhere else |
 | [`preview`](#basecellpreviewprops) | `self.texture` | name of the texture a cell with these properties looks like |
@@ -125,15 +132,16 @@ function Eraser:update(subtick, direction)
 end
 ```
 
-### `BaseCell:pushable(dx, dy, bare)`
+### `BaseCell:pushable(dx, dy, bare, action)`
 
-Whether the cell can be pushed. Default `true`, or `false` for a `fixed` cell.
+Whether the cell can be moved by a push, pull or grab. Default `true`, or `false` for a `fixed` cell.
 
 | parameter | type | description |
 | --- | --- | --- |
 | `dx` | `number` | horizontal push direction: `-1`, `0` or `1` |
 | `dy` | `number` | vertical push direction: `-1`, `0` or `1` |
 | `bare` | `boolean` | the cell is first in a push that has no pusher, like a Repulsor's |
+| `action` | `"push"\|"pull"\|"grab"?` | what is moving the cell, `nil` for other moves |
 
 **Returns** `boolean`
 
@@ -256,7 +264,7 @@ end
 
 ### `BaseCell:bump(dx, dy, pusher)`
 
-Called when a Repulsor pushes this cell and it eats the push instead of moving. Storage uses it to release its content.
+Called when a push runs into this cell and it blocks or eats the push instead of moving. Storage uses it to release its content, and Spinners use it to turn the pusher.
 
 | parameter | type | description |
 | --- | --- | --- |
@@ -285,14 +293,15 @@ function BaseGate:swapped(dx, dy)
 end
 ```
 
-### `BaseCell:pushed(dx, dy)`
+### `BaseCell:pushed(dx, dy, action)`
 
-Called after a push moved this cell, with the direction it was pushed in. Every cell in a pushed line counts, including the ones a repulsor or generator pushes, but not the pusher itself and not cells that were pulled or swapped. Inertia uses it to store its momentum.
+Called after a push, pull or grab moved this cell, with the direction it moved in. Every cell in the moved line counts, including the ones a repulsor or generator pushes, but not the mover itself and not cells that were swapped. Inertia uses it to store its momentum, and extensions use it to extend the force.
 
 | parameter | type | description |
 | --- | --- | --- |
 | `dx` | `number` | horizontal direction of the push |
 | `dy` | `number` | vertical direction of the push |
+| `action` | `"push"\|"pull"\|"grab"` | what moved the cell |
 
 ```lua
 -- remembers the direction it was last pushed in
@@ -386,6 +395,102 @@ Force added to a push or pull. The move fails if the total is 0 or less. Default
 -- like Weight: absorbs one unit of force from every push and pull
 function Weight:force()
     return -1
+end
+```
+
+### `BaseCell:resist(force, dx, dy)`
+
+Changes the force that is left after this cell, after its own [`force`](#basecellforcedx-dy-action) is added. Return the new total: `0` blocks the move, and a smaller number leaves less force for the cells after it. Default is the same force.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `force` | `number` | force left on arriving at this cell, including its own |
+| `dx` | `number` | horizontal direction of the move |
+| `dy` | `number` | vertical direction of the move |
+
+**Returns** `number`
+
+```lua
+-- like Restrictor: at most one unit of force gets through
+function Restrictor:resist(force)
+    return math.min(force, 1)
+end
+```
+
+### `BaseCell:imaginary(dx, dy)`
+
+Imaginary force this cell adds to the line it moves in. The line only moves if every cell in it agrees to the sum, see [`settled`](#basecellsettledtotal). Default `0`.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `dx` | `number` | horizontal direction of the move |
+| `dy` | `number` | vertical direction of the move |
+
+**Returns** `number`
+
+### `BaseCell:settled(total)`
+
+Whether the moved line is allowed to move for its total [imaginary force](#basecellimaginarydx-dy). Every moved cell is asked, and the move is cancelled when one says no. Default `true`.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `total` | `number` | sum of the imaginary force of the moved line |
+
+**Returns** `boolean`
+
+```lua
+-- like Imaginary Weight: the line may not weigh more than it is pushed
+function ImaginaryWeight:settled(total)
+    return total >= 0
+end
+```
+
+### `BaseCell:guarded(guard, dx, dy)`
+
+Whether the cell refuses an action, from `guards` or an effect. Override it to refuse by side. `"protect"` is asked with the direction the threat moves in, so a cell can shield some of its sides, but the other guards are asked without one.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `guard` | `string` | `"push"`, `"pull"`, `"grab"`, `"swap"`, `"scissor"`, `"tunnel"`, `"lock"` or `"protect"` |
+| `dx` | `number?` | horizontal direction the threat moves in |
+| `dy` | `number?` | vertical direction the threat moves in |
+
+**Returns** `boolean`
+
+### `BaseCell:chained(action, dx, dy, anchor)`
+
+Called when a push, pull or grab reaches the cell, before the chain is known to succeed. Queue work with `movement:post`: it runs once the chain has finished, even when the chain failed, and receives whether the chain moved. Does nothing by default.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `action` | `string` | `"push"`, `"pull"` or `"grab"` |
+| `dx` | `number` | horizontal direction the cell would move in |
+| `dy` | `number` | vertical direction the cell would move in |
+| `anchor` | `table` | `x`, `y`, `dx`, `dy` of the push that started the chain, and `extended` to mark that a cell has already extended it |
+
+```lua
+-- pulls the cell behind it once the chain is over
+function PullExtension:chained(action, dx, dy)
+    local movement, x, y = self.simulator.movement, self.x, self.y
+    movement:post(function() movement:pull(x - dx, y - dy, dx, dy) end)
+end
+```
+
+### `BaseCell:clinging(dx, dy)`
+
+What the cell sticks to on the side facing `dx, dy`. Two neighbors move together when each one returns the same value for the side facing the other. Default is the cell's stickiest effect, or `nil`.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `dx` | `number` | horizontal direction of the side |
+| `dy` | `number` | vertical direction of the side |
+
+**Returns** `any`
+
+```lua
+-- sticks to other Silicon on every side
+function Silicon:clinging()
+    return "silicon"
 end
 ```
 

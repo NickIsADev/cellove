@@ -28,8 +28,8 @@ function Inertia:force(_, _, action)
     return action == "push" and constants.force.strength or 0
 end
 
-function Inertia:pushed(dx, dy)
-    self.momentum[axis(dx)] = dx + dy
+function Inertia:pushed(dx, dy, action)
+    if action == "push" then self.momentum[axis(dx)] = dx + dy end
 end
 
 function Inertia:update(_, direction)
