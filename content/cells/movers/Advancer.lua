@@ -19,7 +19,7 @@ function Advancer:force(dx, dy, action)
 end
 
 function Advancer:update()
-    self:advance()
+    self:advance(nil, nil, self.options)
 end
 
 return Advancer

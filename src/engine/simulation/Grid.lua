@@ -145,7 +145,7 @@ function Grid:_put(x, y, cell, layer)
 
     if cell then
         self:_count(cell, x, y, 1)
-        cell.x, cell.y, cell.grid = x, y, self
+        cell.x, cell.y, cell.grid, cell.simulator = x, y, self, self.simulator
     end
     return true
 end
@@ -167,7 +167,7 @@ function Grid:set(x, y, cell, layer)
 
     if cell then
         self:_count(cell, x, y, 1)
-        cell.x, cell.y, cell.grid = x, y, self
+        cell.x, cell.y, cell.grid, cell.simulator = x, y, self, self.simulator
         if cell.effects then self.effected[cell] = true end
     end
 

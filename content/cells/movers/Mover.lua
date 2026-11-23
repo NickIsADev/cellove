@@ -19,8 +19,15 @@ function Mover:force(dx, dy, action)
     return self:_alignment(dx, dy) * constants.force.strength
 end
 
+function Mover:_breakable()
+    local front = self:look(self.rotation)
+    local target = front and front.target
+
+    if target and target:breakable() and not target:guarded("protect", front.dx, front.dy) then return target end
+end
+
 function Mover:update()
-    self:push()
+    self:push(nil, nil, nil, self.options)
 end
 
 return Mover

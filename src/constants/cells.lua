@@ -16,7 +16,11 @@ return {
         run = { id = "run", title = "Run", default = 1, min = 0, max = 99 },
         rise = { id = "rise", title = "Rise", default = 0, min = 0, max = 99 },
         numerator = { id = "numerator", title = "Numerator", default = 0, min = 0, max = 99 },
-        denominator = { id = "denominator", title = "Denominator", default = 1, min = 1, max = 99 }
+        denominator = { id = "denominator", title = "Denominator", default = 1, min = 1, max = 99 },
+        speed = { id = "speed", title = "Speed", default = 1, min = 1, max = 99 },
+        delay = { id = "delay", title = "Delay", default = 1, min = 1, max = 99 },
+        time = { id = "time", title = "Time", default = 0, min = 0, max = 99 },
+        maximum = { id = "maximum", title = "Max", default = 0, min = 0, max = 99, names = { [0] = "0 (inf)" } }
     },
 
     registry = {
@@ -297,6 +301,12 @@ return {
                 id = "sentries",
                 title = "Sentries",
                 icon = "sentry",
+                parent = "destroyers"
+            },
+            {
+                id = "acids",
+                title = "Acids",
+                icon = "acid",
                 parent = "destroyers"
             },
             {

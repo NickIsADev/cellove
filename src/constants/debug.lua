@@ -1,6 +1,10 @@
 return {
     debug = {
         key = "f3",
+        showcase = {
+            key = "f4",
+            message = "loaded every cell (%d)"
+        },
         font = 12,
         interval = 0.1,
         missing = { limit = 12 },

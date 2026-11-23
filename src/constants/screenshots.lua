@@ -4,6 +4,7 @@ return {
         pattern = "^(.+)%.[pP][nN][gG]$",
         extension = ".png",
         scale = 8,
+        pixels = 8000000,
         name = "Screenshot %Y-%m-%d %H-%M-%S",
         title = { text = "Screenshots", size = 40 },
         empty = "No screenshots yet...",

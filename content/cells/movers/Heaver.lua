@@ -19,7 +19,7 @@ function Heaver:update()
     local x, y, dx, dy = self.x, self.y, self:_aim()
 
     if self:push() then
-        self.simulator.movement:flank(x, y, dx, dy)
+        self.simulator.movement:flank(x, y, dx, dy, nil, self.strong)
     else
         self:grab()
     end

@@ -33,6 +33,8 @@ Set these in the table you pass to `setmetatable`.
 | `sweep` | `table` | | scans the subtick row by row (or column by column) instead of by facing, as `{ x = 1, y = -1 }`. `x` and `y` are `1` or `-1`, and `columns = true` makes `x` the outer loop. a directional cell maps each of its subticks to a table that maps a pass direction to one of these |
 | `rear` | `boolean` | | scans from the back of the pass direction instead of the front |
 | `skew` | `number` | `0` | where [`grab`](#basecellgrabdx-dy) drags cells from: `0` the sides, `1` the front diagonals, `-1` the back diagonals |
+| `bend` | `number` | | makes [`slice`](#basecellslicedx-dy) only push cells to one side: `1` clockwise, `-1` counter-clockwise |
+| `strong` | `boolean` | | makes [`grab`](#basecellgrabdx-dy) push the cells it drags instead of only nudging them into empty space |
 | `hostile` | `boolean` | `false` | counts as an enemy. a puzzle is solved when none remain |
 | `friendly` | `boolean` | `false` | counts as an ally. a puzzle is failed when fewer remain than there were at the start |
 | `team` | `string` | | `"hostile"` or `"friendly"`: the side sentries and seekers take for this cell. defaults to `"hostile"` for `hostile` cells and `"friendly"` for `friendly` ones. unlike those flags it does not affect puzzles |
@@ -94,6 +96,7 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | [`tint`](#basecelltint) | nothing | color the sprite is drawn in |
 | [`group`](#basecellgroup) and [`lit`](#basecelllit) | | what an `outcome` cell reports |
 | [`absorb`](#basecellabsorbcell-dx-dy-action) | nothing | called after this cell eats a cell |
+| [`rams`](#basecellramscell-dx-dy-action) and [`ram`](#basecellramcell-dx-dy) | `false` and nothing | make this cell destroy the cell it moves into, like an Acid |
 | [`bump`](#basecellbumpdx-dy-pusher) | nothing | called when a push runs into this cell and it blocks or eats it |
 | [`swapped`](#basecellswappeddx-dy) | nothing | called after a swap carried this cell to the other cell's place |
 | [`pushed`](#basecellpusheddx-dy-action) | nothing | called after a push, pull or grab moved this cell |
@@ -261,6 +264,40 @@ Called after this cell eats `cell`. Return `true` to let `cell` survive and take
 ```lua
 function Counter:absorb(cell)
     print("ate a " .. cell.name)
+end
+```
+
+### `BaseCell:rams(cell, dx, dy, action)`
+
+Whether this cell collides with `cell` when it moves into it, instead of pushing it. Default `false`. A colliding move ends there and calls [`ram`](#basecellramcell-dx-dy) on the moving cell.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `cell` | `BaseCell` | the cell being moved into |
+| `dx` | `number` | horizontal direction this cell is moving |
+| `dy` | `number` | vertical direction this cell is moving |
+| `action` | `string?` | how this cell is moving, as in [`eats`](#basecelleatsdx-dy-action-mover) |
+
+```lua
+function Acid:rams(cell)
+    return cell:breakable()
+end
+```
+
+### `BaseCell:ram(cell, dx, dy)`
+
+Called on a cell whose [`rams`](#basecellramscell-dx-dy-action) returned `true`. Return `true` to let this cell survive and take the place of `cell`.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `cell` | `BaseCell` | the cell that was rammed |
+| `dx` | `number` | horizontal direction this cell was moving |
+| `dy` | `number` | vertical direction this cell was moving |
+
+```lua
+function Acid:ram(cell)
+    cell:hit(1)
+    return false
 end
 ```
 
@@ -589,7 +626,7 @@ Call these from your own methods, usually from `update`. Where `dx` and `dy` are
 | [`become`](#basecellbecomeclass) | turns the cell into another class in place |
 | [`alternate`](#basecellalternate) | turns the cell into its `pair` |
 
-### `BaseCell:push(dx, dy, force)`
+### `BaseCell:push(dx, dy, force, options)`
 
 Pushes the cell one tile, moving whatever is in the way.
 
@@ -598,6 +635,7 @@ Pushes the cell one tile, moving whatever is in the way.
 | `dx` | `number?` | horizontal direction |
 | `dy` | `number?` | vertical direction |
 | `force` | `number?` | extra force added to the push |
+| `options` | `table?` | `limit` is the most cells the push may move besides the pusher, `bend = true` turns a blocked push sideways, and `row = true` keeps pushing the cells past any empty space |
 
 **Returns** `boolean`, true if it moved.
 
@@ -607,7 +645,7 @@ function Mover:update()
 end
 ```
 
-### `BaseCell:pull(dx, dy, force)`
+### `BaseCell:pull(dx, dy, force, row)`
 
 Moves the cell one tile and drags the cells behind it.
 
@@ -616,6 +654,7 @@ Moves the cell one tile and drags the cells behind it.
 | `dx` | `number?` | horizontal direction |
 | `dy` | `number?` | vertical direction |
 | `force` | `number?` | extra force added to the pull |
+| `row` | `boolean?` | keeps dragging the cells past any empty space |
 
 **Returns** `boolean`, true if it moved.
 
@@ -642,7 +681,7 @@ function Grabber:update()
 end
 ```
 
-### `BaseCell:advance(dx, dy)`
+### `BaseCell:advance(dx, dy, options)`
 
 Moves the cell one tile, pushing the cells in front of it and dragging the cells behind it.
 
@@ -650,6 +689,7 @@ Moves the cell one tile, pushing the cells in front of it and dragging the cells
 | --- | --- | --- |
 | `dx` | `number?` | horizontal direction |
 | `dy` | `number?` | vertical direction |
+| `options` | `table?` | `row = true` moves whole rows, and `strict = true` only moves if it can both push and pull |
 
 **Returns** `boolean`, true if it moved.
 
@@ -673,6 +713,23 @@ Moves the cell one tile without pushing. Fails if the tile is occupied.
 ```lua
 function Nudger:update()
     self:nudge()
+end
+```
+
+### `BaseCell:slice(dx, dy)`
+
+Moves the cell one tile like [`nudge`](#basecellnudgedx-dy). If the tile is occupied, it pushes the cell there out of the way to one side and then moves in. Tries both sides unless [`bend`](#class-fields) limits it to one.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `dx` | `number?` | horizontal direction |
+| `dy` | `number?` | vertical direction |
+
+**Returns** `boolean`, true if it moved.
+
+```lua
+function Slicer:update()
+    self:slice()
 end
 ```
 

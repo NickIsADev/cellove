@@ -130,7 +130,9 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | `trawler` | trawlers |
 | `grabber` | grabbers, heavers |
 | `thruster` | thrusters, skewers |
+| `superMover` | super movers, super crushers |
 | `mover` | movers, birds, the push of rotator movers |
+| `slicer` | tunnellers |
 | `nudger` | nudgers, missiles, CelLoves |
 | `sentry` | sentries and turrets |
 | `player` | players |

@@ -7,6 +7,7 @@ local constants = require("src/constants")
 local config = constants.toast
 local text = constants.selector.text.toast
 local labels = constants.debug.text.game
+local showcase = constants.debug.showcase
 
 local GameScene = {}
 GameScene.__index = GameScene
@@ -15,6 +16,7 @@ function GameScene.new(data)
     local self = setmetatable({}, GameScene)
     self.manager = data.manager
     self.renderer = data.renderer
+    self.registry = data.registry
     self.settings = data.settings
     self.hotkeys = data.hotkeys
     self.contraptions = data.contraptions
@@ -46,6 +48,14 @@ function GameScene.new(data)
         self.simulator.interval = 1 / tickSpeed
     end)
     return self
+end
+
+function GameScene:_load(contraption)
+    self.simulator:load(contraption)
+    self.markers:load(contraption.markers)
+    self.editor:reset()
+    self.renderer.camera:focus(contraption.width, contraption.height)
+    self.checkpoint = self.contraptions:export(self:_snapshot())
 end
 
 function GameScene:_snapshot()
@@ -92,18 +102,33 @@ function GameScene:_puzzle()
     })
 end
 
+function GameScene:_showcase()
+    self:_save(true)
+
+    local classes = self.registry:list()
+    local width = math.ceil(math.sqrt(#classes))
+    local contraption = self.contraptions:blank(width, math.ceil(#classes / width))
+
+    for index, class in ipairs(classes) do
+        contraption.cells[index] = {
+            class = class,
+            rotation = 0,
+            x = (index - 1) % width + 1,
+            y = math.ceil(index / width)
+        }
+    end
+
+    self.name = nil
+    self:_load(contraption)
+    self.toast:show(string.format(showcase.message, #classes))
+end
+
 function GameScene:enter(_, data)
     self.toast:clear()
     if data and data.resume then return end
 
     self.name = data and data.name
-    local contraption = self.name and self.contraptions:load(self.name) or self.contraptions:blank()
-
-    self.simulator:load(contraption)
-    self.markers:load(contraption.markers)
-    self.editor:reset()
-    self.renderer.camera:focus(contraption.width, contraption.height)
-    self.checkpoint = self.contraptions:export(self:_snapshot())
+    self:_load(self.name and self.contraptions:load(self.name) or self.contraptions:blank())
 end
 
 function GameScene:leave()
@@ -199,6 +224,8 @@ function GameScene:keypressed(key)
         self:_save()
     elseif hotkeys:pressed("screenshot", key) then
         self:_screenshot()
+    elseif key == showcase.key and self.manager.debug.enabled then
+        self:_showcase()
     end
 end
 

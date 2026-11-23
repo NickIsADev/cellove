@@ -126,6 +126,13 @@ function BaseCell:eats(dx, dy, action, mover)
     return false
 end
 
+function BaseCell:rams(cell, dx, dy, action)
+    return false
+end
+
+function BaseCell:ram(cell, dx, dy)
+end
+
 function BaseCell:bars(dx, dy, action, mover)
     return false
 end
@@ -240,27 +247,27 @@ end
 
 function BaseCell:slice(dx, dy)
     dx, dy = self:_aim(dx, dy)
-    return self.simulator.movement:slice(self.x, self.y, dx, dy)
+    return self.simulator.movement:slice(self.x, self.y, dx, dy, self.bend)
 end
 
-function BaseCell:push(dx, dy, force)
+function BaseCell:push(dx, dy, force, options)
     dx, dy = self:_aim(dx, dy)
-    return self.simulator.movement:push(self.x, self.y, dx, dy, force)
+    return self.simulator.movement:push(self.x, self.y, dx, dy, force, options)
 end
 
-function BaseCell:pull(dx, dy, force)
+function BaseCell:pull(dx, dy, force, row)
     dx, dy = self:_aim(dx, dy)
-    return self.simulator.movement:pull(self.x, self.y, dx, dy, force)
+    return self.simulator.movement:pull(self.x, self.y, dx, dy, force, row)
 end
 
 function BaseCell:grab(dx, dy)
     dx, dy = self:_aim(dx, dy)
-    return self.simulator.movement:grab(self.x, self.y, dx, dy, self.skew)
+    return self.simulator.movement:grab(self.x, self.y, dx, dy, self.skew, self.strong)
 end
 
-function BaseCell:advance(dx, dy)
+function BaseCell:advance(dx, dy, options)
     dx, dy = self:_aim(dx, dy)
-    return self.simulator.movement:advance(self.x, self.y, dx, dy)
+    return self.simulator.movement:advance(self.x, self.y, dx, dy, options)
 end
 
 function BaseCell:swap(ax, ay, bx, by, heading)

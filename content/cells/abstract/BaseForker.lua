@@ -19,11 +19,12 @@ end
 
 function BaseForker:absorb(cell, dx, dy)
     local class, props = cell:generated()
-    if not class then return end
+    local forks = self.forks[self:_entry(dx, dy)]
+    if not (class and forks) then return end
 
     local x, y, movement = self.x, self.y, self.simulator.movement
     local effects, rotation, updated, ran = cell:kept(), cell.rotation, cell.updated, cell.ran
-    local forks, copies = self.forks[self:_entry(dx, dy)], self:_copies()
+    local copies = self:_copies()
 
     movement:defer(function()
         for _ = 1, copies do

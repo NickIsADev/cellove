@@ -7,6 +7,7 @@ local Markers = require("src/engine/simulation/Markers")
 local utils = require("src/utils")
 
 local config = constants.texturepacks
+local shots = constants.screenshots
 local shadow = constants.renderer.shadow
 local box = constants.renderer.box
 local mark = constants.renderer.marker
@@ -728,7 +729,7 @@ end
 function Renderer:capture(simulator, markers, area)
     local width, height = (area.x2 - area.x1 + 1) * tile, (area.y2 - area.y1 + 1) * tile
     local limit = love.graphics.getSystemLimits().texturesize
-    local scale = math.min(constants.screenshots.scale, limit / math.max(width, height))
+    local scale = math.min(shots.scale, limit / math.max(width, height), math.sqrt(shots.pixels / (width * height)))
     local canvas = love.graphics.newCanvas(math.floor(width * scale), math.floor(height * scale), { dpiscale = 1 })
     local live, previous = self.camera, love.graphics.getCanvas()
     local camera = Camera.new({ size = function() return width, height end })

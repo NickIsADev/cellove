@@ -48,7 +48,12 @@ end
 
 function Screenshots:take(simulator, markers, area)
     local grid = simulator.grid
-    local data = self.renderer:capture(simulator, markers, area or { x1 = 1, y1 = 1, x2 = grid.width, y2 = grid.height })
+    local data = self.renderer:capture(simulator, markers, area or {
+        x1 = 0,
+        y1 = 0,
+        x2 = grid.width + 1,
+        y2 = grid.height + 1
+    })
 
     love.filesystem.createDirectory(config.root)
     data:encode("png", self:_path(os.date(config.name)))
