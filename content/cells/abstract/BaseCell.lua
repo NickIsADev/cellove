@@ -33,6 +33,7 @@ local BaseCell = {
     title = "Base",
     description = "",
     hostile = false,
+    collides = false,
     friendly = false,
     player = false,
     subtick = {},

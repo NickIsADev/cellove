@@ -8,6 +8,7 @@ local Enemy = setmetatable({
     faces = {},
     hostile = true,
     destroys = true,
+    collides = true,
     categories = { "enemies" }
 }, { __index = BaseCell })
 Enemy.__index = Enemy

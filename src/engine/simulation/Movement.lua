@@ -853,18 +853,19 @@ function Movement:generate(x, y, dx, dy, options)
     if not (source and source:generatable() and front) then return false end
     if grid:barred(front.x, front.y, front.dx, front.dy, "generate", source) then return false end
 
+    local class, props, rotation = source:generated()
+    local clone = class and class:new({ rotation = rotation or source.rotation, props = props, effects = source:kept() })
+    if clone and self:_crash(clone, front, x, y) then return true end
+
     local chain = self:_line(front.x, front.y, front.dx, front.dy, constants.force.generate)
     if not chain then return false end
 
     if #chain > 0 then self:_shift(chain, true) end
-
-    local class, props, rotation = source:generated()
-    if not class then return true end
+    if not clone then return true end
 
     local origin = generator.path and generator.path[1] or { x, y }
     local turn = back.turn + front.turn + (options.turn or 0)
 
-    local clone = class:new({ rotation = rotation or source.rotation, props = props, effects = source:kept() })
     clone:rotate(turn, true, true)
     clone.updated = source.updated
     clone.ran = source.ran
@@ -885,6 +886,24 @@ function Movement:clear(x, y, dx, dy)
     return chain ~= nil
 end
 
+function Movement:_strike(cell, x, y, occupant)
+    cell.grid, cell.x, cell.y = self.grid, x, y
+
+    local damage = math.min(cell:health(), occupant:health())
+    occupant:hit(damage)
+    return damage
+end
+
+function Movement:_crash(cell, front, x, y)
+    local occupant = self.grid:get(front.x, front.y)
+    if not (cell.collides and cell:breakable() and occupant and occupant:breakable()) then return false end
+    if occupant:eats(front.dx, front.dy, "push", cell) then return false end
+
+    local damage = self:_strike(cell, x, y, occupant)
+    if cell.struck then cell:struck(damage) end
+    return true
+end
+
 function Movement:fire(x, y, dx, dy, cell)
     local front = self:look(x, y, dx, dy)
     if not front then return false end
@@ -893,9 +912,7 @@ function Movement:fire(x, y, dx, dy, cell)
     if occupant and not occupant:eats(front.dx, front.dy, "push", cell) then
         if not (cell.struck and occupant:breakable()) then return false end
 
-        cell.grid, cell.x, cell.y = self.grid, front.x, front.y
-        local damage = math.min(cell:health(), occupant:health())
-        occupant:hit(damage)
+        local damage = self:_strike(cell, front.x, front.y, occupant)
         self:flush()
         if not cell:struck(damage) or self.grid:get(front.x, front.y) then return true end
     end
@@ -909,6 +926,7 @@ function Movement:release(x, y, dx, dy, cell, mode)
     self.top = 0
     local front = self:_route(x, y, dx, dy)
     if not front or self.grid:barred(front.x, front.y, front.dx, front.dy, "generate", cell) then return false end
+    if self:_crash(cell, front, x, y) then return true end
 
     local chain = self:_line(front.x, front.y, front.dx, front.dy, constants.force.generate)
     if not chain then return false end
