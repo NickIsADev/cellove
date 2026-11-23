@@ -47,6 +47,7 @@ Set these in the table you pass to `setmetatable`.
 | `hollow` | `boolean` | | sentries and seekers see through it as if the tile were empty, like a coin |
 | `slick` | `boolean` | | empty tiles next to it, across the direction of a move, are slipped past instead of landed on, like ice |
 | `destroys` | `boolean` | | cells moving into it are destroyed unless protected by an effect |
+| `collides` | `boolean` | `false` | when [`generate`](#basecellgeneratedirection-options) or a release spawns it onto a breakable cell, it hits that cell instead of pushing it away: both take damage and the new cell is gone. enemies, missiles and sentries do this |
 | `freezes` | `boolean` | | keeps updating while frozen, like freezers do |
 | `anchored` | `boolean` | | cannot be rotated |
 | `guards` | `table` | `{}` | actions the cell refuses, like `{ push = true }`. checked by [`guarded`](#basecellguardedguard-dx-dy). guards come from effects too |
@@ -755,7 +756,7 @@ end
 
 ### `BaseCell:generate(direction, options)`
 
-Copies the cell behind this one into the tile in front, pushing out what is there.
+Copies the cell behind this one into the tile in front, pushing out what is there. If the copy [`collides`](#basecell), it hits a breakable cell in front instead of pushing it.
 
 | parameter | type | description |
 | --- | --- | --- |
