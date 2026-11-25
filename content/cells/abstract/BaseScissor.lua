@@ -31,7 +31,7 @@ function BaseScissor:update()
     local facing = constants.directions[self.rotation]
     local target = self.grid:get(self.x + facing[1], self.y + facing[2])
 
-    if self:nudge() or not (target and target:transformable() and not target:guarded("scissor")) then return end
+    if self:nudge() or not (target and target:transformable() and not target:guarded("scissor", facing[1], facing[2])) then return end
 
     target.simulator, target.born = self.simulator, true
     target:kill()

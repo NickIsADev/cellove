@@ -4,8 +4,8 @@ local utils = require("src/utils")
 local none = {}
 local sides = { 1, -1 }
 
-local function movable(cell, action, dx, dy, bare)
-    return cell:pushable(dx, dy, bare, action) and not cell:guarded(action, dx, dy)
+local function movable(cell, action, dx, dy, bare, gx, gy)
+    return cell:pushable(dx, dy, bare, action) and not cell:guarded(action, gx or dx, gy or dy)
 end
 
 local function apply(cell, force, dx, dy, action)
@@ -13,7 +13,7 @@ local function apply(cell, force, dx, dy, action)
 end
 
 local function swappable(cell, dx, dy)
-    return cell:swappable(dx, dy) and not cell:guarded("swap")
+    return cell:swappable(dx, dy) and not cell:guarded("swap", -dx, -dy)
 end
 
 local function devours(eater, mover, dx, dy, action)
@@ -430,7 +430,7 @@ function Movement:_trail(chain, x, y, dx, dy, force, row, strict)
         if not cell or seen[cell] or cell:eats(walk.dx, walk.dy) then return true end
 
         local ox, oy = -walk.dx, -walk.dy
-        if not movable(cell, "pull", ox, oy) then return true end
+        if not movable(cell, "pull", ox, oy, nil, -ox, -oy) then return true end
 
         self:_touch(cell, "pull", ox, oy)
 
@@ -653,7 +653,7 @@ function Movement:attract(x, y, dx, dy, force, row)
         x, y = x - dx, y - dy
         cell = grid:get(x, y)
     end
-    if not (cell and movable(cell, "pull", dx, dy)) then return false end
+    if not (cell and movable(cell, "pull", dx, dy, nil, -dx, -dy)) then return false end
 
     return self:_pull(x, y, dx, dy, force, true, row)
 end
@@ -710,7 +710,7 @@ function Movement:_flanks(chain, x, y, dx, dy, force, skew, strong)
             local fx = (skew * walk.dx + side * walk.dy) / scale
             local fy = (skew * walk.dy - side * walk.dx) / scale
             local move = self:_route(walk.x, walk.y, fx, fy)
-            if not (move and movable(cell, "grab", fx, fy)) then break end
+            if not (move and movable(cell, "grab", fx, fy, nil, walk.dx, walk.dy)) then break end
             if not strong and not self:_open(move.x, move.y, move.dx, move.dy, nil, cell) then break end
 
             self:_touch(cell, "grab", fx, fy)
@@ -993,7 +993,7 @@ function Movement:tunnel(x, y, dx, dy, strong)
             return true
         end
 
-        if not target or target.fixed or target:guarded("tunnel") then return false end
+        if not target or target.fixed or target:guarded("tunnel", dx, dy) then return false end
         x, y, dx, dy = move.x, move.y, move.dx, move.dy
     end
     return false

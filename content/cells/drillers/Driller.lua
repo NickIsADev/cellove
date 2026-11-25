@@ -32,7 +32,7 @@ function Driller:drill()
     local dx, dy = self:_aim()
     local target = self.grid:get(self.x + dx, self.y + dy)
 
-    return not (target and target:guarded("tunnel")) and self:swap(0, 0, dx, dy)
+    return not (target and target:guarded("tunnel", dx, dy)) and self:swap(0, 0, dx, dy)
 end
 
 function Driller:update()
