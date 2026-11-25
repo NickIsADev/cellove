@@ -12,8 +12,6 @@ local function covers(faces, rotation, directions)
 end
 
 local function reflect(class, rotation, key)
-    if class.slanted then return class.flipped or class, key % 2 == 1 and rotation or (key - 1 - rotation) % 4 end
-
     local mirrored = {}
     for _, offset in ipairs(class.faces or class.outputs) do
         mirrored[(key - rotation - offset) % 4] = true
@@ -293,7 +291,7 @@ function BaseCell:rotate(amount, forced, quiet, wide)
 end
 
 function BaseCell:flip(key, forced)
-    if (self.anchored or self:guarded("lock")) and not forced then return end
+    if self:guarded("lock") and not forced then return end
 
     local grid, held = self.grid, self.props.stored
     local class, rotation = reflect(getmetatable(self), self.rotation, key)

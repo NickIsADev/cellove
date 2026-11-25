@@ -49,11 +49,10 @@ Set these in the table you pass to `setmetatable`.
 | `destroys` | `boolean` | | cells moving into it are destroyed unless protected by an effect |
 | `collides` | `boolean` | `false` | when [`generate`](#basecellgeneratedirection-options) or a release spawns it onto a breakable cell, it hits that cell instead of pushing it away: both take damage and the new cell is gone. enemies, missiles and sentries do this |
 | `freezes` | `boolean` | | keeps updating while frozen, like freezers do |
-| `anchored` | `boolean` | | cannot be rotated or flipped |
+| `anchored` | `boolean` | | cannot be rotated |
 | `guards` | `table` | `{}` | actions the cell refuses, like `{ push = true }`. checked by [`guarded`](#basecellguardedguard-dx-dy). guards come from effects too |
 | `faces` | `table` | `outputs` | directions relative to rotation that flip gears mirror, in the same format as `outputs`. `{}` keeps the rotation when flipped |
 | `twin` | `string` | | the name of the cell this one becomes when flipped by a flip gear, such as a clockwise gear's counter-clockwise twin. cells that look the same mirrored don't need one |
-| `slanted` | `boolean` | | the cell's axis lies on a diagonal, like diagonal flippers: straight flips turn it, diagonal flips keep its rotation. overrides `faces` |
 
 ```lua
 local Mover = setmetatable({

@@ -38,9 +38,9 @@ function BaseTransmitter:rotated(amount, wide)
     self:relay(function(cell) cell:rotate(amount, false, false, wide) end, wide)
 end
 
-function BaseTransmitter:flip(key, forced, wide)
+function BaseTransmitter:flip(key, forced)
     if self:guarded("lock") and not forced then return end
-    self:relay(function(cell) cell:flip(key) end, wide)
+    self:relay(function(cell) cell:flip(key) end)
 end
 
 return BaseTransmitter

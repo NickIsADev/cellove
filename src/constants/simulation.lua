@@ -17,7 +17,7 @@ return {
             [2] = { -1, 0, 0, 1 },
             [3] = { 0, -1, -1, 0 }
         },
-        shift = { straight = 2, diagonal = 1, antidiagonal = 3 }
+        shift = { straight = 2, diagonal = 1 }
     },
 
     simulator = {
@@ -46,8 +46,6 @@ return {
             "memoryReplicator",
             "maker",
             "perpetual",
-            "superFlipper",
-            "flipper",
             "superRotator",
             "rotator",
             "spin",
