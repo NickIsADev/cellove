@@ -6,6 +6,7 @@ local DiagonalPerpetualFlipper = setmetatable({
     title = "Diagonal Perpetual Flipper",
     description = "Makes adjacent cells flip diagonally every tick, even after moving away.",
     categories = { "flippers", "effects" },
+    slanted = true,
     axis = "diagonal"
 }, { __index = BasePerpetualFlipper })
 DiagonalPerpetualFlipper.__index = DiagonalPerpetualFlipper
