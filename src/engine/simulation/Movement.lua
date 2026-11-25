@@ -5,7 +5,7 @@ local none = {}
 local sides = { 1, -1 }
 
 local function movable(cell, action, dx, dy, bare)
-    return cell:pushable(dx, dy, bare, action) and not cell:guarded(action)
+    return cell:pushable(dx, dy, bare, action) and not cell:guarded(action, dx, dy)
 end
 
 local function apply(cell, force, dx, dy, action)
