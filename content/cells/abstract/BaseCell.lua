@@ -169,6 +169,9 @@ end
 function BaseCell:chained(action, dx, dy, anchor)
 end
 
+function BaseCell:ahead(target)
+end
+
 function BaseCell:click(button)
 end
 
@@ -290,13 +293,13 @@ function BaseCell:rotate(amount, forced, quiet, wide)
     return true
 end
 
-function BaseCell:flip(key, forced)
+function BaseCell:flip(key, forced, wide, quiet)
     if self:guarded("lock") and not forced then return end
 
     local grid, held = self.grid, self.props.stored
     local class, rotation = reflect(getmetatable(self), self.rotation, key)
     local turned = rotation - self.rotation
-    if not self:rotate(turned, forced) then turned = 0 end
+    if not self:rotate(turned, forced, quiet, wide) then turned = 0 end
 
     for effect, value in pairs(self.effects or none) do
         self.effects[effect] = effect:flipped(value, key, turned)

@@ -227,6 +227,13 @@ function Movement:_touch(cell, action, dx, dy)
     cell:chained(action, dx, dy, self.anchor)
 end
 
+function Movement:_meet(cell, target)
+    if self.dry or not target then return end
+
+    cell.simulator = self.simulator
+    cell:ahead(target)
+end
+
 function Movement:_post(run, ...)
     local outer = self.after
     self.after = {}
@@ -306,6 +313,7 @@ function Movement:_walk(x, y, dx, dy, force, chain, bare)
             nx, ny, ndx, ndy, turn, via, target = self:_step(x, y, dx, dy)
             if not nx then return end
 
+            self:_meet(cell, target)
             cell.walked = stamp
 
             local move = self:_take()
@@ -998,6 +1006,31 @@ function Movement:destroy(cell, exploded)
         cell.simulator = self.simulator
         cell:kill(exploded)
     end)
+end
+
+function Movement:relocate(points, before)
+    local grid, chain, members = self.grid, {}, {}
+    self.top = 0
+
+    for _, point in ipairs(points) do
+        members[grid:get(point[1], point[2])] = true
+    end
+
+    for _, point in ipairs(points) do
+        local x, y = point[3], point[4]
+        local dx, dy = utils.sign(x - point[1]), utils.sign(y - point[2])
+        local cell = grid:get(point[1], point[2])
+
+        if dx ~= 0 or dy ~= 0 then
+            if not (members[grid:get(x, y)] or self:_open(x, y, dx, dy, "pull", cell)) then return false end
+
+            chain[#chain + 1] = self:_carry(cell, x, y, dx, dy, "pull")
+        end
+    end
+
+    if before then before() end
+    self:_shift(chain, true)
+    return true
 end
 
 function Movement:place(x, y, cell)

@@ -7,7 +7,7 @@ local BaseTurner = setmetatable({
 BaseTurner.__index = BaseTurner
 
 function BaseTurner:_spin(cell)
-    cell:rotate(self.spin)
+    cell:rotate(self.spin, false, true)
 end
 
 function BaseTurner:chained(action)

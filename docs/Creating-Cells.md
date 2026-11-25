@@ -117,11 +117,13 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | `cyclerCW`, `cyclerCCW` | clockwise cyclers, counter-clockwise cyclers (paracyclers use both) |
 | `memoryGenerator`, `generator`, `memoryReplicator`, `maker` | memory generators, generators, memory replicators, makers |
 | `perpetual` | where perpetual rotations and flips are applied |
+| `superFlipper`, `flipper` | super flippers, flippers |
 | `superRotator`, `rotator`, `spin` | super rotators, rotators, the spin of rotator movers |
 | `flipGear` | flip gears |
 | `gearCW`, `gearCCW`, `gear180`, `gearRNG` | clockwise gears, counter-clockwise gears, 180 gears, random gears |
 | `orbiter` | sawblade orbiters |
 | `superRedirector`, `redirector` | super redirectors, redirectors |
+| `orientator` | orientators and aligners |
 | `inertia` | inertia |
 | `vacuum`, `superImpulsor`, `impulsor` | vacuums, super impulsors, impulsors |
 | `fan`, `superRepulsor`, `repulsor` | fans, super repulsors, repulsors |

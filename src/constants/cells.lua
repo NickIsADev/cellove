@@ -187,6 +187,12 @@ return {
                 parent = "rotators"
             },
             {
+                id = "orientators",
+                title = "Orientators",
+                icon = "orientator",
+                parent = "rotators"
+            },
+            {
                 id = "otherrotators",
                 title = "Other",
                 icon = "transmitter",

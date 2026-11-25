@@ -113,6 +113,7 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | [`settled`](#basecellsettledtotal) | `true` | whether the line is allowed to move for its imaginary force |
 | [`guarded`](#basecellguardedguard-dx-dy) | whether `guards` has the action | whether the cell refuses an action |
 | [`chained`](#basecellchainedaction-dx-dy-anchor) | nothing | called when a push, pull or grab reaches the cell, even if it fails |
+| [`ahead`](#basecellaheadtarget) | nothing | called with the cell a push is about to reach after this one, even if it fails |
 | [`clinging`](#basecellclingingdx-dy) | the cell's stickiest effect | what the cell sticks to on one side |
 | [`divert`](#basecelldivertdx-dy-reverse) | nothing | bends the path of a move passing through |
 | [`jump`](#basecelljumpdx-dy-x-y-reverse) | nothing | moves the path of a move passing through somewhere else |
@@ -513,6 +514,21 @@ Called when a push, pull or grab reaches the cell, before the chain is known to 
 function PullExtension:chained(action, dx, dy)
     local movement, x, y = self.simulator.movement, self.x, self.y
     movement:post(function() movement:pull(x - dx, y - dy, dx, dy) end)
+end
+```
+
+### `BaseCell:ahead(target)`
+
+Called when a push moves past this cell and reaches `target`, the cell that would be pushed next. Portals and diverters in between are already followed. It is not called when the push stops at this cell or when nothing is ahead. Does nothing by default.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `target` | `BaseCell` | the cell ahead |
+
+```lua
+-- turns whatever it pushes into, like a Twirler
+function Twirler:ahead(target)
+    target:rotate(1, false, true)
 end
 ```
 
