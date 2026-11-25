@@ -15,7 +15,7 @@ local Anchor = setmetatable({
 Anchor.__index = Anchor
 
 function Anchor:_pivot(matrix, apply)
-    local grid, a, b, c, d = self.grid, table.unpack(matrix)
+    local grid, a, b, c, d = self.grid, unpack(matrix)
     local area = grid:flood(self.x, self.y, function(cell) return cell and not cell.fixed and not cell:guarded("swap") end)
     local points = {}
 
