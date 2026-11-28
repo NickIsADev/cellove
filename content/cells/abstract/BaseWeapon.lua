@@ -3,10 +3,6 @@ local constants = require("src/constants")
 
 local crossings, warning = 5, 4
 
-local function hit(cell)
-    if cell then cell:hit() end
-end
-
 local BaseWeapon = setmetatable({
     faces = { 0 },
     hostile = false,
