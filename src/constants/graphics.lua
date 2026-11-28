@@ -48,8 +48,8 @@ return {
         },
         stored = {
             storage = 0.5,
-            memory = 0.5,
-            maker = 0.5
+            memory = 0.2,
+            maker = 0.4
         },
         explosion = {
             pop = 0.1,

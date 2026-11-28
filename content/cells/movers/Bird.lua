@@ -24,7 +24,7 @@ function Bird:update()
         dx, dy = -dy * side, dx * side
     end
 
-    if self:push(dx, dy, sidestep and constants.force.strength) then
+    if self:push(dx, dy, { force = sidestep and constants.force.strength }) then
         self.step = (self.step + 1) % 4
     else
         self:rotate(1)

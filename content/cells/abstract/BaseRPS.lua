@@ -1,4 +1,5 @@
 local BaseCell = require("content/cells/abstract/BaseCell")
+local utils = require("src/utils")
 
 local BaseRPS = setmetatable({
     categories = { "infectious" },
@@ -7,7 +8,7 @@ local BaseRPS = setmetatable({
 BaseRPS.__index = BaseRPS
 
 function BaseRPS:_spawn(x, y)
-    local class, props = self:generated()
+    local class, props = self:template()
     local clone = class:new({ rotation = self.rotation, props = props })
 
     clone.updated = self.simulator.time.tick
@@ -16,7 +17,7 @@ end
 
 function BaseRPS:update()
     self:neighbors(1, function(cell, x, y)
-        if not cell or cell.name == self.beats and cell:transformable() then self:_spawn(x, y) end
+        if not cell or cell.name == self.beats and cell:transformable(utils.sign(x - self.x), utils.sign(y - self.y)) then self:_spawn(x, y) end
     end)
 end
 

@@ -11,7 +11,7 @@ local Semisilicon = setmetatable({
 Semisilicon.__index = Semisilicon
 
 function Semisilicon:clinging(dx, dy)
-    if self:_alignment(dx, dy) == 0 then return BaseCell.clinging(self, dx, dy) end
+    if self:_along(dx, dy) == 0 then return BaseCell.clinging(self, dx, dy) end
 
     return self.bond
 end

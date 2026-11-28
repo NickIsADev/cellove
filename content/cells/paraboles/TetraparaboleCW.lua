@@ -14,7 +14,7 @@ local TetraparaboleCW = setmetatable({
 TetraparaboleCW.__index = TetraparaboleCW
 
 function TetraparaboleCW:pushed(_, _, action)
-    self:rotate(self.spins[action], true, true)
+    self:rotate(self.spins[action], { forced = true, quiet = true })
 end
 
 return TetraparaboleCW

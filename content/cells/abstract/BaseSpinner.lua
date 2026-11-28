@@ -6,12 +6,12 @@ local BaseSpinner = setmetatable({
 }, { __index = Wall })
 BaseSpinner.__index = BaseSpinner
 
-function BaseSpinner:_spin(cell)
-    cell:rotate(self.spin)
+function BaseSpinner:_spin(cell, dx, dy)
+    cell:rotate(self.spin, { dx = dx, dy = dy })
 end
 
-function BaseSpinner:bump(_, _, pusher)
-    if pusher then self:_spin(pusher) end
+function BaseSpinner:bumped(dx, dy, pusher)
+    if pusher then self:_spin(pusher, dx, dy) end
 end
 
 return BaseSpinner

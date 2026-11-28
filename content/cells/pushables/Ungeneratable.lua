@@ -9,7 +9,7 @@ local Ungeneratable = setmetatable({
 }, { __index = Pushable })
 Ungeneratable.__index = Ungeneratable
 
-function Ungeneratable:generated()
+function Ungeneratable:template()
 end
 
 return Ungeneratable

@@ -27,10 +27,10 @@ function Activator:update()
 end
 
 function Activator:eats(dx, dy)
-    return (dx == 0 or dy == 0) and self:_alignment(dx, dy) > 0
+    return (dx == 0 or dy == 0) and self:_along(dx, dy) > 0
 end
 
-function Activator:absorb(cell, dx, dy, action)
+function Activator:ate(cell, dx, dy, action)
     if action ~= "swap" then self:_pause(true) end
 end
 

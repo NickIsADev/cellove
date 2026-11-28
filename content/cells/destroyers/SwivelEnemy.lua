@@ -16,7 +16,7 @@ function SwivelEnemy:hit(damage)
     if damage > self.rotation then
         Enemy.hit(self, damage)
     else
-        self:rotate(-damage, true)
+        self:rotate(-damage, { forced = true })
     end
 end
 

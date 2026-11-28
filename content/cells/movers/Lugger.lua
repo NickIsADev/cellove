@@ -13,7 +13,7 @@ Lugger.__index = Lugger
 
 function Lugger:force(dx, dy, action)
     if action == "push" then return 0 end
-    return self:_alignment(dx, dy) * constants.force.strength
+    return self:_along(dx, dy) * constants.force.strength
 end
 
 function Lugger:update()
@@ -21,7 +21,7 @@ function Lugger:update()
     local x, y, dx, dy = self.x, self.y, self:_aim()
 
     if self:grab() then
-        movement:attract(x - dx, y - dy, dx, dy, constants.force.strength)
+        movement:attract(x - dx, y - dy, dx, dy, { force = constants.force.strength })
     elseif self:pull() then
         movement:flank(x, y, dx, dy)
     end

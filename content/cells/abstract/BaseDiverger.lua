@@ -8,10 +8,10 @@ local BaseDiverger = setmetatable({
 BaseDiverger.__index = BaseDiverger
 
 function BaseDiverger:_entry(dx, dy)
-    local along = self:_alignment(dx, dy)
+    local along = self:_along(dx, dy)
     if along ~= 0 then return 1 + along end
 
-    return 2 + self:_side(dx, dy)
+    return 2 + self:_across(dx, dy)
 end
 
 function BaseDiverger:divert(dx, dy, reverse)

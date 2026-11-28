@@ -12,7 +12,7 @@ local Hoister = setmetatable({
 Hoister.__index = Hoister
 
 function Hoister:force(dx, dy)
-    return self:_alignment(dx, dy) * constants.force.strength
+    return self:_along(dx, dy) * constants.force.strength
 end
 
 function Hoister:update()
@@ -22,9 +22,9 @@ function Hoister:update()
     if self:push() then
         movement:flank(x, y, dx, dy)
     elseif not self:grab() then
-        return self:pull(dx, dy, constants.force.strength)
+        return self:pull(dx, dy, { force = constants.force.strength })
     end
-    movement:attract(x - dx, y - dy, dx, dy, constants.force.strength)
+    movement:attract(x - dx, y - dy, dx, dy, { force = constants.force.strength })
 end
 
 return Hoister

@@ -10,7 +10,7 @@ local ImaginaryBias = setmetatable({
 ImaginaryBias.__index = ImaginaryBias
 
 function ImaginaryBias:imaginary(dx, dy)
-    return self:_alignment(dx, dy)
+    return self:_along(dx, dy)
 end
 
 return ImaginaryBias

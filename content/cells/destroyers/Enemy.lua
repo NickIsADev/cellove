@@ -21,7 +21,7 @@ function Enemy:hit(damage)
     self:kill(true)
 end
 
-function Enemy:absorb(cell)
+function Enemy:ate(cell)
     local damage = math.min(self:health(), cell:health())
     self:hit(damage)
     return not self.grid:get(self.x, self.y) and cell.struck and cell:struck(damage)

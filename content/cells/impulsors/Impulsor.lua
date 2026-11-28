@@ -25,7 +25,7 @@ function Impulsor:update(_, direction)
     local near = self:look((direction + 2) % 4, true)
     if not near then return end
 
-    self.simulator.movement:attract(near.x + near.dx, near.y + near.dy, -near.dx, -near.dy, constants.force.strength, self.row)
+    self.simulator.movement:attract(near.x + near.dx, near.y + near.dy, -near.dx, -near.dy, { force = constants.force.strength, row = self.row })
 end
 
 return Impulsor

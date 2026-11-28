@@ -21,7 +21,7 @@ function SuperImpulsor:update(_, direction)
 
     local x, y, dx, dy = move.x, move.y, -move.dx, -move.dy
     for _ = 1, constants.grid.limits.max do
-        if not movement:attract(x, y, dx, dy, math.huge) then return end
+        if not movement:attract(x, y, dx, dy, { force = math.huge }) then return end
 
         move = movement:look(x, y, dx, dy)
         if not move then return end

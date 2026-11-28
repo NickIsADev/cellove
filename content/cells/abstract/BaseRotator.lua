@@ -17,7 +17,11 @@ end
 
 function BaseRotator:update()
     self:surrounding(1, function(cell, _, _, dx, dy)
-        if cell and self:_reaches(dx, dy) then cell:rotate(self:_spin(dx, dy), false, false, self.sides.diagonal) end
+        if cell and self:_reaches(dx, dy) then cell:rotate(self:_spin(dx, dy), {
+            wide = self.sides.diagonal,
+            dx = dx,
+            dy = dy
+        }) end
     end)
 end
 

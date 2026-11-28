@@ -69,7 +69,7 @@ function RotatorDiverger:passed(mover)
     if not shift then return end
 
     self.grid.simulator.movement:defer(function()
-        mover:flip((self.rotation * 2 + shift) % 4, true)
+        mover:flip((self.rotation * 2 + shift) % 4, { forced = true })
     end)
 end
 

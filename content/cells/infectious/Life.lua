@@ -27,7 +27,7 @@ function Life:_spreads(cell, x, y)
 end
 
 function Life:_spawn(x, y)
-    local class, props = self:generated()
+    local class, props = self:template()
     local clone = class:new({ rotation = self.rotation, props = props })
 
     clone.updated = self.simulator.time.tick

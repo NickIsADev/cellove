@@ -12,10 +12,10 @@ AdvancerPlayer.__index = AdvancerPlayer
 function AdvancerPlayer:_move(dx, dy)
     local x, y = self.x, self.y
 
-    if self:push(dx, dy, constants.force.strength) then
-        self.simulator.movement:attract(x - dx, y - dy, dx, dy, constants.force.strength)
+    if self:push(dx, dy, { force = constants.force.strength }) then
+        self.simulator.movement:attract(x - dx, y - dy, dx, dy, { force = constants.force.strength })
     else
-        self:pull(dx, dy, constants.force.strength)
+        self:pull(dx, dy, { force = constants.force.strength })
     end
 end
 

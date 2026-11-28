@@ -15,8 +15,8 @@ function TrashDiodePipe:eats(dx, dy)
     return (dx == 0 or dy == 0) and self:_entry(dx, dy) == 0 or DiodePipe.eats(self, dx, dy)
 end
 
-function TrashDiodePipe:absorb(cell, dx, dy)
-    if self:_entry(dx, dy) ~= 0 then DiodePipe.absorb(self, cell, dx, dy) end
+function TrashDiodePipe:ate(cell, dx, dy)
+    if self:_entry(dx, dy) ~= 0 then DiodePipe.ate(self, cell, dx, dy) end
 end
 
 return TrashDiodePipe

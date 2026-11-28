@@ -21,7 +21,7 @@ function CollectableKey:eats(dx, dy, action)
     return action ~= "swap"
 end
 
-function CollectableKey:absorb()
+function CollectableKey:ate()
     Keys.collect(self.grid, self.props.color)
     Audio.play("coin")
     self.spark = "greysparkle"

@@ -12,13 +12,13 @@ local Constructor = setmetatable({
 }, { __index = BaseCell })
 Constructor.__index = Constructor
 
-function Constructor:bump(dx, dy, pusher)
-    if not (pusher and pusher:generatable() and self:_alignment(dx, dy) > 0) then return end
+function Constructor:bumped(dx, dy, pusher)
+    if not (pusher and pusher:cloneable() and self:_along(dx, dy) > 0) then return end
 
-    local class, props, rotation = pusher:generated()
+    local class, props, rotation = pusher:template()
     if not class then return end
 
-    local clone = class:new({ rotation = rotation or pusher.rotation, props = props, effects = pusher:kept() })
+    local clone = class:new({ rotation = rotation or pusher.rotation, props = props, effects = pusher:permanent() })
     local facing = constants.directions[self.rotation]
 
     self.simulator.movement:defer(function()

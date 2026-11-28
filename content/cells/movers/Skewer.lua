@@ -13,9 +13,9 @@ function Skewer:update()
     local x, y, dx, dy = self.x, self.y, self:_aim()
 
     if self:grab() then
-        movement:flank(x, y, dx, dy, -1)
+        movement:flank(x, y, dx, dy, { skew = -1 })
     else
-        movement:grab(x, y, dx, dy, -1)
+        movement:grab(x, y, dx, dy, { skew = -1 })
     end
 end
 

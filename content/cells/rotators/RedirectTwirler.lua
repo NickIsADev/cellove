@@ -10,8 +10,12 @@ local RedirectTwirler = setmetatable({
 }, { __index = BaseTwirler })
 RedirectTwirler.__index = RedirectTwirler
 
-function RedirectTwirler:_spin(cell)
-    cell:rotate(self.rotation - cell.rotation, false, true)
+function RedirectTwirler:_spin(cell, dx, dy)
+    cell:rotate(self.rotation - cell.rotation, {
+        quiet = true,
+        dx = dx,
+        dy = dy
+    })
 end
 
 return RedirectTwirler

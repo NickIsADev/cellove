@@ -16,7 +16,7 @@ Missile.__index = Missile
 function Missile:_collide()
     local front = self:look(self.rotation)
     local cell = front and self.grid:get(front.x, front.y)
-    if not (cell and cell:breakable()) then return end
+    if not (cell and cell:breakable(front.dx, front.dy)) then return end
 
     local damage = math.min(self:health(), cell:health())
     cell:hit(damage)

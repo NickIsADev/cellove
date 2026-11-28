@@ -23,7 +23,7 @@ function BaseOutcome:eats()
     return true
 end
 
-function BaseOutcome:absorb()
+function BaseOutcome:ate()
     Audio.play("destroy")
     self.enabled = not self.enabled
 end

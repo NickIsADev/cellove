@@ -18,7 +18,7 @@ end
 function BaseRedirector:update()
     self:surrounding(1, function(cell, _, _, dx, dy)
         if cell and not cell.redirector and self:_reaches(dx, dy) then
-            cell:rotate(self:_facing(dx, dy) - cell.rotation)
+            cell:rotate(self:_facing(dx, dy) - cell.rotation, { dx = dx, dy = dy })
         end
     end)
 end

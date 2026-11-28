@@ -9,8 +9,8 @@ local RedirectSpinner = setmetatable({
 }, { __index = BaseSpinner })
 RedirectSpinner.__index = RedirectSpinner
 
-function RedirectSpinner:_spin(cell)
-    cell:rotate(self.rotation - cell.rotation)
+function RedirectSpinner:_spin(cell, dx, dy)
+    cell:rotate(self.rotation - cell.rotation, { dx = dx, dy = dy })
 end
 
 return RedirectSpinner

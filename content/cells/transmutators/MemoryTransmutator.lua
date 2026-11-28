@@ -19,7 +19,7 @@ function MemoryTransmutator:update(_, direction)
     local clone = self:_make(direction)
     local front = self:look(direction)
     local target = front and front.target
-    if not (target and target:transformable() and self:_movable(clone, scout)) then return end
+    if not (target and target:transformable(front.dx, front.dy) and self:_movable(clone, scout)) then return end
     if self:_withdraw(scout) then self:transform(direction, clone) end
 end
 

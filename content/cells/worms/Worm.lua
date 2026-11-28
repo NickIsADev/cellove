@@ -15,19 +15,19 @@ Worm.__index = Worm
 function Worm:update(_, direction)
     local front = self:look(direction)
     local target = front and front.target
-    if not (target and target:transformable()) then return end
+    if not (target and target:transformable(front.dx, front.dy)) then return end
 
-    local class, props = self:generated()
+    local class, props = self:template()
     local clone = class:new({
         rotation = self.rotation,
         props = props,
-        effects = self:kept()
+        effects = self:permanent()
     })
-    clone:rotate(self.spin, true, true)
+    clone:rotate(self.spin, { forced = true, quiet = true })
     clone.updated, clone.ran = self.updated, self.ran
 
     self:transform(direction, clone)
-    if self.twist then clone:flip((self.rotation * 2 + self.twist) % 4, true) end
+    if self.twist then clone:flip((self.rotation * 2 + self.twist) % 4, { forced = true }) end
     if self.grid:get(self.x, self.y) == self then self:kill() end
 end
 

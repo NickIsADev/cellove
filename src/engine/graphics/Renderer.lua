@@ -552,10 +552,10 @@ function Renderer:drawCount(text, x, y, _, scale, offset)
     if offset == 0 then self:_print(text, x, y, scale, tag.anchors.count) end
 end
 
-function Renderer:drawStored(content, x, y, turn, scale, offset)
+function Renderer:drawStored(content, x, y, turn, scale, offset, upright)
     if offset ~= 0 then return end
 
-    self:drawSprite(content.class:preview(content.props or none), x, y, content.rotation + turn, scale, 0)
+    self:drawSprite(content.class:preview(content.props or none), x, y, upright and 0 or content.rotation + turn, scale, 0)
     for effect, value in pairs(content.effects or none) do
         effect:draw(self, value, x, y, scale, 0)
     end

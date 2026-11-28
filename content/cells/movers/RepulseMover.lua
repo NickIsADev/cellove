@@ -19,12 +19,12 @@ function RepulseMover:_repel(x, y)
 end
 
 function RepulseMover:resist(force, dx, dy, action)
-    if action == "push" and self:_alignment(dx, dy) == 0 and force <= 1 then return 0 end
+    if action == "push" and self:_along(dx, dy) == 0 and force <= 1 then return 0 end
     return force
 end
 
 function RepulseMover:pushed(dx, dy, action)
-    if action ~= "push" or self:_alignment(dx, dy) <= 0 then return end
+    if action ~= "push" or self:_along(dx, dy) <= 0 then return end
 
     local x, y = self.x, self.y
     self.simulator.movement:post(function() self:_repel(x, y) end)

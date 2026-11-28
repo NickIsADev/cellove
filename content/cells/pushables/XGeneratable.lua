@@ -15,7 +15,7 @@ local XGeneratable = setmetatable({
 }, { __index = Pushable })
 XGeneratable.__index = XGeneratable
 
-function XGeneratable:generated()
+function XGeneratable:template()
     local remaining = self.props.layers - 1
     if remaining == 0 then return Ungeneratable end
     if remaining == 1 then return Monogeneratable end

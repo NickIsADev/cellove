@@ -16,7 +16,7 @@ function Seizer:update()
         local sx, sy = dy ~= 0 and 1 or 0, dx ~= 0 and -1 or 0
 
         for _, side in ipairs({ 1, -1 }) do
-            self.simulator.movement:pull(x + sx * side, y + sy * side, -sx * side, -sy * side, constants.force.strength)
+            self.simulator.movement:pull(x + sx * side, y + sy * side, -sx * side, -sy * side, { force = constants.force.strength })
         end
     end
     self:push()

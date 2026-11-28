@@ -31,16 +31,16 @@ function BaseTransformer:_scout(direction)
         turn = back.turn
     }
     local cell = back.target
-    if cell and cell:generatable() and cell:generated() then scout.cell = cell end
+    if cell and cell:cloneable() and cell:template() then scout.cell = cell end
     return scout, turn
 end
 
 function BaseTransformer:_build(scout, turn)
     local cell = scout.cell
-    local class, props, rotation = cell:generated()
-    local clone = class:new({ rotation = rotation or cell.rotation, props = props, effects = cell:kept() })
+    local class, props, rotation = cell:template()
+    local clone = class:new({ rotation = rotation or cell.rotation, props = props, effects = cell:permanent() })
 
-    clone:rotate(scout.turn + turn, true, true)
+    clone:rotate(scout.turn + turn, { forced = true, quiet = true })
     clone.updated, clone.ran = cell.updated, cell.ran
     return clone
 end
@@ -59,7 +59,7 @@ function BaseTransformer:_withdraw(scout)
     if not target then return true end
 
     local dx, dy = -behind.dx, -behind.dy
-    if target:pushable(dx, dy, nil, "pull") and not target:guarded("pull") and movement:pull(behind.x, behind.y, dx, dy, constants.force.strength) then return true end
+    if target:pushable(dx, dy, nil, "pull") and not target:guarded("pull") and movement:pull(behind.x, behind.y, dx, dy, { force = constants.force.strength }) then return true end
 
     if cell then grid:set(scout.x, scout.y, cell) end
     return false

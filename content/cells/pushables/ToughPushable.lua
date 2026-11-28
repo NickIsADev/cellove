@@ -1,15 +1,14 @@
 local Pushable = require("content/cells/pushables/Pushable")
-local BaseTough = require("content/cells/abstract/BaseTough")
+
+local Wall = require("content/cells/walls/Wall")
 
 local ToughPushable = setmetatable({
     name = "toughpushable",
     k3 = 159,
     title = "Tough Pushable",
     description = "Pushable that cannot be destroyed diagonally.",
-    shields = { corner = true }
+    mimic = { corner = Wall }
 }, { __index = Pushable })
 ToughPushable.__index = ToughPushable
-
-ToughPushable.guarded = BaseTough.guarded
 
 return ToughPushable

@@ -21,7 +21,7 @@ function Spooner:eats(dx, dy, action)
     return not action and self.inputs[self:_entry(dx, dy)] ~= nil
 end
 
-function Spooner:absorb(cell, dx, dy)
+function Spooner:ate(cell, dx, dy)
     if self.output then return end
 
     local turn = self.rotates and self.inputs[self:_entry(dx, dy)] or 0

@@ -15,7 +15,7 @@ end
 
 function GrabberPlayer:force(dx, dy, action)
     if action ~= "grab" then return 0 end
-    return self:_alignment(dx, dy) * constants.force.strength
+    return self:_along(dx, dy) * constants.force.strength
 end
 
 return GrabberPlayer

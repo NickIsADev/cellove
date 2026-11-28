@@ -15,7 +15,7 @@ Puller.__index = Puller
 
 function Puller:force(dx, dy, action)
     if action ~= "pull" then return 0 end
-    return self:_alignment(dx, dy) * constants.force.strength
+    return self:_along(dx, dy) * constants.force.strength
 end
 
 function Puller:update()

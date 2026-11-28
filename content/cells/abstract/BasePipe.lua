@@ -38,7 +38,7 @@ function BasePipe:eats(dx, dy)
     return not self:held() and (dx == 0 or dy == 0) and self:_bend(dx, dy) ~= nil
 end
 
-function BasePipe:absorb(cell, dx, dy)
+function BasePipe:ate(cell, dx, dy)
     local nx, ny, spin = self:_bend(dx, dy)
 
     local content = cell:contents((cell.rotation + spin) % 4)

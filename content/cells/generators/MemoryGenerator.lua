@@ -21,8 +21,8 @@ function MemoryGenerator:update()
     local look = self:look((self.rotation + source) % 4)
     local target = look and look.target
 
-    if target and target:generatable() then
-        self:_hold({ class = target:generated(), rotation = (target.rotation - look.turn) % 4, effects = target:kept() })
+    if target and target:cloneable() then
+        self:_hold({ class = target:template(), rotation = (target.rotation - look.turn) % 4, effects = target:permanent() })
     end
 
     if self:held() then self:_release(self.rotation) end

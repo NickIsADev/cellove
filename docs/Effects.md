@@ -40,7 +40,7 @@ An effect lasts one tick unless it is `permanent`, and is refreshed by whatever 
 | `permanent` | `boolean` | | stays until something removes it, instead of ending after the tick |
 | `universal` | `boolean` | | also applies to `fixed` and immune cells |
 | `relays` | `boolean` | `true` | passes through transmitters to the cells they touch |
-| `guards` | `table` | `{}` | what a cell with the effect is protected from, as `{ protect = true }`. built-in guards are `protect`, `immune`, `lock`, `push`, `pull`, `grab`, `swap`, `scissor` and `tunnel` |
+| `guards` | `table` | `{}` | what a cell with the effect is protected from, as `{ protect = true }`. built-in guards are `protect`, `immune`, `lock`, `push`, `pull`, `grab`, `swap`, `scissor`, `tunnel` |
 | `cling` | `number` | | makes the cell cling to its neighbors, lower wins when a cell has several |
 
 ## Methods
@@ -70,7 +70,7 @@ Frost:apply(cell, true)   -- gives the effect
 Frost:remove(cell)        -- takes it away
 ```
 
-A cell moved into a holder, pipe, generator or similar keeps its permanent effects. Override [`BaseCell:kept`](BaseCell) in a cell that should keep fewer.
+A cell moved into a holder, pipe, generator or similar keeps its permanent effects. Override [`BaseCell:permanent`](BaseCell) in a cell that should keep fewer.
 
 ## Giving and removing effects
 

@@ -13,8 +13,8 @@ local Spin = setmetatable({
 Spin.__index = Spin
 
 function Spin:update(cell, value)
-    if type(value) == "number" then return cell:flip(value, true) end
-    cell:rotate(turns[value] or utils.randomSign(), true)
+    if type(value) == "number" then return cell:flip(value, { forced = true }) end
+    cell:rotate(turns[value] or utils.randomSign(), { forced = true })
 end
 
 function Spin:rotated(value, amount)

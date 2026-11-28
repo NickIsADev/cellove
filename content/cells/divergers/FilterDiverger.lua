@@ -11,6 +11,7 @@ local FilterDiverger = setmetatable({
     destroys = true,
     faces = { 0, 2 },
     fit = constants.renderer.stored.memory,
+    upright = true,
     _entry = BaseDiverger._entry
 }, { __index = BaseHolder })
 FilterDiverger.__index = FilterDiverger
@@ -31,8 +32,8 @@ function FilterDiverger:eats(dx, dy, action, mover)
     return not action and (self:_entry(dx, dy) % 2 == 1 or mover ~= nil and self:_blocks(mover))
 end
 
-function FilterDiverger:absorb(cell, dx, dy)
-    if self:_entry(dx, dy) % 2 == 1 then BaseHolder.absorb(self, cell) end
+function FilterDiverger:ate(cell, dx, dy)
+    if self:_entry(dx, dy) % 2 == 1 then BaseHolder.ate(self, cell) end
 end
 
 return FilterDiverger

@@ -17,7 +17,11 @@ function Flipper:update()
     local key = utils.flip(self.rotation, self.axis)
 
     self:surrounding(1, function(cell, _, _, dx, dy)
-        if cell and self:_reaches(dx, dy) then cell:flip(key, false, self.sides.diagonal) end
+        if cell and self:_reaches(dx, dy) then cell:flip(key, {
+            wide = self.sides.diagonal,
+            dx = dx,
+            dy = dy
+        }) end
     end)
 end
 

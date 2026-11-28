@@ -18,14 +18,14 @@ local Player = setmetatable({
 Player.__index = Player
 
 function Player:_move(dx, dy)
-    self:push(dx, dy, constants.force.strength)
+    self:push(dx, dy, { force = constants.force.strength })
 end
 
 function Player:eats()
     return self.fragile
 end
 
-function Player:absorb()
+function Player:ate()
     self:kill(true)
 end
 

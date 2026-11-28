@@ -16,13 +16,13 @@ function Settlestorage:eats()
     return not self:held()
 end
 
-function Settlestorage:absorb(cell)
-    BaseHolder.absorb(self, cell)
+function Settlestorage:ate(cell)
+    BaseHolder.ate(self, cell)
     self.fed = self.simulator.time.tick
 end
 
 function Settlestorage:swapped()
-    if not self:held() then self:absorb(self) end
+    if not self:held() then self:ate(self) end
 end
 
 function Settlestorage:update()

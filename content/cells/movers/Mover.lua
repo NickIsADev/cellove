@@ -16,7 +16,7 @@ Mover.__index = Mover
 
 function Mover:force(dx, dy, action)
     if action ~= "push" then return 0 end
-    return self:_alignment(dx, dy) * constants.force.strength
+    return self:_along(dx, dy) * constants.force.strength
 end
 
 function Mover:_breakable()
@@ -27,7 +27,7 @@ function Mover:_breakable()
 end
 
 function Mover:update()
-    self:push(nil, nil, nil, self.options)
+    self:push(nil, nil, self.options)
 end
 
 return Mover

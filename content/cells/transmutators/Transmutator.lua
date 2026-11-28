@@ -23,7 +23,7 @@ function Transmutator:update(_, direction)
 
     local front = self:look(direction)
     local target = front and front.target
-    if not (target and target:transformable() and self:_movable(scout.cell, scout)) then return end
+    if not (target and target:transformable(front.dx, front.dy) and self:_movable(scout.cell, scout)) then return end
     if not shared and not self:_withdraw(scout) then return end
 
     self:transform(direction, self:_build(scout, turn))

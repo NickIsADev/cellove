@@ -8,7 +8,7 @@ local Staller = setmetatable({
 }, { __index = Wall })
 Staller.__index = Staller
 
-function Staller:bump()
+function Staller:bumped()
     self.simulator.movement:destroy(self, true)
 end
 

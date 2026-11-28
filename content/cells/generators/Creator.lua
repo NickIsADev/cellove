@@ -1,4 +1,6 @@
 local Tetramaker = require("content/cells/generators/Tetramaker")
+local constants = require("src/constants")
+local stored = constants.renderer.stored
 
 local Creator = setmetatable({
     name = "creator",
@@ -6,7 +8,8 @@ local Creator = setmetatable({
     title = "Creator",
     description = "Like an unbreakable Tetramaker.",
     fixed = true,
-    anchored = true
+    anchored = true,
+    fit = stored.storage
 }, { __index = Tetramaker })
 Creator.__index = Creator
 

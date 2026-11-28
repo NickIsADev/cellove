@@ -51,6 +51,7 @@ Set these in the table you pass to `setmetatable`.
 | `freezes` | `boolean` | | keeps updating while frozen, like freezers do |
 | `anchored` | `boolean` | | cannot be rotated |
 | `guards` | `table` | `{}` | actions the cell refuses, like `{ push = true }`. checked by [`guarded`](#basecellguardedguard-dx-dy). guards come from effects too |
+| `mimic` | `table` | `{}` | what each side of the cell acts like, as `{ front = Wall, left = Trash }`. a side is `front`, `back`, `left`, `right` or `corner`, relative to the cell's rotation, and the value is a cell class. when something hits that side, [`pushable`](#basecellpushabledx-dy-bare-action-gx-gy), `swappable`, `eats`, `bars`, `force`, `resist`, `breakable`, `guarded`, `bumped`, `pushed`, `rammed` and `ate` are answered by that class instead. a cell can also be given its own `mimic` in the data passed to `new`. Tough cells use it, and so can an Omnicell |
 | `faces` | `table` | `outputs` | directions relative to rotation that flip gears mirror, in the same format as `outputs`. `{}` keeps the rotation when flipped |
 | `twin` | `string` | | the name of the cell this one becomes when flipped by a flip gear, such as a clockwise gear's counter-clockwise twin. cells that look the same mirrored don't need one |
 
@@ -90,30 +91,30 @@ Override these to define how a cell acts. Each one has a default, so only overri
 | method | default | description |
 | --- | --- | --- |
 | [`update`](#basecellupdatesubtick-direction) | nothing | runs during the cell's subticks |
-| [`pushable`](#basecellpushabledx-dy-bare-action) | `true` | whether the cell can be pushed |
+| [`pushable`](#basecellpushabledx-dy-bare-action-gx-gy) | `true` | whether the cell can be pushed |
 | [`eats`](#basecelleatsdx-dy-action-mover) | `false` | whether cells moving into this one are deleted |
 | [`bars`](#basecellbarsdx-dy-action-mover) | `false` | whether this cell stops cells from moving onto its tile, for [layered](Layers) cells |
 | [`click`](#basecellclickbutton) | `false` | called when the tile is clicked while the simulation runs |
 | [`tint`](#basecelltint) | nothing | color the sprite is drawn in |
 | [`group`](#basecellgroup) and [`lit`](#basecelllit) | | what an `outcome` cell reports |
-| [`absorb`](#basecellabsorbcell-dx-dy-action) | nothing | called after this cell eats a cell |
-| [`rams`](#basecellramscell-dx-dy-action) and [`ram`](#basecellramcell-dx-dy) | `false` and nothing | make this cell destroy the cell it moves into, like an Acid |
-| [`bump`](#basecellbumpdx-dy-pusher) | nothing | called when a push runs into this cell and it blocks or eats it |
+| [`ate`](#basecellatecell-dx-dy-action) | nothing | called after this cell eats a cell |
+| [`rams`](#basecellramscell-dx-dy-action) and [`rammed`](#basecellrammedcell-dx-dy) | `false` and nothing | make this cell destroy the cell it moves into, like an Acid |
+| [`bumped`](#basecellbumpeddx-dy-pusher) | nothing | called when a push runs into this cell and it blocks or eats it |
 | [`swapped`](#basecellswappeddx-dy) | nothing | called after a swap carried this cell to the other cell's place |
 | [`pushed`](#basecellpusheddx-dy-action) | nothing | called after a push, pull or grab moved this cell |
 | [`side`](#basecellside) | the `team` | which side sentries and seekers see this cell on |
 | [`health`](#basecellhealth) | `1` | how much damage the cell takes to destroy |
-| [`breakable`](#basecellbreakable) | not `fixed` or protected | whether collisions and explosions can destroy the cell |
+| [`breakable`](#basecellbreakabledx-dy) | not `fixed` or protected | whether collisions and explosions can destroy the cell |
 | [`hit`](#basecellhitdamage) | destroys a breakable cell | called when a collision or an explosion damages this cell |
-| [`generatable`](#basecellgeneratable) | `true` | whether generators can copy the cell |
-| [`generated`](#basecellgenerated) | the same class and props | what a generator's copy of the cell becomes |
+| [`cloneable`](#basecellcloneable) | `true` | whether generators can copy the cell |
+| [`template`](#basecelltemplate) | the same class and props | what a generator's copy of the cell becomes |
 | [`force`](#basecellforcedx-dy-action) | `0` | force added to a push or pull |
 | [`resist`](#basecellresistforce-dx-dy) | the same force | changes the force that is left after this cell |
 | [`imaginary`](#basecellimaginarydx-dy) | `0` | imaginary force this cell adds to the line it moves in |
 | [`settled`](#basecellsettledtotal) | `true` | whether the line is allowed to move for its imaginary force |
 | [`guarded`](#basecellguardedguard-dx-dy) | whether `guards` has the action | whether the cell refuses an action |
-| [`chained`](#basecellchainedaction-dx-dy-anchor) | nothing | called when a push, pull or grab reaches the cell, even if it fails |
-| [`ahead`](#basecellaheadtarget) | nothing | called with the cell a push is about to reach after this one, even if it fails |
+| [`chained`](#basecellchainedaction-dx-dy-anchor-pusher) | nothing | called when a push, pull or grab reaches the cell, even if it fails |
+| [`ahead`](#basecellaheadtarget-dx-dy) | nothing | called with the cell a push is about to reach after this one, even if it fails |
 | [`clinging`](#basecellclingingdx-dy) | the cell's stickiest effect | what the cell sticks to on one side |
 | [`divert`](#basecelldivertdx-dy-reverse) | nothing | bends the path of a move passing through |
 | [`jump`](#basecelljumpdx-dy-x-y-reverse) | nothing | moves the path of a move passing through somewhere else |
@@ -139,7 +140,7 @@ function Eraser:update(subtick, direction)
 end
 ```
 
-### `BaseCell:pushable(dx, dy, bare, action)`
+### `BaseCell:pushable(dx, dy, bare, action, gx, gy)`
 
 Whether the cell can be moved by a push, pull or grab. Default `true`, or `false` for a `fixed` cell.
 
@@ -149,6 +150,8 @@ Whether the cell can be moved by a push, pull or grab. Default `true`, or `false
 | `dy` | `number` | vertical push direction: `-1`, `0` or `1` |
 | `bare` | `boolean` | the cell is first in a push that has no pusher, like a Repulsor's |
 | `action` | `"push"\|"pull"\|"grab"?` | what is moving the cell, `nil` for other moves |
+| `gx` | `number?` | horizontal direction of the force that hits the cell, if it differs from `dx`. pulls and grabs use it |
+| `gy` | `number?` | vertical direction of the force that hits the cell |
 
 **Returns** `boolean`
 
@@ -161,14 +164,13 @@ end
 
 ### `BaseCell:eats(dx, dy, action, mover)`
 
-Whether cells moving into this one are deleted. Default `false`. A [layered](Layers) cell can eat too: the mover is deleted before it reaches whatever is in the foreground.
+Whether this cell eats a cell moving into it, deleting it. Default `false`. [`ate`](#basecellatecell-dx-dy-action) is called when it does. A [layered](Layers) cell can eat too: the mover is deleted before it reaches whatever is in the foreground.
 
 | parameter | type | description |
 | --- | --- | --- |
 | `dx` | `number` | horizontal direction the other cell is moving |
 | `dy` | `number` | vertical direction the other cell is moving |
 | `action` | `string?` | how the other cell arrives: `nil` when pushed, `"pull"` when a puller or nudger moves itself in, `"swap"` when it swaps places with this cell. a Storage or Converter accepts the last two even when it cannot eject what it holds |
-
 | `mover` | `BaseCell?` | the cell moving in, `nil` when it is not known |
 
 **Returns** `boolean`
@@ -252,9 +254,9 @@ For `outcome` cells, the group the cell belongs to. Cells with the same group ar
 
 For `outcome` cells, whether the cell is enabled. An `outcome` is reached when every cell of one group is lit.
 
-### `BaseCell:absorb(cell, dx, dy, action)`
+### `BaseCell:ate(cell, dx, dy, action)`
 
-Called after this cell eats `cell`. Return `true` to let `cell` survive and take the eaten cell's place instead, like a coin being collected.
+Called after [`eats`](#basecelleatsdx-dy-action-mover) made this cell eat `cell`. Return `true` to let `cell` survive and take the eaten cell's place instead, like a coin being collected.
 
 | parameter | type | description |
 | --- | --- | --- |
@@ -264,14 +266,14 @@ Called after this cell eats `cell`. Return `true` to let `cell` survive and take
 | `action` | `string?` | how it arrived, as in [`eats`](#basecelleatsdx-dy-action) |
 
 ```lua
-function Counter:absorb(cell)
+function Counter:ate(cell)
     print("ate a " .. cell.name)
 end
 ```
 
 ### `BaseCell:rams(cell, dx, dy, action)`
 
-Whether this cell collides with `cell` when it moves into it, instead of pushing it. Default `false`. A colliding move ends there and calls [`ram`](#basecellramcell-dx-dy) on the moving cell.
+Whether this cell collides with `cell` when it moves into it, instead of pushing it. Default `false`. A colliding move ends there and calls [`rammed`](#basecellrammedcell-dx-dy) on the moving cell.
 
 | parameter | type | description |
 | --- | --- | --- |
@@ -286,7 +288,7 @@ function Acid:rams(cell)
 end
 ```
 
-### `BaseCell:ram(cell, dx, dy)`
+### `BaseCell:rammed(cell, dx, dy)`
 
 Called on a cell whose [`rams`](#basecellramscell-dx-dy-action) returned `true`. Return `true` to let this cell survive and take the place of `cell`.
 
@@ -297,13 +299,13 @@ Called on a cell whose [`rams`](#basecellramscell-dx-dy-action) returned `true`.
 | `dy` | `number` | vertical direction this cell was moving |
 
 ```lua
-function Acid:ram(cell)
+function Acid:rammed(cell)
     cell:hit(1)
     return false
 end
 ```
 
-### `BaseCell:bump(dx, dy, pusher)`
+### `BaseCell:bumped(dx, dy, pusher)`
 
 Called when a push runs into this cell and it blocks or eats the push instead of moving. Storage uses it to release its content, and Spinners use it to turn the pusher.
 
@@ -314,7 +316,7 @@ Called when a push runs into this cell and it blocks or eats the push instead of
 | `pusher` | `BaseCell?` | the cell that ran into this one, or `nil` when the push came from a force like a Repulsor or a generator |
 
 ```lua
-function Storage:bump(dx, dy)
+function Storage:bumped(dx, dy)
     self:_hold({})
 end
 ```
@@ -330,7 +332,7 @@ Called after a mirror swap carried this cell onto the other cell's place, with t
 
 ```lua
 function BaseGate:swapped(dx, dy)
-    if self:eats(dx, dy) then self:absorb(self, dx, dy) end
+    if self:eats(dx, dy) then self:ate(self, dx, dy) end
 end
 ```
 
@@ -377,9 +379,9 @@ function Strong:health()
 end
 ```
 
-### `BaseCell:breakable()`
+### `BaseCell:breakable(dx, dy)`
 
-Whether collisions and explosions can destroy the cell. Default is not `fixed` and not protected.
+Whether collisions and explosions can destroy the cell. Default is not `fixed` and not protected. Pass the direction the threat moves in so the side it hits can answer, see `mimic`. `transformable(dx, dy)` asks the same for transformers, worms and timewarpers.
 
 ### `BaseCell:hit(damage)`
 
@@ -395,27 +397,27 @@ function Strong:hit(damage)
 end
 ```
 
-### `BaseCell:generatable()`
+### `BaseCell:cloneable()`
 
 Whether generators can copy the cell. Default `true`.
 
 **Returns** `boolean`
 
 ```lua
-function Unique:generatable()
+function Unique:cloneable()
     return false
 end
 ```
 
-### `BaseCell:generated()`
+### `BaseCell:template()`
 
-What a generator's copy of the cell becomes. Only called when [`generatable`](#basecellgeneratable) is true. Default is the cell's own class and props.
+What a generator's copy of the cell becomes. Only called when [`cloneable`](#basecellcloneable) is true. Default is the cell's own class and props.
 
 **Returns** the class of the copy, and optionally the props it starts with and its rotation. Return nothing to generate nothing. The rotation defaults to the cell's own.
 
 ```lua
 -- copies turn into an Ungeneratable
-function Fragile:generated()
+function Fragile:template()
     return Ungeneratable
 end
 ```
@@ -488,7 +490,7 @@ end
 
 ### `BaseCell:guarded(guard, dx, dy)`
 
-Whether the cell refuses an action, from `guards` or an effect. Override it to refuse by side. `"protect"` is asked with the direction the threat moves in, so a cell can shield some of its sides, but the other guards are asked without one.
+Whether the cell refuses an action, from `guards`, or from the class in `mimic` for the side the direction hits, plus effects. Pass the direction the threat moves in to ask a side; without it only `guards` and effects count. A `fixed` class in `mimic` refuses every guard.
 
 | parameter | type | description |
 | --- | --- | --- |
@@ -498,7 +500,7 @@ Whether the cell refuses an action, from `guards` or an effect. Override it to r
 
 **Returns** `boolean`
 
-### `BaseCell:chained(action, dx, dy, anchor)`
+### `BaseCell:chained(action, dx, dy, anchor, pusher)`
 
 Called when a push, pull or grab reaches the cell, before the chain is known to succeed. Queue work with `movement:post`: it runs once the chain has finished, even when the chain failed, and receives whether the chain moved. Does nothing by default.
 
@@ -508,6 +510,7 @@ Called when a push, pull or grab reaches the cell, before the chain is known to 
 | `dx` | `number` | horizontal direction the cell would move in |
 | `dy` | `number` | vertical direction the cell would move in |
 | `anchor` | `table` | `x`, `y`, `dx`, `dy` of the push that started the chain, and `extended` to mark that a cell has already extended it |
+| `pusher` | `BaseCell?` | the cell that pushes this one, if any. builders copy it |
 
 ```lua
 -- pulls the cell behind it once the chain is over
@@ -517,9 +520,9 @@ function PullExtension:chained(action, dx, dy)
 end
 ```
 
-### `BaseCell:ahead(target)`
+### `BaseCell:ahead(target, dx, dy)`
 
-Called when a push moves past this cell and reaches `target`, the cell that would be pushed next. Portals and diverters in between are already followed. It is not called when the push stops at this cell or when nothing is ahead. Does nothing by default.
+Called when a push moves past this cell and reaches `target`, the cell that would be pushed next, moving in `dx`, `dy`. Portals and diverters in between are already followed. It is not called when the push stops at this cell or when nothing is ahead. Does nothing by default.
 
 | parameter | type | description |
 | --- | --- | --- |
@@ -528,7 +531,7 @@ Called when a push moves past this cell and reaches `target`, the cell that woul
 ```lua
 -- turns whatever it pushes into, like a Twirler
 function Twirler:ahead(target)
-    target:rotate(1, false, true)
+    target:rotate(1, { quiet = true })
 end
 ```
 
@@ -635,7 +638,7 @@ Call these from your own methods, usually from `update`. Where `dx` and `dy` are
 | [`generate`](#basecellgeneratedirection-options) | copies the cell behind this one into the tile in front |
 | [`fire`](#basecellfireclass-direction) | puts a new cell into the tile in front, if it is empty or eats the cell |
 | [`repel`](#basecellrepeldirection-force-row) | pushes the cell in front of this one away without moving this cell |
-| [`rotate`](#basecellrotateamount-forced) | rotates the cell |
+| [`rotate`](#basecellrotateamount-forced-quiet-wide-dx-dy) | rotates the cell |
 | [`rotateNeighbors`](#basecellrotateneighborsamount-predicate) | rotates the four adjacent cells |
 | [`neighbors`](#basecellneighborsdistance-callback) | loops over nearby tiles, no diagonals |
 | [`surrounding`](#basecellsurroundingdistance-callback) | loops over the square around the cell, diagonals included |
@@ -643,7 +646,7 @@ Call these from your own methods, usually from `update`. Where `dx` and `dy` are
 | [`become`](#basecellbecomeclass) | turns the cell into another class in place |
 | [`alternate`](#basecellalternate) | turns the cell into its `pair` |
 
-### `BaseCell:push(dx, dy, force, options)`
+### `BaseCell:push(dx, dy, options)`
 
 Pushes the cell one tile, moving whatever is in the way.
 
@@ -651,8 +654,7 @@ Pushes the cell one tile, moving whatever is in the way.
 | --- | --- | --- |
 | `dx` | `number?` | horizontal direction |
 | `dy` | `number?` | vertical direction |
-| `force` | `number?` | extra force added to the push |
-| `options` | `table?` | `limit` is the most cells the push may move besides the pusher, `bend = true` turns a blocked push sideways, and `row = true` keeps pushing the cells past any empty space |
+| `options` | `table?` | `force` is extra force added to the push, `limit` is the most cells the push may move besides the pusher, `bend = true` turns a blocked push sideways, and `row = true` keeps pushing the cells past any empty space |
 
 **Returns** `boolean`, true if it moved.
 
@@ -662,7 +664,7 @@ function Mover:update()
 end
 ```
 
-### `BaseCell:pull(dx, dy, force, row)`
+### `BaseCell:pull(dx, dy, options)`
 
 Moves the cell one tile and drags the cells behind it.
 
@@ -670,8 +672,7 @@ Moves the cell one tile and drags the cells behind it.
 | --- | --- | --- |
 | `dx` | `number?` | horizontal direction |
 | `dy` | `number?` | vertical direction |
-| `force` | `number?` | extra force added to the pull |
-| `row` | `boolean?` | keeps dragging the cells past any empty space |
+| `options` | `table?` | `force` is extra force added to the pull, and `row = true` keeps dragging the cells past any empty space |
 
 **Returns** `boolean`, true if it moved.
 
@@ -777,7 +778,16 @@ Copies the cell behind this one into the tile in front, pushing out what is ther
 | parameter | type | description |
 | --- | --- | --- |
 | `direction` | `number?` | direction to generate in. defaults to the facing direction |
-| `options` | `table?` | extra options for the generation |
+| `options` | `table?` | extra options for the generation, listed below |
+
+| option | type | description |
+| --- | --- | --- |
+| `source` | `number?` | direction to take the copy from, relative to the world. defaults to behind |
+| `cell` | `BaseCell?` | copy this cell instead of the one behind |
+| `turn` | `number?` | extra quarter turns for the copy |
+| `force` | `number?` | force to push with. defaults to `constants.force.generate` |
+| `bend` | `boolean?` | bend the push around corners, like `Bendgenerator` |
+| `retreat` | `string?` | `"first"` and `"always"` push this cell back and put the copy on its old tile, `"blocked"` does that only when the front is blocked |
 
 **Returns** `boolean`, then the new cell and the turn that diverters applied to it. Both are nil when nothing was copied.
 
@@ -786,6 +796,22 @@ function Copier:update(_, direction)
     self:generate(direction)
 end
 ```
+
+### `BaseCell:clone(turn)`
+
+Makes a copy from [`template`](#basecelltemplate), turned by `turn` quarter turns and carrying the cell's `updated` and `ran`, without placing it.
+
+**Returns** the new cell, or nil when the cell generates nothing.
+
+### `BaseCell:launch(dx, dy, options)`
+
+Pushes the cell in a direction again and again until it is blocked, turning through portals. Snipers use it.
+
+| parameter | type | description |
+| --- | --- | --- |
+| `dx` | `number` | horizontal direction |
+| `dy` | `number` | vertical direction |
+| `options` | `table?` | passed to each [`push`](#basecellpushdx-dy-options) |
 
 ### `BaseCell:fire(class, direction)`
 
@@ -804,32 +830,31 @@ function Gun:update()
 end
 ```
 
-### `BaseCell:repel(direction, force, row)`
+### `BaseCell:repel(direction, options)`
 
 Pushes the cell next to this one away, along with whatever is in its way. This cell does not move.
 
 | parameter | type | description |
 | --- | --- | --- |
 | `direction` | `number` | direction to push towards (0-3) |
-| `force` | `number` | force of the push, defaults to `constants.force.strength` |
-| `row` | `boolean` | keep pushing past gaps, so the whole row moves |
+| `options` | `table?` | `force` is the force of the push and defaults to `constants.force.strength`, and `row = true` keeps pushing past gaps so the whole row moves |
 
 **Returns** the move it pushed from, or `false` if the push failed.
 
 ```lua
 function Repulsor:update(_, direction)
-    self:repel(direction, nil, self.row)
+    self:repel(direction, { row = self.row })
 end
 ```
 
-### `BaseCell:rotate(amount, forced)`
+### `BaseCell:rotate(amount, options)`
 
-Rotates the cell by `amount` clockwise quarter turns. Does nothing to an `anchored` cell unless `forced` is set.
+Rotates the cell by `amount` clockwise quarter turns. Does nothing to an `anchored` or locked cell unless `forced` is set. Pass the direction the rotation comes from as `dx`, `dy` so a side that guards `rotate` can refuse it, like the sides of a Tough Mover. `flip(key, options)` takes the same options.
 
 | parameter | type | description |
 | --- | --- | --- |
 | `amount` | `number` | quarter turns. negative turns counterclockwise |
-| `forced` | `boolean` | rotates even an `anchored` cell |
+| `options` | `table?` | `forced` rotates even an `anchored` cell and ignores guards, `quiet` skips the `rotated` call, `wide` is passed on to `rotated`, and `dx`, `dy` are the direction the rotation comes from |
 
 ```lua
 self:rotate(1)  -- clockwise

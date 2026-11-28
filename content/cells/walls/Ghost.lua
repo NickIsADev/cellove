@@ -8,7 +8,7 @@ local Ghost = setmetatable({
 }, { __index = Wall })
 Ghost.__index = Ghost
 
-function Ghost:generatable()
+function Ghost:cloneable()
     return false
 end
 

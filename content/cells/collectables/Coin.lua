@@ -16,7 +16,7 @@ function Coin:eats(dx, dy, action)
     return action ~= "swap"
 end
 
-function Coin:absorb(cell)
+function Coin:ate(cell)
     Coins:give(cell, 1)
     Audio.play("coin")
     self.spark = "coin"

@@ -15,11 +15,11 @@ function BaseReactiveTrash:_react(dx, dy)
     if self.physical then
         self.simulator.movement:repel(self.x, self.y, dx, dy)
     else
-        self:push(dx, dy, constants.force.strength)
+        self:push(dx, dy, { force = constants.force.strength })
     end
 end
 
-function BaseReactiveTrash:absorb(_, dx, dy)
+function BaseReactiveTrash:ate(_, dx, dy)
     dx, dy = self:_heading(dx, dy)
     self.simulator.movement:defer(function() self:_react(dx, dy) end)
 end

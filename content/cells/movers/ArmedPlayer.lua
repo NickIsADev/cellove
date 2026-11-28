@@ -17,7 +17,7 @@ function ArmedPlayer:update(_, direction)
     if direction ~= (input or 0) then return end
 
     if input then
-        self:rotate(input - self.rotation, true)
+        self:rotate(input - self.rotation, { forced = true })
         self:_move(unpack(constants.directions[input]))
     end
     if simulator.action then self:fire(FriendlyMissile) end

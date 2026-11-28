@@ -29,7 +29,7 @@ function FearfulEnemy:update()
         local side = utils.randomSign()
         dx, dy = up * side, left * side
     end
-    self:push(dx, dy, constants.force.strength)
+    self:push(dx, dy, { force = constants.force.strength })
 end
 
 return FearfulEnemy

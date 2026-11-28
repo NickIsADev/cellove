@@ -29,7 +29,7 @@ end
 
 function AdjustableMover:force(dx, dy, action)
     if action ~= "push" then return 0 end
-    return self:_alignment(dx, dy) * self:_power()
+    return self:_along(dx, dy) * self:_power()
 end
 
 function AdjustableMover:pushed(dx, dy, action)
@@ -42,10 +42,10 @@ function AdjustableMover:update()
     if not first then return end
 
     local props = self.props
-    local options = { limit = props.maximum > 0 and props.maximum or nil }
+    local limit = props.maximum > 0 and props.maximum or nil
 
     for step = first, props.speed - 1 do
-        if self.grid:get(self.x, self.y) ~= self or not self:push(nil, nil, -step, options) then return end
+        if self.grid:get(self.x, self.y) ~= self or not self:push(nil, nil, { force = -step, limit = limit }) then return end
     end
 end
 

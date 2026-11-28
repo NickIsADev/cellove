@@ -9,6 +9,6 @@ local SpiritSliderOneDirectional = setmetatable({
 }, { __index = SliderOneDirectional })
 SpiritSliderOneDirectional.__index = SpiritSliderOneDirectional
 
-SpiritSliderOneDirectional.generatable = BaseSpirit.generatable
+SpiritSliderOneDirectional.cloneable = BaseSpirit.cloneable
 
 return SpiritSliderOneDirectional

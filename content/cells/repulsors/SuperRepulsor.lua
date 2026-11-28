@@ -16,7 +16,7 @@ function SuperRepulsor:update(_, direction)
     local x, y, dx, dy = self.x, self.y, facing[1], facing[2]
 
     for _ = 1, constants.grid.limits.max do
-        local front = movement:repel(x, y, dx, dy, math.huge)
+        local front = movement:repel(x, y, dx, dy, { force = math.huge })
         if not front then return end
 
         x, y, dx, dy = front.x, front.y, front.dx, front.dy

@@ -33,7 +33,7 @@ function BaseHolder:_release(direction, mode, cell)
     cell = cell or self:_make(direction)
 
     local facing = constants.directions[direction]
-    return self.simulator.movement:release(self.x, self.y, facing[1], facing[2], cell, mode)
+    return self.simulator.movement:release(self.x, self.y, facing[1], facing[2], cell, { mode = mode, retreat = self.retreat })
 end
 
 function BaseHolder:_shrink()
@@ -62,12 +62,12 @@ function BaseHolder:eats()
     return false
 end
 
-function BaseHolder:absorb(cell)
+function BaseHolder:ate(cell)
     self:_hold(cell:contents())
 end
 
-function BaseHolder:rotate(amount, forced)
-    if not BaseCell.rotate(self, amount, forced) then return end
+function BaseHolder:rotate(amount, options)
+    if not BaseCell.rotate(self, amount, options) then return end
 
     local content = self.props and self.props.stored
     if content and content.class then
@@ -80,7 +80,7 @@ end
 function BaseHolder:draw(renderer, x, y, angle, scale, offset)
     BaseCell.draw(self, renderer, x, y, angle, scale, offset)
     if self:held() and not self.arriving then
-        renderer:drawStored(self.props.stored, x, y, angle - self.rotation, scale * self.fit, offset)
+        renderer:drawStored(self.props.stored, x, y, angle - self.rotation, scale * self.fit, offset, self.upright)
     end
 end
 

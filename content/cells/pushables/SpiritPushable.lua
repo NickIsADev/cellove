@@ -9,6 +9,6 @@ local SpiritPushable = setmetatable({
 }, { __index = Pushable })
 SpiritPushable.__index = SpiritPushable
 
-SpiritPushable.generatable = BaseSpirit.generatable
+SpiritPushable.cloneable = BaseSpirit.cloneable
 
 return SpiritPushable

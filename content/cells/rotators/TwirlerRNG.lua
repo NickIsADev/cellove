@@ -9,8 +9,8 @@ local TwirlerRNG = setmetatable({
 }, { __index = BaseTwirler })
 TwirlerRNG.__index = TwirlerRNG
 
-function TwirlerRNG:_spin(cell)
-    cell:rotate(utils.randomSign())
+function TwirlerRNG:_spin(cell, dx, dy)
+    cell:rotate(utils.randomSign(), { dx = dx, dy = dy })
 end
 
 return TwirlerRNG

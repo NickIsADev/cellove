@@ -24,7 +24,7 @@ function Mincer:update()
     elseif not self:grab() then
         return self:pull()
     end
-    movement:attract(x - dx, y - dy, dx, dy, constants.force.strength)
+    movement:attract(x - dx, y - dy, dx, dy, { force = constants.force.strength })
 end
 
 return Mincer

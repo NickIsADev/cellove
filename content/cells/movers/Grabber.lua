@@ -15,7 +15,7 @@ Grabber.__index = Grabber
 
 function Grabber:force(dx, dy, action)
     if action ~= "grab" then return 0 end
-    return self:_alignment(dx, dy) * constants.force.strength
+    return self:_along(dx, dy) * constants.force.strength
 end
 
 function Grabber:update()

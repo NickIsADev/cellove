@@ -32,7 +32,7 @@ function DividerDiverger:eats(dx, dy, action)
     return not action and self:_entry(dx, dy) == 2 and not self:_ready()
 end
 
-function DividerDiverger:absorb()
+function DividerDiverger:ate()
     self:_count(self.props.count + 1)
 end
 

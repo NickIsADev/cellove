@@ -10,7 +10,7 @@ local SliderOneDirectional = setmetatable({
 SliderOneDirectional.__index = SliderOneDirectional
 
 function SliderOneDirectional:pushable(dx, dy)
-    return self:_alignment(dx, dy) > 0
+    return self:_along(dx, dy) > 0
 end
 
 return SliderOneDirectional

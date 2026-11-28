@@ -17,7 +17,7 @@ local CollectableKeyDoor = setmetatable({
 }, { __index = BaseCell })
 CollectableKeyDoor.__index = CollectableKeyDoor
 
-function CollectableKeyDoor:bump()
+function CollectableKeyDoor:bumped()
     if not Keys.held(self.grid, self.props.color) then return end
 
     Audio.play("unlock")

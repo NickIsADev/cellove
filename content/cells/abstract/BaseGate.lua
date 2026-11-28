@@ -16,19 +16,19 @@ function BaseGate:new(data)
 end
 
 function BaseGate:eats(dx, dy)
-    return (dx == 0 or dy == 0) and self:_side(dx, dy) ~= 0
+    return (dx == 0 or dy == 0) and self:_across(dx, dy) ~= 0
 end
 
 function BaseGate:swapped(dx, dy)
-    if self:eats(dx, dy) then self:absorb(self, dx, dy) end
+    if self:eats(dx, dy) then self:ate(self, dx, dy) end
 end
 
 function BaseGate:pushable(dx, dy, bare)
     return bare
 end
 
-function BaseGate:absorb(cell, dx, dy)
-    local side = self:_side(dx, dy) > 0 and "left" or "right"
+function BaseGate:ate(cell, dx, dy)
+    local side = self:_across(dx, dy) > 0 and "left" or "right"
     self.fed[side] = self.simulator:position()
 end
 

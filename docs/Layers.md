@@ -43,7 +43,7 @@ A tile can hold an overlay cell and a foreground cell at once. The editor places
 Moves into a tile ask that tile's non-foreground cells two questions, in this order:
 
 1. [`bars(dx, dy, action, mover)`](BaseCell#basecellbarsdx-dy-action-mover): return `true` to stop the mover. A push that would enter the tile is blocked as a whole, and swaps and generators cannot enter either.
-2. [`eats(dx, dy, action, mover)`](BaseCell#basecelleatsdx-dy-action-mover): return `true` to delete the mover as it arrives. [`absorb`](BaseCell#basecellabsorbcell-dx-dy-action) runs afterwards, and returning `true` from it lets the mover keep going.
+2. [`eats(dx, dy, action, mover)`](BaseCell#basecelleatsdx-dy-action-mover): return `true` to delete the mover as it arrives. [`ate`](BaseCell#basecellatecell-dx-dy-action) runs afterwards, and returning `true` from it lets the mover keep going.
 
 A cell that eats the mover must also let it in: `bars` has to return `false` for the same mover.
 
@@ -63,7 +63,7 @@ function Gate:eats(dx, dy, action, mover)
     return mover ~= nil and mover.key == "gold"
 end
 
-function Gate:absorb()
+function Gate:ate()
     self:become(OpenGate)
 end
 ```

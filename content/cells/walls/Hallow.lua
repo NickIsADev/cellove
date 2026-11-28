@@ -9,8 +9,8 @@ local Hallow = setmetatable({
 }, { __index = Wall })
 Hallow.__index = Hallow
 
-function Hallow:bump(_, _, pusher)
-    if not (pusher and pusher:transformable()) then return end
+function Hallow:bumped(dx, dy, pusher)
+    if not (pusher and pusher:transformable(-dx, -dy)) then return end
 
     local movement = self.simulator.movement
     movement:defer(function()

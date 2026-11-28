@@ -12,6 +12,6 @@ local Alkali = setmetatable({
 Alkali.__index = Alkali
 
 Alkali.rams = BaseAcid.rams
-Alkali.ram = BaseAcid.ram
+Alkali.rammed = BaseAcid.rammed
 
 return Alkali

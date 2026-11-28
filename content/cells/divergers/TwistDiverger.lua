@@ -10,7 +10,7 @@ TwistDiverger.__index = TwistDiverger
 
 function TwistDiverger:passed(mover)
     self.grid.simulator.movement:defer(function()
-        mover:flip(self.rotation * 2 % 4, true)
+        mover:flip(self.rotation * 2 % 4, { forced = true })
     end)
 end
 

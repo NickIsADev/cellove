@@ -14,7 +14,7 @@ function BaseToggle:eats(dx, dy, action, mover)
     return mover ~= nil and mover.key == "toggle"
 end
 
-function BaseToggle:absorb()
+function BaseToggle:ate()
     Audio.play("unlock")
     self.spark = "quantum"
     self.grid:touch(self)

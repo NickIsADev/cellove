@@ -9,8 +9,8 @@ local TurnerRNG = setmetatable({
 }, { __index = BaseTurner })
 TurnerRNG.__index = TurnerRNG
 
-function TurnerRNG:_spin(cell)
-    cell:rotate(utils.randomSign())
+function TurnerRNG:_spin(cell, dx, dy)
+    cell:rotate(utils.randomSign(), { dx = dx, dy = dy })
 end
 
 return TurnerRNG

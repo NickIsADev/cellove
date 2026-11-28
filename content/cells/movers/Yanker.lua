@@ -18,7 +18,7 @@ function Yanker:update()
     local x, y, dx, dy = self.x, self.y, self:_aim()
 
     if self:push() or self:slice() then
-        self.simulator.movement:attract(x - dx, y - dy, dx, dy, constants.force.strength)
+        self.simulator.movement:attract(x - dx, y - dy, dx, dy, { force = constants.force.strength })
     else
         self:pull()
     end

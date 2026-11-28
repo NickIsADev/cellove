@@ -4,7 +4,7 @@ local utils = require("src/utils")
 
 local function drag(cell, dx, dy)
     if (dx ~= 0 or dy ~= 0) and cell.grid:get(cell.x, cell.y) == cell and cell:pushable(dx, dy) then
-        cell:push(dx, dy, constants.force.strength)
+        cell:push(dx, dy, { force = constants.force.strength })
     end
 end
 

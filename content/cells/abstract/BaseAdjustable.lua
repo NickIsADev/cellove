@@ -29,7 +29,7 @@ function BaseAdjustable:_charge()
 end
 
 function BaseAdjustable:pushed(dx, dy)
-    if self:_alignment(dx, dy) <= 0 then return end
+    if self:_along(dx, dy) <= 0 then return end
 
     local round = self:_round()
     round.steps = round.steps + 1

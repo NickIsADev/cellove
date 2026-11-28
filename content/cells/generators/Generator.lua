@@ -7,18 +7,47 @@ local Generator = setmetatable({
     description = "Clones the cell behind it and pushes it out the front.",
     categories = { "generators" },
     subtick = { "generator" },
-    directional = true
+    directional = true,
+    pushing = {}
 }, { __index = BaseCell })
 Generator.__index = Generator
 
+function Generator:_source()
+    local offset = self.bend or self.source or self.aligns and 2
+    return offset and (self.rotation + offset) % 4
+end
+
+function Generator:_turn(direction)
+    if self.rotates == false then return end
+    return self.bend or self.aligns and direction - self.rotation
+end
+
+function Generator:_options(direction)
+    return {
+        source = self:_source(direction),
+        turn = self:_turn(direction),
+        retreat = self.retreat,
+        force = self.pushing.force,
+        bend = self.pushing.bend
+    }
+end
+
+function Generator:_back(direction, options)
+    return self:look(options.source or (direction + 2) % 4, true)
+end
+
+function Generator:generated()
+end
+
 function Generator:update(_, direction)
-    if self.bend then
-        self:generate(direction, { source = (self.rotation + self.bend) % 4, turn = self.bend })
-    elseif self.aligns then
-        self:generate(direction, { source = (self.rotation + 2) % 4, turn = direction - self.rotation })
-    else
-        self:generate(direction)
-    end
+    local options = self:_options(direction)
+    if not options then return end
+
+    local done, clone, turn = self:generate(direction, options)
+    if not done then return end
+
+    if not (clone and clone.x and self.grid:get(clone.x, clone.y) == clone) then clone = nil end
+    self:generated(clone, direction, turn)
 end
 
 return Generator

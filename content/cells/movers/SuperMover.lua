@@ -11,12 +11,12 @@ local SuperMover = setmetatable({
 SuperMover.__index = SuperMover
 
 function SuperMover:force(dx, dy, action)
-    if action ~= "push" or self:_alignment(dx, dy) <= 0 then return 0 end
+    if action ~= "push" or self:_along(dx, dy) <= 0 then return 0 end
     return math.huge
 end
 
 function SuperMover:resist(force, dx, dy, action)
-    if action == "push" and self:_alignment(dx, dy) < 0 then return 0 end
+    if action == "push" and self:_along(dx, dy) < 0 then return 0 end
     return force
 end
 

@@ -22,14 +22,14 @@ function PartialConverter:_ready()
     return self:held() and self.count >= self.props.needed - 1
 end
 
-function PartialConverter:absorb(cell, dx, dy, action)
+function PartialConverter:ate(cell, dx, dy, action)
     if action == "swap" then return end
 
     if self:held() and self.count < self.props.needed - 1 then
         self.count = self.count + 1
     else
         self.count = 0
-        BaseConverter.absorb(self, cell)
+        BaseConverter.ate(self, cell)
     end
 end
 

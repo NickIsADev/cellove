@@ -20,10 +20,10 @@ function Metageneratable:eats()
 end
 
 function Metageneratable:swapped()
-    if not self:held() then self:absorb(self) end
+    if not self:held() then self:ate(self) end
 end
 
-function Metageneratable:generated()
+function Metageneratable:template()
     local stored, generations = self.props.stored, self.props.generations
 
     if generations > 1 then

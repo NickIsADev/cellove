@@ -19,8 +19,8 @@ function Vacuum:update(_, direction)
     local strength = constants.force.strength
     local x, y, dx, dy = move.x, move.y, -move.dx, -move.dy
 
-    if self.simulator.grid:get(x, y) or movement:attract(x - dx, y - dy, dx, dy, strength) then
-        movement:attract(x, y, dx, dy, strength * 2)
+    if self.simulator.grid:get(x, y) or movement:attract(x - dx, y - dy, dx, dy, { force = strength }) then
+        movement:attract(x, y, dx, dy, { force = strength * 2 })
     end
 end
 

@@ -9,20 +9,20 @@ local Tainter = setmetatable({
 }, { __index = Trash })
 Tainter.__index = Tainter
 
-function Tainter:_taint(x, y)
+function Tainter:_taint(x, y, dx, dy)
     local target = self.grid:get(x, y)
-    if x == self.x and y == self.y or target and not target:transformable() then return end
+    if x == self.x and y == self.y or target and not target:transformable(dx, dy) then return end
 
-    local class, props = self:generated()
+    local class, props = self:template()
     local clone = class:new({ rotation = self.rotation, props = props })
 
     clone.updated = self.simulator.time.tick
     self.simulator.movement:place(x, y, clone)
 end
 
-function Tainter:absorb(cell)
+function Tainter:ate(cell, dx, dy)
     local x, y = cell.x, cell.y
-    self.simulator.movement:defer(function() self:_taint(x, y) end)
+    self.simulator.movement:defer(function() self:_taint(x, y, -dx, -dy) end)
 end
 
 return Tainter

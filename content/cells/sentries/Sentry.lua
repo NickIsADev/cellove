@@ -19,7 +19,7 @@ function Sentry:update()
     local aim = self:_target(self.props.range, true)
     if not aim then return end
 
-    self:rotate(aim - self.rotation, true)
+    self:rotate(aim - self.rotation, { forced = true })
     self:fire(self.missile)
 end
 

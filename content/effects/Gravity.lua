@@ -34,7 +34,7 @@ function Gravity:update(cell, value, _, direction)
     if value % 4 ~= direction then return end
 
     local fall = constants.directions[direction]
-    cell:push(fall[1], fall[2], constants.force.gravity)
+    cell:push(fall[1], fall[2], { force = constants.force.gravity })
 end
 
 function Gravity:texture(value)

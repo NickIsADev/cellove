@@ -1,18 +1,17 @@
 local Mover = require("content/cells/movers/Mover")
-local BaseTough = require("content/cells/abstract/BaseTough")
 local Audio = require("src/engine/audio/Audio")
+
+local Wall = require("content/cells/walls/Wall")
 
 local Crusher = setmetatable({
     name = "crusher",
     k3 = 1160,
     title = "Crusher",
     description = "Mover that crushes the cell in front of it against an immovable cell. Cannot be destroyed from its front.",
-    shields = { front = true },
+    mimic = { front = Wall },
     damage = 1
 }, { __index = Mover })
 Crusher.__index = Crusher
-
-Crusher.guarded = BaseTough.guarded
 
 function Crusher:_crush()
     local target = self.simulator.movement.depth >= 2 and self:_breakable()

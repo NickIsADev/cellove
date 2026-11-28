@@ -1,6 +1,8 @@
 local Audio = require("src/engine/audio/Audio")
 local Properties = require("src/engine/registry/Properties")
 local constants = require("src/constants")
+local Mimic = require("src/engine/simulation/Mimic")
+local utils = require("src/utils")
 
 local none = {}
 
@@ -39,7 +41,8 @@ local BaseCell = {
     subtick = {},
     outputs = { 0 },
     properties = {},
-    guards = {}
+    guards = {},
+    mimic = {}
 }
 BaseCell.__index = BaseCell
 
@@ -56,21 +59,36 @@ function BaseCell:new(data)
         cell.effects = cell.effects or {}
         cell.effects[effect] = value
     end
+
+    cell.mimic = data.mimic or self.mimic
+    if next(cell.mimic) then Mimic.install(cell) end
     return cell
 end
 
-function BaseCell:_alignment(dx, dy)
+function BaseCell:_mimicked(dx, dy)
+    local class = dx and self.mimic[self:_face(dx, dy)]
+    if not class then return end
+
+    self.mimics = self.mimics or {}
+    local side = self.mimics[class] or class:new({ rotation = self.rotation })
+    self.mimics[class] = side
+
+    side.rotation, side.x, side.y, side.grid, side.simulator = self.rotation, self.x, self.y, self.grid, self.simulator
+    return side
+end
+
+function BaseCell:_along(dx, dy)
     local facing = constants.directions[self.rotation]
     return facing[1] * dx + facing[2] * dy
 end
 
-function BaseCell:_side(dx, dy)
+function BaseCell:_across(dx, dy)
     local facing = constants.directions[self.rotation]
     return facing[1] * dy - facing[2] * dx
 end
 
 function BaseCell:_face(dx, dy)
-    local along, across = self:_alignment(dx, dy), self:_side(dx, dy)
+    local along, across = self:_along(dx, dy), self:_across(dx, dy)
     if along ~= 0 and across ~= 0 then return "corner" end
     if along ~= 0 then return along > 0 and "back" or "front" end
     return across < 0 and "right" or "left"
@@ -108,7 +126,7 @@ end
 
 function BaseCell:driven(dx, dy, action)
     local drive = self.drive
-    return drive and drive[action] and self:_alignment(dx, dy) > 0
+    return drive and drive[action] and self:_along(dx, dy) > 0
 end
 
 function BaseCell:pushable(dx, dy)
@@ -131,17 +149,17 @@ function BaseCell:rams(cell, dx, dy, action)
     return false
 end
 
-function BaseCell:ram(cell, dx, dy)
+function BaseCell:rammed(cell, dx, dy)
 end
 
 function BaseCell:bars(dx, dy, action, mover)
     return false
 end
 
-function BaseCell:absorb(cell, dx, dy)
+function BaseCell:ate(cell, dx, dy)
 end
 
-function BaseCell:bump(dx, dy, pusher)
+function BaseCell:bumped(dx, dy, pusher)
 end
 
 function BaseCell:side()
@@ -152,8 +170,8 @@ function BaseCell:health()
     return 1
 end
 
-function BaseCell:breakable()
-    return not (self.fixed or self:guarded("protect"))
+function BaseCell:breakable(dx, dy)
+    return not (self.fixed or self:guarded("protect", dx, dy))
 end
 
 function BaseCell:hit(damage)
@@ -166,21 +184,21 @@ end
 function BaseCell:pushed(dx, dy, action)
 end
 
-function BaseCell:chained(action, dx, dy, anchor)
+function BaseCell:chained(action, dx, dy, anchor, pusher)
 end
 
-function BaseCell:ahead(target)
+function BaseCell:ahead(target, dx, dy)
 end
 
 function BaseCell:click(button)
 end
 
-function BaseCell:generatable()
+function BaseCell:cloneable()
     return true
 end
 
-function BaseCell:transformable()
-    return self:breakable()
+function BaseCell:transformable(dx, dy)
+    return self:breakable(dx, dy)
 end
 
 function BaseCell:moved()
@@ -192,7 +210,7 @@ function BaseCell:effect(effect)
     return self.effects and self.effects[effect]
 end
 
-function BaseCell:kept()
+function BaseCell:permanent()
     local kept
 
     for effect, value in pairs(self.effects or none) do
@@ -205,7 +223,7 @@ function BaseCell:kept()
 end
 
 function BaseCell:contents(rotation)
-    return { class = getmetatable(self), rotation = rotation or self.rotation, props = self.props, effects = self:kept() }
+    return { class = getmetatable(self), rotation = rotation or self.rotation, props = self.props, effects = self:permanent() }
 end
 
 function BaseCell:clinging(dx, dy)
@@ -217,8 +235,13 @@ function BaseCell:clinging(dx, dy)
     return cling
 end
 
-function BaseCell:guarded(guard)
-    if self.guards[guard] then return true end
+function BaseCell:guarded(guard, dx, dy)
+    local side = self:_mimicked(dx, dy)
+    if side then
+        if side.fixed or side.guards[guard] then return true end
+    elseif self.guards[guard] then
+        return true
+    end
 
     for effect in pairs(self.effects or none) do
         if effect.guards[guard] then return true end
@@ -226,8 +249,19 @@ function BaseCell:guarded(guard)
     return false
 end
 
-function BaseCell:generated()
+function BaseCell:template()
     return getmetatable(self), self.props
+end
+
+function BaseCell:clone(turn)
+    local class, props, rotation = self:template()
+    if not class then return end
+
+    local clone = class:new({ rotation = rotation or self.rotation, props = props, effects = self:permanent() })
+    clone:rotate(turn or 0, { forced = true, quiet = true })
+    clone.updated = self.updated
+    clone.ran = self.ran
+    return clone
 end
 
 function BaseCell:divert(dx, dy, reverse, mover)
@@ -254,19 +288,33 @@ function BaseCell:slice(dx, dy)
     return self.simulator.movement:slice(self.x, self.y, dx, dy, self.bend)
 end
 
-function BaseCell:push(dx, dy, force, options)
+function BaseCell:push(dx, dy, options)
     dx, dy = self:_aim(dx, dy)
-    return self.simulator.movement:push(self.x, self.y, dx, dy, force, options)
+    return self.simulator.movement:push(self.x, self.y, dx, dy, options)
 end
 
-function BaseCell:pull(dx, dy, force, row)
+function BaseCell:launch(dx, dy, options)
+    local grid, crossings = self.grid, {}
+
+    while grid:get(self.x, self.y) == self do
+        local index = (self.y - 1) * grid.width + self.x
+        crossings[index] = (crossings[index] or 0) + 1
+        if crossings[index] > constants.simulator.crossings then return end
+
+        local rotation = self.rotation
+        if not self:push(dx, dy, options) then return end
+        dx, dy = utils.turn(dx, dy, self.rotation - rotation)
+    end
+end
+
+function BaseCell:pull(dx, dy, options)
     dx, dy = self:_aim(dx, dy)
-    return self.simulator.movement:pull(self.x, self.y, dx, dy, force, row)
+    return self.simulator.movement:pull(self.x, self.y, dx, dy, options)
 end
 
 function BaseCell:grab(dx, dy)
     dx, dy = self:_aim(dx, dy)
-    return self.simulator.movement:grab(self.x, self.y, dx, dy, self.skew, self.strong)
+    return self.simulator.movement:grab(self.x, self.y, dx, dy, { skew = self.skew, strong = self.strong })
 end
 
 function BaseCell:advance(dx, dy, options)
@@ -278,9 +326,12 @@ function BaseCell:swap(ax, ay, bx, by, heading)
     return self.simulator.movement:swap(self.x + ax, self.y + ay, self.x + bx, self.y + by, heading)
 end
 
-function BaseCell:rotate(amount, forced, quiet, wide)
-    if (self.anchored or self:guarded("lock")) and not forced then return false end
-    if not self:rotatable(amount) and not forced then return false end
+function BaseCell:rotate(amount, options)
+    options = options or none
+    local forced = options.forced
+
+    if not forced and (self.anchored or self:guarded("lock") or self:guarded("rotate", options.dx, options.dy)) then return false end
+    if not forced and not self:rotatable(amount) then return false end
 
     self.turn = (self.turn or 0) + (amount + 2) % 4 - 2
     self.rotation = (self.rotation + amount) % 4
@@ -289,17 +340,22 @@ function BaseCell:rotate(amount, forced, quiet, wide)
         self.effects[effect] = effect:rotated(value, amount)
     end
     if self.grid then self.grid:touch(self) end
-    if not quiet then self:rotated(amount, wide) end
+    if not options.quiet then self:rotated(amount, options.wide) end
     return true
 end
 
-function BaseCell:flip(key, forced, wide, quiet)
-    if self:guarded("lock") and not forced then return end
+function BaseCell:flip(key, options)
+    options = options or none
+    if not options.forced and (self:guarded("lock") or self:guarded("flip", options.dx, options.dy)) then return end
 
-    local grid, held = self.grid, self.props.stored
+    local held = self.props.stored
     local class, rotation = reflect(getmetatable(self), self.rotation, key)
     local turned = rotation - self.rotation
-    if not self:rotate(turned, forced, quiet, wide) then turned = 0 end
+    if not self:rotate(turned, {
+        forced = options.forced,
+        quiet = options.quiet,
+        wide = options.wide
+    }) then turned = 0 end
 
     for effect, value in pairs(self.effects or none) do
         self.effects[effect] = effect:flipped(value, key, turned)
@@ -365,9 +421,9 @@ function BaseCell:fire(class, direction)
     return self.simulator.movement:fire(self.x, self.y, facing[1], facing[2], class:new({ rotation = direction }))
 end
 
-function BaseCell:repel(direction, force, row)
+function BaseCell:repel(direction, options)
     local facing = constants.directions[direction]
-    return self.simulator.movement:repel(self.x, self.y, facing[1], facing[2], force, row)
+    return self.simulator.movement:repel(self.x, self.y, facing[1], facing[2], options)
 end
 
 function BaseCell:look(direction, reverse)

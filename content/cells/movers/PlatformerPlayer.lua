@@ -43,7 +43,7 @@ function PlatformerPlayer:_travel()
                 step[axis] = utils.sign(vel[axis])
                 left[axis] = left[axis] - 1
 
-                if not self:push(step[1], step[2], constants.force.strength) then
+                if not self:push(step[1], step[2], { force = constants.force.strength }) then
                     vel[axis], left[axis] = 0, 0
                 end
                 if self.grid:get(self.x, self.y) ~= self then return end

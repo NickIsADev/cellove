@@ -10,7 +10,7 @@ local SliderThreeDirectional = setmetatable({
 SliderThreeDirectional.__index = SliderThreeDirectional
 
 function SliderThreeDirectional:pushable(dx, dy)
-    return self:_alignment(dx, dy) >= 0
+    return self:_along(dx, dy) >= 0
 end
 
 return SliderThreeDirectional

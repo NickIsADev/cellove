@@ -9,6 +9,6 @@ local SpiritSliderThreeDirectional = setmetatable({
 }, { __index = SliderThreeDirectional })
 SpiritSliderThreeDirectional.__index = SpiritSliderThreeDirectional
 
-SpiritSliderThreeDirectional.generatable = BaseSpirit.generatable
+SpiritSliderThreeDirectional.cloneable = BaseSpirit.cloneable
 
 return SpiritSliderThreeDirectional

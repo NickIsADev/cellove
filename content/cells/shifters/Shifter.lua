@@ -30,7 +30,7 @@ function Shifter:_retreat(direction)
     local back, front = constants.directions[(direction + 2) % 4], constants.directions[direction]
 
     grid:set(scout.x, scout.y)
-    if self:push(back[1], back[2], constants.force.strength) then
+    if self:push(back[1], back[2], { force = constants.force.strength }) then
         return self.simulator.movement:release(self.x, self.y, front[1], front[2], self:_build(scout, turn))
     end
 

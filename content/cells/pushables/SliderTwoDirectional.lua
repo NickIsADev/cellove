@@ -10,7 +10,7 @@ local SliderTwoDirectional = setmetatable({
 SliderTwoDirectional.__index = SliderTwoDirectional
 
 function SliderTwoDirectional:pushable(dx, dy)
-    return self:_alignment(dx, dy) > 0 or self:_side(dx, dy) < 0
+    return self:_along(dx, dy) > 0 or self:_across(dx, dy) < 0
 end
 
 return SliderTwoDirectional

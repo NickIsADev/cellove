@@ -15,7 +15,7 @@ function Trash:eats()
     return true
 end
 
-function Trash:generatable()
+function Trash:cloneable()
     return not self.phantom
 end
 

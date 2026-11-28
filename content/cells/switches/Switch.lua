@@ -22,7 +22,7 @@ function Switch:eats()
     return true
 end
 
-function Switch:absorb()
+function Switch:ate()
     Audio.play("destroy")
     Switches.flip(self.grid, self.props.id)
 end

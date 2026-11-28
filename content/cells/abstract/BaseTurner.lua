@@ -6,17 +6,21 @@ local BaseTurner = setmetatable({
 }, { __index = Pushable })
 BaseTurner.__index = BaseTurner
 
-function BaseTurner:_spin(cell)
-    cell:rotate(self.spin, false, true)
+function BaseTurner:_spin(cell, dx, dy)
+    cell:rotate(self.spin, {
+        quiet = true,
+        dx = dx,
+        dy = dy
+    })
 end
 
-function BaseTurner:chained(action)
+function BaseTurner:chained(action, dx, dy)
     if action ~= "push" then return end
 
     local movement, x, y = self.simulator.movement, self.x, self.y
     movement:post(function(moved)
         local pusher = moved and self.grid:get(x, y)
-        if pusher and pusher ~= self then self:_spin(pusher) end
+        if pusher and pusher ~= self then self:_spin(pusher, dx, dy) end
     end)
 end
 

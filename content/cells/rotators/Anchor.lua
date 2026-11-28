@@ -1,6 +1,7 @@
 local BaseCell = require("content/cells/abstract/BaseCell")
 local constants = require("src/constants")
 
+local none = {}
 local spins = { { 0, -1, 1, 0 }, { -1, 0, 0, -1 }, { 0, 1, -1, 0 } }
 
 local Anchor = setmetatable({
@@ -40,12 +41,13 @@ end
 
 function Anchor:rotated(amount)
     local turn = amount % 4
-    if turn ~= 0 then self:_run(spins[turn], function(cell) cell:rotate(turn, false, true) end) end
+    if turn ~= 0 then self:_run(spins[turn], function(cell) cell:rotate(turn, { quiet = true }) end) end
 end
 
-function Anchor:flip(key, forced, _, quiet)
-    if quiet or self:guarded("lock") and not forced then return end
-    self:_run(constants.flip.reflections[key], function(cell) cell:flip(key, false, false, true) end)
+function Anchor:flip(key, options)
+    options = options or none
+    if options.quiet or self:guarded("lock") and not options.forced then return end
+    self:_run(constants.flip.reflections[key], function(cell) cell:flip(key, { quiet = true }) end)
 end
 
 return Anchor

@@ -9,7 +9,7 @@ local FlipFlopDiverger = setmetatable({
 FlipFlopDiverger.__index = FlipFlopDiverger
 
 function FlipFlopDiverger:passed(_, dx, dy)
-    self:rotate(self:_entry(dx, dy) % 2 == 0 and -1 or 1, true, true)
+    self:rotate(self:_entry(dx, dy) % 2 == 0 and -1 or 1, { forced = true, quiet = true })
 end
 
 return FlipFlopDiverger

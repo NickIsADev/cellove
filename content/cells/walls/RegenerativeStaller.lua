@@ -16,7 +16,7 @@ function RegenerativeStaller:_shut()
     return not self.mended or self.grid.simulator.time.tick >= self.mended
 end
 
-function RegenerativeStaller:bump()
+function RegenerativeStaller:bumped()
     self.mended = self.grid.simulator.time.tick + self.props.time + 1
     self.simulator.movement:defer(function() self.grid:invalidate() end)
 end

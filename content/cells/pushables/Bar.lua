@@ -11,7 +11,7 @@ local Bar = setmetatable({
 Bar.__index = Bar
 
 function Bar:pushed(dx, dy, action)
-    if action == "grab" or self:_alignment(dx, dy) ~= 0 then return end
+    if action == "grab" or self:_along(dx, dy) ~= 0 then return end
 
     local x, y, movement = self.x, self.y, self.simulator.movement
     movement:defer(function() movement:flank(x, y, dx, dy) end)

@@ -25,8 +25,8 @@ function SpyPlayer:_disguise()
         local x, y = self.x + facing[1], self.y + facing[2]
         local cell = self.grid:bounds(x, y) and self.grid:get(x, y)
 
-        if cell and cell:generatable() and not cell.path then
-            local class, props = cell:generated()
+        if cell and cell:cloneable() and not cell.path then
+            local class, props = cell:template()
             if class and class ~= SpyPlayer then
                 return self:_mask({ class = class, rotation = cell.rotation, props = props })
             end

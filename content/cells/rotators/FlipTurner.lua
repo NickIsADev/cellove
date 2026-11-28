@@ -12,8 +12,12 @@ local FlipTurner = setmetatable({
 }, { __index = BaseTurner })
 FlipTurner.__index = FlipTurner
 
-function FlipTurner:_spin(cell)
-    cell:flip(utils.flip(self.rotation, self.axis), false, false, true)
+function FlipTurner:_spin(cell, dx, dy)
+    cell:flip(utils.flip(self.rotation, self.axis), {
+        quiet = true,
+        dx = dx,
+        dy = dy
+    })
 end
 
 return FlipTurner

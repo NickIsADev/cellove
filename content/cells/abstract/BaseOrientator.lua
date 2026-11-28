@@ -25,7 +25,7 @@ function BaseOrientator:update(_, direction)
     local front = self:look(direction)
     local to = front and front.target
 
-    if to then to:rotate(rotation - to.rotation) end
+    if to then to:rotate(rotation - to.rotation, { dx = front.dx, dy = front.dy }) end
 end
 
 return BaseOrientator

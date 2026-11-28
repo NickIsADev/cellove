@@ -10,7 +10,7 @@ local PullerPlayer = setmetatable({
 PullerPlayer.__index = PullerPlayer
 
 function PullerPlayer:_move(dx, dy)
-    self:pull(dx, dy, constants.force.strength)
+    self:pull(dx, dy, { force = constants.force.strength })
 end
 
 return PullerPlayer

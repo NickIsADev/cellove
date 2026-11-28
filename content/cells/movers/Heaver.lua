@@ -12,14 +12,14 @@ Heaver.__index = Heaver
 
 function Heaver:force(dx, dy, action)
     if action == "pull" then return 0 end
-    return self:_alignment(dx, dy) * constants.force.strength
+    return self:_along(dx, dy) * constants.force.strength
 end
 
 function Heaver:update()
     local x, y, dx, dy = self.x, self.y, self:_aim()
 
     if self:push() then
-        self.simulator.movement:flank(x, y, dx, dy, nil, self.strong)
+        self.simulator.movement:flank(x, y, dx, dy, { strong = self.strong })
     else
         self:grab()
     end

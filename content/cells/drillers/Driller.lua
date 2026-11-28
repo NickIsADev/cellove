@@ -20,12 +20,12 @@ local Driller = setmetatable({
 Driller.__index = Driller
 
 function Driller:_follow(x, y, dx, dy)
-    if self.pulls then self.simulator.movement:attract(x - dx, y - dy, dx, dy, constants.force.strength) end
+    if self.pulls then self.simulator.movement:attract(x - dx, y - dy, dx, dy, { force = constants.force.strength }) end
 end
 
 function Driller:force(dx, dy, action)
     if not self[abilities[action]] then return 0 end
-    return self:_alignment(dx, dy) * constants.force.strength
+    return self:_along(dx, dy) * constants.force.strength
 end
 
 function Driller:drill()

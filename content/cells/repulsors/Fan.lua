@@ -12,9 +12,9 @@ Fan.__index = Fan
 
 function Fan:update(_, direction)
     local strength = constants.force.strength
-    local front = self:repel(direction, strength * 2)
+    local front = self:repel(direction, { force = strength * 2 })
 
-    if front then self.simulator.movement:repel(front.x, front.y, front.dx, front.dy, strength) end
+    if front then self.simulator.movement:repel(front.x, front.y, front.dx, front.dy, { force = strength }) end
 end
 
 return Fan

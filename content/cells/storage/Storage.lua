@@ -16,7 +16,7 @@ function Storage:_eject(old, dx, dy)
     local cell = self:_cell(old)
 
     self.simulator.movement:defer(function()
-        self.simulator.movement:release(self.x, self.y, dx, dy, cell, "eject")
+        self.simulator.movement:release(self.x, self.y, dx, dy, cell, { mode = "eject" })
     end)
 end
 
@@ -24,17 +24,17 @@ function Storage:eats(dx, dy, action)
     return action ~= nil or not self:held() or self.grid.simulator.movement:clear(self.x, self.y, dx, dy)
 end
 
-function Storage:absorb(cell, dx, dy)
+function Storage:ate(cell, dx, dy)
     local old = self.props.stored
-    BaseHolder.absorb(self, cell)
+    BaseHolder.ate(self, cell)
     self:_eject(old, dx, dy)
 end
 
 function Storage:swapped(dx, dy)
-    self:absorb(self, dx, dy)
+    self:ate(self, dx, dy)
 end
 
-function Storage:bump(dx, dy)
+function Storage:bumped(dx, dy)
     if not self:eats(dx, dy) then return end
 
     local old = self.props.stored

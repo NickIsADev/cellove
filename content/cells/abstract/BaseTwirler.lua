@@ -7,12 +7,16 @@ local BaseTwirler = setmetatable({
 }, { __index = BaseCell })
 BaseTwirler.__index = BaseTwirler
 
-function BaseTwirler:_spin(cell)
-    cell:rotate(self.spin, false, true)
+function BaseTwirler:_spin(cell, dx, dy)
+    cell:rotate(self.spin, {
+        quiet = true,
+        dx = dx,
+        dy = dy
+    })
 end
 
-function BaseTwirler:ahead(target)
-    self:_spin(target)
+function BaseTwirler:ahead(target, dx, dy)
+    self:_spin(target, dx, dy)
 end
 
 return BaseTwirler

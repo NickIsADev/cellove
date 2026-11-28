@@ -11,6 +11,6 @@ local SquishAcid = setmetatable({
 SquishAcid.__index = SquishAcid
 
 SquishAcid.hit = Enemy.hit
-SquishAcid.absorb = Enemy.absorb
+SquishAcid.ate = Enemy.ate
 
 return SquishAcid

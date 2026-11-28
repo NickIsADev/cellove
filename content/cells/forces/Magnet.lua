@@ -27,7 +27,7 @@ function Magnet:_reach(direction)
     local target = far and far.target
 
     if target and target.magnet and target.rotation == self.rotation then
-        movement:attract(far.x, far.y, -far.dx, -far.dy, constants.force.strength)
+        movement:attract(far.x, far.y, -far.dx, -far.dy, { force = constants.force.strength })
     end
 end
 

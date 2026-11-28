@@ -10,7 +10,7 @@ local Monogeneratable = setmetatable({
 }, { __index = Pushable })
 Monogeneratable.__index = Monogeneratable
 
-function Monogeneratable:generated()
+function Monogeneratable:template()
     return Ungeneratable
 end
 

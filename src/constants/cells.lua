@@ -164,6 +164,24 @@ return {
                 parent = "generators"
             },
             {
+                id = "physicalgenerators",
+                title = "Physical Generators",
+                icon = "physicalgenerator",
+                parent = "generators"
+            },
+            {
+                id = "supergenerators",
+                title = "Super Generators",
+                icon = "supergenerator",
+                parent = "generators"
+            },
+            {
+                id = "othergenerators",
+                title = "Other",
+                icon = "recursor",
+                parent = "generators"
+            },
+            {
                 id = "rotators",
                 title = "Rotators",
                 icon = "rotator_cw"

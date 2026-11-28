@@ -11,7 +11,7 @@ local Bias = setmetatable({
 Bias.__index = Bias
 
 function Bias:force(dx, dy)
-    return self:_alignment(dx, dy) * constants.force.strength
+    return self:_along(dx, dy) * constants.force.strength
 end
 
 return Bias

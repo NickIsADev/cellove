@@ -18,13 +18,13 @@ end
 function Seeker:update()
     local aim = self:_target(0)
     if aim then
-        self:rotate(aim - self.rotation, true)
+        self:rotate(aim - self.rotation, { forced = true })
         return Missile.update(self)
     end
 
     for _ = 1, 2 do
         if self:_open() then return Missile.update(self) end
-        self:rotate(-1, true)
+        self:rotate(-1, { forced = true })
     end
     Missile.update(self)
 end

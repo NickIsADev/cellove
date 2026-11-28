@@ -15,7 +15,7 @@ function Door:eats(dx, dy, action, mover)
     return action ~= "swap" and mover ~= nil and mover.key == "door"
 end
 
-function Door:absorb(cell)
+function Door:ate(cell)
     Audio.play("unlock")
     Audio.play("destroy")
     self.spark = "sparkle"

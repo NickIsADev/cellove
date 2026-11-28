@@ -11,7 +11,7 @@ Digger.__index = Digger
 
 function Digger:update()
     local dx, dy = self:_aim()
-    self.simulator.movement:tunnel(self.x, self.y, dx, dy, true)
+    self.simulator.movement:tunnel(self.x, self.y, dx, dy, { strong = true })
 end
 
 return Digger

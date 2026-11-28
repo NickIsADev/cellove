@@ -110,12 +110,19 @@ A tick runs its subticks in ascending order, and a cell's `update` runs in the s
 | `dumpster` | dumpsters, cross dumpsters |
 | `superTimewarper`, `timewarper` | super timewarpers, timewarpers |
 | `worm` | worms |
-| `shifter` | shifters |
 | `transformer` | transformers, transmutators |
 | `midas` | midas |
 | `superMirror`, `mirror`, `curvedMirror` | super mirrors, mirrors, curved mirrors |
 | `cyclerCW`, `cyclerCCW` | clockwise cyclers, counter-clockwise cyclers (paracyclers use both) |
-| `memoryGenerator`, `generator`, `memoryReplicator`, `maker` | memory generators, generators, memory replicators, makers |
+| `memoryGenerator` | memory generators |
+| `shifter` | shifters |
+| `hyperGenerator` | hyper generators, supra generators |
+| `superGenerator` | super generators |
+| `generator` | generators, physical generators |
+| `memoryReplicator` | memory replicators |
+| `superReplicator` | super replicators |
+| `replicator` | replicators |
+| `maker`, `recursor` | makers, recursors |
 | `perpetual` | where perpetual rotations and flips are applied |
 | `superFlipper`, `flipper` | super flippers, flippers |
 | `superRotator`, `rotator`, `spin` | super rotators, rotators, the spin of rotator movers |

@@ -9,7 +9,7 @@ local ToughTrash = setmetatable({
 ToughTrash.__index = ToughTrash
 
 function ToughTrash:eats(dx, dy)
-    return (dx == 0 or dy == 0) and self:_alignment(dx, dy) ~= 0
+    return (dx == 0 or dy == 0) and self:_along(dx, dy) ~= 0
 end
 
 return ToughTrash

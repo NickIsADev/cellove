@@ -12,7 +12,7 @@ function BulkTrash:eats()
     return false
 end
 
-function BulkTrash:bump(_, _, pusher)
+function BulkTrash:bumped(_, _, pusher)
     if pusher then self.simulator.movement:destroy(pusher) end
 end
 

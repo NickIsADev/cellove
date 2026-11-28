@@ -54,7 +54,7 @@ function BaseGear:_turn(ring, spin)
 
     for _, point in ipairs(ring) do
         local cell = grid:get(point[1], point[2])
-        if cell and point.diagonal == corner then cell:rotate(self.twist or spin, self.forced) end
+        if cell and point.diagonal == corner then cell:rotate(self.twist or spin, { forced = self.forced }) end
     end
 end
 

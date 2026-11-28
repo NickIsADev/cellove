@@ -13,7 +13,7 @@ local Repulsor = setmetatable({
 Repulsor.__index = Repulsor
 
 function Repulsor:update(_, direction)
-    self:repel(direction, nil, self.row)
+    self:repel(direction, { row = self.row })
 end
 
 return Repulsor

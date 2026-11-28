@@ -25,8 +25,8 @@ function MemoryTransformer:_store(scout)
     local cell = scout.cell
     if not cell then return end
 
-    local class, _, rotation = cell:generated()
-    self:_hold({ class = class, rotation = ((rotation or cell.rotation) + scout.turn) % 4, effects = cell:kept() })
+    local class, _, rotation = cell:template()
+    self:_hold({ class = class, rotation = ((rotation or cell.rotation) + scout.turn) % 4, effects = cell:permanent() })
 end
 
 function MemoryTransformer:update(_, direction)

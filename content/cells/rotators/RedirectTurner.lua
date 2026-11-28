@@ -10,8 +10,12 @@ local RedirectTurner = setmetatable({
 }, { __index = BaseTurner })
 RedirectTurner.__index = RedirectTurner
 
-function RedirectTurner:_spin(cell)
-    cell:rotate(self.rotation - cell.rotation, false, true)
+function RedirectTurner:_spin(cell, dx, dy)
+    cell:rotate(self.rotation - cell.rotation, {
+        quiet = true,
+        dx = dx,
+        dy = dy
+    })
 end
 
 return RedirectTurner

@@ -12,8 +12,12 @@ local FlipTwirler = setmetatable({
 }, { __index = BaseTwirler })
 FlipTwirler.__index = FlipTwirler
 
-function FlipTwirler:_spin(cell)
-    cell:flip(utils.flip(self.rotation, self.axis), false, false, true)
+function FlipTwirler:_spin(cell, dx, dy)
+    cell:flip(utils.flip(self.rotation, self.axis), {
+        quiet = true,
+        dx = dx,
+        dy = dy
+    })
 end
 
 return FlipTwirler

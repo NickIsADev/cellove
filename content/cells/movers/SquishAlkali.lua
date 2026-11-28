@@ -13,6 +13,6 @@ SquishAlkali.__index = SquishAlkali
 
 SquishAlkali.eats = SquishAcid.eats
 SquishAlkali.hit = SquishAcid.hit
-SquishAlkali.absorb = SquishAcid.absorb
+SquishAlkali.ate = SquishAcid.ate
 
 return SquishAlkali

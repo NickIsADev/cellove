@@ -15,7 +15,7 @@ Timewarper.__index = Timewarper
 function Timewarper:_warp(front)
     local target = front.target
     local initial = Initial.at(self.grid, front.x, front.y)
-    if target and not target:transformable() or not (initial or target) then return false end
+    if target and not target:transformable(front.dx, front.dy) or not (initial or target) then return false end
 
     local movement = self.simulator.movement
     if initial then

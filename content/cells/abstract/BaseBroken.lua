@@ -7,4 +7,8 @@ function BaseBroken:pushed()
     self.simulator.movement:destroy(self)
 end
 
+function BaseBroken:generated()
+    self.simulator.movement:destroy(self)
+end
+
 return BaseBroken

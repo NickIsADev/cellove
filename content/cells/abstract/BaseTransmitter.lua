@@ -1,6 +1,7 @@
 local BaseCell = require("content/cells/abstract/BaseCell")
 
 local wave
+local none = {}
 
 local BaseTransmitter = setmetatable({
     categories = { "effects" },
@@ -35,12 +36,13 @@ function BaseTransmitter:relay(action, wide)
 end
 
 function BaseTransmitter:rotated(amount, wide)
-    self:relay(function(cell) cell:rotate(amount, false, false, wide) end, wide)
+    self:relay(function(cell) cell:rotate(amount, { wide = wide }) end, wide)
 end
 
-function BaseTransmitter:flip(key, forced, wide, quiet)
-    if quiet or self:guarded("lock") and not forced then return end
-    self:relay(function(cell) cell:flip(key, false, wide) end, wide)
+function BaseTransmitter:flip(key, options)
+    options = options or none
+    if options.quiet or self:guarded("lock") and not options.forced then return end
+    self:relay(function(cell) cell:flip(key, { wide = options.wide }) end, options.wide)
 end
 
 return BaseTransmitter

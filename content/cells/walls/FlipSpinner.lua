@@ -11,8 +11,8 @@ local FlipSpinner = setmetatable({
 }, { __index = BaseSpinner })
 FlipSpinner.__index = FlipSpinner
 
-function FlipSpinner:_spin(cell)
-    cell:flip(utils.flip(self.rotation, self.axis))
+function FlipSpinner:_spin(cell, dx, dy)
+    cell:flip(utils.flip(self.rotation, self.axis), { dx = dx, dy = dy })
 end
 
 return FlipSpinner

@@ -10,9 +10,9 @@ local BulkEnemy = setmetatable({
 }, { __index = Staller })
 BulkEnemy.__index = BulkEnemy
 
-function BulkEnemy:bump(_, _, pusher)
+function BulkEnemy:bumped(_, _, pusher)
     if pusher then self.simulator.movement:destroy(pusher) end
-    Staller.bump(self)
+    Staller.bumped(self)
 end
 
 return BulkEnemy

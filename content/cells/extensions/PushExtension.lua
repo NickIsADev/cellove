@@ -10,14 +10,14 @@ local PushExtension = setmetatable({
 PushExtension.__index = PushExtension
 
 function PushExtension:_extend(dx, dy)
-    self:push(dx, dy, constants.force.strength)
+    self:push(dx, dy, { force = constants.force.strength })
 end
 
 function PushExtension:chained(action, dx, dy)
     if action ~= "grab" then return end
 
     local movement, x, y = self.simulator.movement, self.x, self.y
-    movement:post(function() movement:push(x, y, dx, dy, constants.force.unit) end)
+    movement:post(function() movement:push(x, y, dx, dy, { force = constants.force.unit }) end)
 end
 
 return PushExtension
